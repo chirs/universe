@@ -4,6 +4,8 @@ import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
   levelFromShortcut, hashForView, moonSystemRadius, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
+  formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
+  galaxySummary, clusterSummary, landmarkSummary,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -69,6 +71,34 @@ test('a circular orbit stays at the semi-major axis', () => {
 test('daysSinceJ2000 is zero at the epoch', () => {
   assert.equal(daysSinceJ2000(J2000_MS), 0);
   assert.equal(daysSinceJ2000(J2000_MS + 86400e3), 1);
+});
+
+test('hover summaries use compact units appropriate to the scale', () => {
+  assert.equal(formatDistance(384400000), '384,400 km');
+  assert.equal(formatDistance(AU), '1 AU');
+  assert.equal(formatDistance(4.25 * LY), '4.25 ly');
+  assert.equal(formatDistance(26000 * LY), '26 kly');
+  assert.equal(formatDistance(2.54e6 * LY), '2.54 Mly');
+  assert.equal(formatDistance(46.5e9 * LY), '46.5 Gly');
+  assert.equal(formatPeriod(0.3187), '7.65 hours');
+  assert.equal(formatPeriod(27.321661), '27.3 days');
+  assert.equal(formatPeriod(365.256), '1 year');
+  assert.equal(formatPeriod(90560), '248 years');
+});
+
+test('hover summaries describe each kind of named object', () => {
+  const moon = earth.moons[0];
+  const pluto = PLANETS.find((p) => p.name === 'Pluto');
+  const sedna = PLANETS.find((p) => p.name === 'Sedna');
+  assert.match(planetSummary(earth), /^Planet · radius 6,371 km/);
+  assert.match(planetSummary(pluto), /^Dwarf planet /);
+  assert.match(planetSummary(sedna), /^Dwarf-planet candidate /);
+  assert.match(moonSummary(moon, earth.name), /^Moon of Earth /);
+  assert.equal(starSummary(STARS[0]), `Star · ${formatDistance(STARS[0].dist * LY)} from the Sun`);
+  assert.match(galaxySummary(LOCAL_GROUP[1]), /^Spiral galaxy /);
+  assert.match(clusterSummary(CLUSTERS[0]), /^Galaxy group · centered on the Milky Way/);
+  assert.match(clusterSummary(CLUSTERS.find((c) => c.name === 'Virgo Cluster')), /^Galaxy cluster /);
+  assert.match(landmarkSummary({ dist: 54e6 * LY, size: 55e6 * LY }), /^Large-scale structure /);
 });
 
 test('global shortcuts ignore focused controls and editable content', () => {

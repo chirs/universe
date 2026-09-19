@@ -60,6 +60,19 @@ html, body {
   gap: 6px;
 }
 
+#hover-info {
+  top: 108px;
+  left: 20px;
+  max-width: 360px;
+  padding: 8px 10px;
+  background: rgba(12, 14, 22, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+#hover-info[hidden] { display: none; }
+#hover-info .name { color: #fff; font-weight: 600; }
+#hover-info .details { margin-top: 2px; color: #9ba1b1; font-size: 12px; }
+
 #bottom {
   left: 20px;
   right: 20px;

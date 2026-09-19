@@ -1,4 +1,81 @@
-import { J2000_MS, DAY_S } from './data.js';
+import { J2000_MS, DAY_S, AU, LY } from './data.js';
+
+const OFFICIAL_DWARF_PLANETS = new Set(['Ceres', 'Pluto', 'Haumea', 'Makemake', 'Eris']);
+
+function compactNumber(value) {
+  const abs = Math.abs(value);
+  const digits = abs >= 100 ? 0 : abs >= 10 ? 1 : 2;
+  return Number(value.toFixed(digits)).toLocaleString('en-US', { maximumFractionDigits: digits });
+}
+
+export function formatDistance(meters) {
+  const units = [
+    [1e9 * LY, 1e9 * LY, 'Gly'],
+    [1e6 * LY, 1e6 * LY, 'Mly'],
+    [1e3 * LY, 1e3 * LY, 'kly'],
+    [0.1 * LY, LY, 'ly'],
+    [0.1 * AU, AU, 'AU'],
+    [1e9, 1e9, 'million km'],
+    [1000, 1000, 'km'],
+  ];
+  const [, size, name] = units.find(([threshold]) => meters >= threshold) || units[units.length - 1];
+  return `${compactNumber(meters / size)} ${name}`;
+}
+
+export function formatPeriod(days) {
+  let value;
+  let singular;
+  let plural;
+  if (days >= 365) {
+    value = days / 365.25;
+    singular = 'year';
+    plural = 'years';
+  } else if (days >= 1) {
+    value = days;
+    singular = 'day';
+    plural = 'days';
+  } else {
+    value = days * 24;
+    singular = 'hour';
+    plural = 'hours';
+  }
+  return `${compactNumber(value)} ${Math.abs(value - 1) < 0.005 ? singular : plural}`;
+}
+
+export function planetSummary(body) {
+  const kind = body.dwarf
+    ? OFFICIAL_DWARF_PLANETS.has(body.name) ? 'Dwarf planet' : 'Dwarf-planet candidate'
+    : 'Planet';
+  return `${kind} · radius ${formatDistance(body.radius)} · orbit ${formatDistance(body.a)} · period ${formatPeriod(body.period)}`;
+}
+
+export function moonSummary(moon, parentName) {
+  return `Moon of ${parentName} · radius ${formatDistance(moon.radius)} · orbit ${formatDistance(moon.a)} · period ${formatPeriod(moon.period)}`;
+}
+
+export function starSummary(star) {
+  const parts = ['Star'];
+  if (star.radius) parts.push(`radius ${formatDistance(star.radius)}`);
+  if (star.dist) parts.push(`${formatDistance(star.dist * LY)} from the Sun`);
+  if (star.mag !== undefined) parts.push(`apparent magnitude ${compactNumber(star.mag)}`);
+  return parts.join(' · ');
+}
+
+export function galaxySummary(galaxy) {
+  const kind = galaxy.spiral ? 'Spiral galaxy' : 'Galaxy';
+  const distance = galaxy.dist ? `${formatDistance(galaxy.dist * LY)} from the Milky Way` : 'our galaxy';
+  return `${kind} · ${distance} · approximate radius ${formatDistance(galaxy.size * LY)}`;
+}
+
+export function clusterSummary(cluster) {
+  const kind = cluster.name.includes('Group') ? 'Galaxy group' : 'Galaxy cluster';
+  const distance = cluster.dist ? `${formatDistance(cluster.dist * 1e6 * LY)} from the Milky Way` : 'centered on the Milky Way';
+  return `${kind} · ${distance} · approximate diameter ${formatDistance(cluster.size * 1e6 * LY)}`;
+}
+
+export function landmarkSummary(landmark) {
+  return `Large-scale structure · ${formatDistance(landmark.dist)} from the Milky Way · approximate size ${formatDistance(landmark.size)}`;
+}
 
 export function daysSinceJ2000(ms) {
   return (ms - J2000_MS) / (DAY_S * 1000);

@@ -2,7 +2,11 @@ import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   UNIVERSE, SIGNPOSTS,
 } from './data.js';
-import { orbitalPosition, mulberry32, skyToPlane, layerAlpha } from './util.js';
+import {
+  orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
+  planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
+  landmarkSummary,
+} from './util.js';
 
 const TAU = Math.PI * 2;
 const INF = Infinity;
@@ -78,8 +82,8 @@ function label(view, x, y, text, alpha, priority = 0) {
   view.labels.push({ x, y, text, alpha, priority });
 }
 
-function hit(view, x, y, name, alpha) {
-  if (alpha > 0.5) view.hits.push({ x, y, name });
+function hit(view, x, y, name, alpha, detail) {
+  if (alpha > 0.5) view.hits.push({ x, y, name, detail });
 }
 
 function onScreen(view, x, y, pad = 20) {
@@ -112,7 +116,7 @@ const solarSystem = {
     glow(ctx, sx, sy, sunR * 4, SUN.color, 0.35 * alpha);
     dot(ctx, sx, sy, sunR, SUN.color, alpha);
     label(view, sx, sy, SUN.name, alpha, 2);
-    hit(view, sx, sy, SUN.name, alpha);
+    hit(view, sx, sy, SUN.name, alpha, starSummary(SUN));
     for (const p of PLANETS) {
       const pos = orbitalPosition(p, days);
       const x = view.sx(pos.x);
@@ -122,7 +126,7 @@ const solarSystem = {
       dot(ctx, x, y, r, p.color, alpha);
       const far = Math.hypot(x - sx, y - sy) > 14;
       label(view, x, y, p.name, far ? alpha : 0, p.dwarf ? 0 : 1);
-      hit(view, x, y, p.name, far ? alpha : 0);
+      hit(view, x, y, p.name, far ? alpha : 0, planetSummary(p));
     }
   },
 };
@@ -165,7 +169,7 @@ const moons = {
         dot(ctx, x, y, Math.max(m.radius / view.mpp, 2), m.color, alpha);
         const far = Math.hypot(x - px, y - py) > 14;
         label(view, x, y, m.name, far ? alpha : 0, 0);
-        hit(view, x, y, m.name, far ? alpha : 0);
+        hit(view, x, y, m.name, far ? alpha : 0, moonSummary(m, p.name));
       }
     }
   },
@@ -208,7 +212,7 @@ const sunDot = {
     glow(ctx, x, y, 8, SUN.color, 0.5 * alpha);
     dot(ctx, x, y, 2, SUN.color, alpha);
     label(view, x, y, 'Sun', alpha, 3);
-    hit(view, x, y, 'Sun', alpha);
+    hit(view, x, y, 'Sun', alpha, starSummary(SUN));
   },
 };
 
@@ -228,7 +232,7 @@ const nearestStars = {
       glow(ctx, x, y, r * 4, '#ffffff', 0.25 * alpha);
       dot(ctx, x, y, r, s.bright ? '#fff6dc' : '#d9c9b0', alpha);
       label(view, x, y, s.name, alpha, s.bright ? 1 : 0);
-      hit(view, x, y, s.name, alpha);
+      hit(view, x, y, s.name, alpha, starSummary(s));
     }
   },
 };
@@ -250,7 +254,7 @@ const brightStars = {
       glow(ctx, x, y, r * 4, color, 0.3 * alpha);
       dot(ctx, x, y, r, color, alpha);
       label(view, x, y, s.name, alpha, s.mag < 1.5 ? 1 : 0);
-      hit(view, x, y, s.name, alpha);
+      hit(view, x, y, s.name, alpha, starSummary(s));
     }
   },
 };
@@ -306,7 +310,8 @@ const milkyWay = (() => {
       drawPoints(ctx, view, bulge, GC.x, GC.y, '#fff0cc', 0.7 * alpha);
       glow(ctx, gx, gy, mw.bulgeRadius / view.mpp, 'rgba(255,230,180,0.6)', alpha);
       label(view, gx, gy, 'Galactic center', alpha, 2);
-      hit(view, gx, gy, 'Galactic center', alpha);
+      hit(view, gx, gy, 'Galactic center', alpha,
+        `Milky Way center · ${formatDistance(MILKY_WAY.sunDistance)} from the Sun`);
     },
   };
 })();
@@ -357,7 +362,7 @@ const localGroup = (() => {
           dot(ctx, x, y, Math.max(r * 0.5, 1.5), '#e6dcc8', gAlpha);
         }
         label(view, x, y, g.name, gAlpha, g.spiral ? 2 : 0);
-        hit(view, x, y, g.name, gAlpha);
+        hit(view, x, y, g.name, gAlpha, galaxySummary(g));
       }
     },
   };
@@ -383,7 +388,7 @@ const clusters = (() => {
         glow(ctx, x, y, Math.max(r, 4), 'rgba(200,190,230,0.35)', alpha);
         drawPoints(ctx, view, c.pts, c.x, c.y, '#e8e4f4', 0.6 * alpha);
         label(view, x, y, c.name, alpha, c.n >= 200 ? 2 : c.n >= 100 ? 1 : 0);
-        hit(view, x, y, c.name, alpha);
+        hit(view, x, y, c.name, alpha, clusterSummary(c));
       }
     },
   };
@@ -472,7 +477,7 @@ const landmarks = {
       ctx.stroke();
       ctx.setLineDash([]);
       label(view, x, y - r, m.name, alpha, 1);
-      hit(view, x, y - r, m.name, alpha);
+      hit(view, x, y - r, m.name, alpha, landmarkSummary(m));
     }
   },
 };
@@ -492,7 +497,7 @@ const youAreHere = {
     ctx.moveTo(x, y + 3); ctx.lineTo(x, y + 8);
     ctx.stroke();
     label(view, x, y, 'Milky Way', alpha, 3);
-    hit(view, x, y, 'Milky Way', alpha);
+    hit(view, x, y, 'Milky Way', alpha, galaxySummary(LOCAL_GROUP[0]));
   },
 };
 

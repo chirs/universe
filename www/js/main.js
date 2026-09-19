@@ -59,6 +59,9 @@ const scalebarEl = document.getElementById('scalebar');
 const overviewBtn = document.getElementById('overview');
 const tourBtn = document.getElementById('tour');
 const captionEl = document.getElementById('caption');
+const hoverInfoEl = document.getElementById('hover-info');
+const hoverNameEl = hoverInfoEl.querySelector('.name');
+const hoverDetailsEl = hoverInfoEl.querySelector('.details');
 const DEFAULT_CAPTION = 'Distances to scale. Dots are not.';
 
 const cam = { cx: 0, cy: 0, mpp: 1, follow: null, followPos: null };
@@ -246,6 +249,11 @@ function updateHud() {
   scalebarEl.hidden = overview;
   captionEl.hidden = overview;
   captionEl.textContent = near.caption || DEFAULT_CAPTION;
+  hoverInfoEl.hidden = !hover;
+  if (hover) {
+    hoverNameEl.textContent = hover.name;
+    hoverDetailsEl.textContent = hover.detail;
+  }
 }
 
 function frame(now) {
