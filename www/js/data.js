@@ -34,7 +34,9 @@ export const SUN = { name: 'Sun', radius: 695700 * KM, color: '#ffd76a' };
 
 // a in meters, period in days, radius in meters, L0 (mean longitude at
 // J2000), varpi (longitude of perihelion) in degrees, e eccentricity. Orbits
-// are drawn in the ecliptic plane; inclination is ignored.
+// are drawn in the ecliptic plane; inclination is ignored. Dwarf planets
+// (Ceres, Pluto, Haumea, Makemake, Eris, and Sedna, which is a likely one)
+// use JPL Horizons heliocentric elements at J2000.
 export const PLANETS = [
   { name: 'Mercury', a: 0.387098 * AU, period: 87.969, radius: 2439.7 * KM, L0: 252.251, e: 0.20563593, varpi: 77.458, color: '#b5b1a8' },
   { name: 'Venus', a: 0.723332 * AU, period: 224.701, radius: 6051.8 * KM, L0: 181.980, e: 0.00677672, varpi: 131.602, color: '#e8cda0' },
@@ -43,6 +45,7 @@ export const PLANETS = [
       { name: 'Moon', a: 384400 * KM, period: 27.321661, radius: 1737.4 * KM, L0: 219.554, e: 0.0549, varpi: 83.353, color: '#c8c4bc' },
     ] },
   { name: 'Mars', a: 1.523679 * AU, period: 686.980, radius: 3389.5 * KM, L0: 355.453, e: 0.0933941, varpi: 336.056, color: '#d1693f' },
+  { name: 'Ceres', a: 2.7665 * AU, period: 1680.7, radius: 469.7 * KM, L0: 160.594, e: 0.07838, varpi: 154.417, color: '#a09a90', dwarf: true },
   { name: 'Jupiter', a: 5.2044 * AU, period: 4332.59, radius: 69911 * KM, L0: 34.404, e: 0.04838624, varpi: 14.728, color: '#d9b48a',
     moons: [
       { name: 'Io', a: 421800 * KM, period: 1.769138, radius: 1821.6 * KM, L0: 18.171, color: '#e0c66a' },
@@ -82,6 +85,10 @@ export const PLANETS = [
     moons: [
       { name: 'Charon', a: 19591 * KM, period: 6.387, radius: 606.0 * KM, L0: 266.141, retrograde: true, color: '#a8a4a0' },
     ] },
+  { name: 'Haumea', a: 42.9093 * AU, period: 102665.6, radius: 780 * KM, L0: 192.119, e: 0.19992, varpi: 2.524, color: '#d8d4d0', dwarf: true },
+  { name: 'Makemake', a: 45.3721 * AU, period: 111630.1, radius: 715 * KM, L0: 155.276, e: 0.16452, varpi: 15.556, color: '#c8a890', dwarf: true },
+  { name: 'Eris', a: 68.1399 * AU, period: 205447.3, radius: 1163 * KM, L0: 21.264, e: 0.43251, varpi: 186.973, color: '#e0e0e8', dwarf: true },
+  { name: 'Sedna', a: 549.8733 * AU, period: 4709690.2, radius: 500 * KM, L0: 92.951, e: 0.86098, varpi: 95.05, color: '#c86a50', dwarf: true },
 ];
 
 export const BELTS = {

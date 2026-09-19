@@ -90,7 +90,7 @@ function onScreen(view, x, y, pad = 20) {
 
 const solarSystem = {
   name: 'solar system',
-  range: [0, 400 * AU],
+  range: [0, 1500 * AU],
   draw(ctx, view, alpha, days) {
     const sx = view.sx(0);
     const sy = view.sy(0);
