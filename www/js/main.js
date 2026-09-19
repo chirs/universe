@@ -1,7 +1,7 @@
 import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, formatDate, skyToPlane, orbitalPosition,
+  levelFromHash, formatDate, skyToPlane, orbitalPosition, placeLabel,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 
@@ -149,14 +149,13 @@ function drawLabels(view) {
   for (const l of sorted) {
     const isHover = hover && hover.name === l.text;
     const tw = ctx.measureText(l.text).width;
-    const rect = { x: l.x + 8, y: l.y - 8, w: tw + 4, h: 16 };
-    const clash = placed.some((r) => rect.x < r.x + r.w && rect.x + rect.w > r.x && rect.y < r.y + r.h && rect.y + rect.h > r.y);
-    if (clash && !isHover) continue;
-    if (rect.x + rect.w > w || rect.y < 0 || rect.y + rect.h > h) continue;
+    let rect = placeLabel(l.x, l.y, tw + 4, 16, placed, { w, h });
+    if (!rect && isHover) rect = { x: l.x + 8, y: l.y - 8, w: tw + 4, h: 16 };
+    if (!rect) continue;
     placed.push(rect);
     ctx.globalAlpha = l.alpha * (isHover ? 1 : 0.8);
     ctx.fillStyle = isHover ? '#ffffff' : '#cfd3dc';
-    ctx.fillText(l.text, rect.x + 2, l.y);
+    ctx.fillText(l.text, rect.x + 2, rect.y + 8);
   }
   ctx.globalAlpha = 1;
 }

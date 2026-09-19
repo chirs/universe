@@ -314,7 +314,7 @@ const localGroup = (() => {
   }));
   return {
     name: 'local group',
-    range: [250e3 * LY, 300e6 * LY],
+    range: [250e3 * LY, 25e6 * LY],
     draw(ctx, view, alpha) {
       for (const g of members) {
         const x = view.sx(g.x);

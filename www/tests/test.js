@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
-  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000,
+  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
 } from '../js/util.js';
 import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
@@ -182,4 +182,29 @@ test('star and galaxy coordinates are in range', () => {
     assert.ok(s.mag > -2 && s.mag < 3 && 'bwyo'.includes(s.hue), s.name);
     last = s.dist;
   }
+});
+
+test('placeLabel tries right, left, above, below, then gives up', () => {
+  const bounds = { w: 800, h: 600 };
+  const placed = [];
+  const spots = [];
+  for (let i = 0; i < 5; i++) {
+    const r = placeLabel(400, 300, 60, 16, placed, bounds);
+    spots.push(r);
+    if (r) placed.push(r);
+  }
+  assert.deepEqual(spots[0], { x: 408, y: 292, w: 60, h: 16 });
+  assert.deepEqual(spots[1], { x: 332, y: 292, w: 60, h: 16 });
+  assert.deepEqual(spots[2], { x: 370, y: 276, w: 60, h: 16 });
+  assert.deepEqual(spots[3], { x: 370, y: 308, w: 60, h: 16 });
+  assert.equal(spots[4], null);
+});
+
+test('placeLabel keeps labels inside the bounds', () => {
+  const bounds = { w: 800, h: 600 };
+  const nearRight = placeLabel(790, 300, 60, 16, [], bounds);
+  assert.deepEqual(nearRight, { x: 722, y: 292, w: 60, h: 16 });
+  const nearTop = placeLabel(5, 40, 60, 16, [], bounds);
+  assert.deepEqual(nearTop, { x: 13, y: 32, w: 60, h: 16 });
+  assert.equal(placeLabel(5, 5, 60, 16, [], bounds), null);
 });

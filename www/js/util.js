@@ -102,3 +102,22 @@ export function levelFromHash(hash, levels) {
 export function formatDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
+
+// Find a spot for a w x h label beside the point (x, y): to the right, then
+// left, above, below. Returns the rect, or null if every spot collides with a
+// placed rect or leaves the bounds.
+export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
+  const candidates = [
+    { x: x + gap, y: y - h / 2 },
+    { x: x - gap - w, y: y - h / 2 },
+    { x: x - w / 2, y: y - gap - h },
+    { x: x - w / 2, y: y + gap },
+  ];
+  for (const c of candidates) {
+    const rect = { x: c.x, y: c.y, w, h };
+    if (rect.x < 0 || rect.y < 0 || rect.x + w > bounds.w || rect.y + h > bounds.h) continue;
+    const clash = placed.some((r) => rect.x < r.x + r.w && rect.x + w > r.x && rect.y < r.y + r.h && rect.y + h > r.y);
+    if (!clash) return rect;
+  }
+  return null;
+}
