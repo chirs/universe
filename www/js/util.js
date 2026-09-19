@@ -77,6 +77,10 @@ export function landmarkSummary(landmark) {
   return `Large-scale structure · ${formatDistance(landmark.dist)} from the Milky Way · approximate size ${formatDistance(landmark.size)}`;
 }
 
+export function observableUniverseSummary(radius) {
+  return `Observable horizon · radius ${formatDistance(radius)} (comoving) · universe age about 13.8 billion years`;
+}
+
 export function daysSinceJ2000(ms) {
   return (ms - J2000_MS) / (DAY_S * 1000);
 }
@@ -161,6 +165,73 @@ export function mulberry32(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+// A procedural cosmic web: random cells with points projected onto the
+// boundaries between their nearest centers. kind 1 marks filaments and kind 2
+// their denser junctions; kind 0 is the sparse field between them.
+export function makeVoronoiWeb(seed, radius, nCells, nPoints) {
+  const rand = mulberry32(seed);
+  const cells = new Float64Array(nCells * 2);
+  for (let i = 0; i < nCells; i++) {
+    const r = radius * Math.sqrt(rand());
+    const t = Math.PI * 2 * rand();
+    cells[2 * i] = r * Math.cos(t);
+    cells[2 * i + 1] = r * Math.sin(t);
+  }
+
+  const pts = new Float64Array(nPoints * 2);
+  const kind = new Uint8Array(nPoints);
+  const width = radius / Math.sqrt(nCells) * 0.18;
+  for (let i = 0; i < nPoints; i++) {
+    const r = radius * Math.sqrt(rand());
+    const t = Math.PI * 2 * rand();
+    let x = r * Math.cos(t);
+    let y = r * Math.sin(t);
+    let first = Infinity;
+    let second = Infinity;
+    let third = Infinity;
+    let firstIndex = -1;
+    let secondIndex = -1;
+    for (let j = 0; j < nCells; j++) {
+      const dx = x - cells[2 * j];
+      const dy = y - cells[2 * j + 1];
+      const d = dx * dx + dy * dy;
+      if (d < first) {
+        third = second;
+        second = first;
+        secondIndex = firstIndex;
+        first = d;
+        firstIndex = j;
+      } else if (d < second) {
+        third = second;
+        second = d;
+        secondIndex = j;
+      } else if (d < third) {
+        third = d;
+      }
+    }
+
+    if (Math.sqrt(second) - Math.sqrt(first) < width) {
+      const ax = cells[2 * firstIndex];
+      const ay = cells[2 * firstIndex + 1];
+      const nx = cells[2 * secondIndex] - ax;
+      const ny = cells[2 * secondIndex + 1] - ay;
+      const mx = ax + nx / 2;
+      const my = ay + ny / 2;
+      const offset = ((x - mx) * nx + (y - my) * ny) / (nx * nx + ny * ny);
+      const px = x - offset * nx;
+      const py = y - offset * ny;
+      if (Math.hypot(px, py) <= radius) {
+        x = px;
+        y = py;
+      }
+      kind[i] = Math.sqrt(third) - Math.sqrt(first) < width * 1.4 ? 2 : 1;
+    }
+    pts[2 * i] = x;
+    pts[2 * i + 1] = y;
+  }
+  return { pts, kind };
 }
 
 // Place an object at its true distance, in the direction of its galactic

@@ -27,7 +27,8 @@ export const LEVELS = [
     caption: 'Schematic top-down projection. Radial distances are to scale; galactic latitude is omitted and galaxy sizes are approximate.' },
   { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
   { id: 'virgo', name: 'Virgo Supercluster', shortcut: '9', radius: 60e6 * LY, cx: VIRGO.x / 2, cy: VIRGO.y / 2 },
-  { id: 'universe', name: 'Observable universe', shortcut: '0', radius: 50e9 * LY, cx: 0, cy: 0 },
+  { id: 'universe', name: 'Observable universe', shortcut: '0', radius: 58e9 * LY, cx: 0, cy: 0,
+    caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];
 
 // Moon systems without a button, reached by clicking the planet or by hash.
@@ -222,14 +223,22 @@ function updateHover(view) {
   if (!mouse) return;
   let bestD = 14;
   for (const hit of view.hits) {
-    const d = Math.hypot(hit.x - mouse.x, hit.y - mouse.y);
-    if (d < bestD) { bestD = d; hover = hit; }
+    const dx = mouse.x - hit.x;
+    const dy = mouse.y - hit.y;
+    const radial = Math.hypot(dx, dy);
+    const d = hit.radius === undefined ? radial : Math.abs(radial - hit.radius);
+    if (d < bestD) {
+      bestD = d;
+      hover = hit.radius === undefined || radial === 0
+        ? hit
+        : { ...hit, markerX: hit.x + dx / radial * hit.radius, markerY: hit.y + dy / radial * hit.radius };
+    }
   }
   if (hover) {
     ctx.strokeStyle = 'rgba(255,255,255,0.6)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(hover.x, hover.y, 9, 0, Math.PI * 2);
+    ctx.arc(hover.markerX ?? hover.x, hover.markerY ?? hover.y, 9, 0, Math.PI * 2);
     ctx.stroke();
   }
   canvas.style.cursor = hover ? 'pointer' : 'default';

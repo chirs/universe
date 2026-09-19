@@ -5,7 +5,8 @@ import {
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
   levelFromShortcut, hashForView, moonSystemRadius, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
-  galaxySummary, clusterSummary, landmarkSummary,
+  galaxySummary, clusterSummary, landmarkSummary, observableUniverseSummary,
+  makeVoronoiWeb,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -99,6 +100,24 @@ test('hover summaries describe each kind of named object', () => {
   assert.match(clusterSummary(CLUSTERS[0]), /^Galaxy group · centered on the Milky Way/);
   assert.match(clusterSummary(CLUSTERS.find((c) => c.name === 'Virgo Cluster')), /^Galaxy cluster /);
   assert.match(landmarkSummary({ dist: 54e6 * LY, size: 55e6 * LY }), /^Large-scale structure /);
+  assert.equal(
+    observableUniverseSummary(46.5e9 * LY),
+    'Observable horizon · radius 46.5 Gly (comoving) · universe age about 13.8 billion years',
+  );
+});
+
+test('procedural cosmic web is deterministic with filaments and junctions', () => {
+  const a = makeVoronoiWeb(5, 1000, 20, 1000);
+  const b = makeVoronoiWeb(5, 1000, 20, 1000);
+  assert.deepEqual(a, b);
+  assert.equal(a.pts.length, 2000);
+  assert.equal(a.kind.length, 1000);
+  assert.ok(a.kind.includes(0));
+  assert.ok(a.kind.includes(1));
+  assert.ok(a.kind.includes(2));
+  for (let i = 0; i < a.kind.length; i++) {
+    assert.ok(Math.hypot(a.pts[2 * i], a.pts[2 * i + 1]) <= 1000);
+  }
 });
 
 test('global shortcuts ignore focused controls and editable content', () => {

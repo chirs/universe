@@ -31,6 +31,10 @@ Overview button (or `o`) switches to a log-radius map after Gott and
 Jurić: direction across, distance from the Sun up on a log scale, everything
 on one screen.
 
+The widest level is not a present-day snapshot. Looking farther out also means
+looking farther back in time, so it is presented as a schematic 2D comoving
+slice. Its cosmic web is procedural rather than a survey reconstruction.
+
 No build step, no dependencies. 2D canvas.
 
 ### Development

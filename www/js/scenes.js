@@ -5,7 +5,7 @@ import {
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
-  landmarkSummary,
+  landmarkSummary, observableUniverseSummary, makeVoronoiWeb,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -84,6 +84,10 @@ function label(view, x, y, text, alpha, priority = 0) {
 
 function hit(view, x, y, name, alpha, detail) {
   if (alpha > 0.5) view.hits.push({ x, y, name, detail });
+}
+
+function ringHit(view, x, y, radius, name, alpha, detail) {
+  if (alpha > 0.5) view.hits.push({ x, y, radius, name, detail });
 }
 
 function onScreen(view, x, y, pad = 20) {
@@ -396,60 +400,26 @@ const clusters = (() => {
 
 // ---------------------------------------------------------------- cosmic web
 
-function makeWeb(seed, radius, nVoids, nPoints) {
-  const rand = mulberry32(seed);
-  const voids = [];
-  const typical = radius / Math.sqrt(nVoids) * 0.9;
-  for (let i = 0; i < nVoids; i++) {
-    const r = radius * Math.sqrt(rand());
-    const t = rand() * TAU;
-    voids.push({ x: r * Math.cos(t), y: r * Math.sin(t), r: typical * (0.5 + rand()) });
-  }
-  const pts = new Float64Array(nPoints * 2);
-  const wall = new Uint8Array(nPoints);
-  for (let i = 0; i < nPoints; i++) {
-    const r = radius * Math.sqrt(rand());
-    const t = rand() * TAU;
-    let x = r * Math.cos(t);
-    let y = r * Math.sin(t);
-    let best = null;
-    let bestD = INF;
-    for (const v of voids) {
-      const d = Math.hypot(x - v.x, y - v.y) / v.r;
-      if (d < bestD) { bestD = d; best = v; }
-    }
-    if (bestD < 1) {
-      const push = best.r * (0.97 + 0.06 * rand());
-      const d = Math.hypot(x - best.x, y - best.y) || 1;
-      x = best.x + (x - best.x) / d * push;
-      y = best.y + (y - best.y) / d * push;
-      wall[i] = 1;
-    }
-    pts[2 * i] = x;
-    pts[2 * i + 1] = y;
-  }
-  return { pts, wall };
-}
-
-function webLayer(name, seed, radius, nVoids, nPoints, range) {
-  const { pts, wall } = makeWeb(seed, radius, nVoids, nPoints);
-  const walls = new Float64Array(wall.reduce((n, w) => n + w, 0) * 2);
-  const field = new Float64Array(pts.length - walls.length);
-  let a = 0;
-  let b = 0;
-  for (let i = 0; i < wall.length; i++) {
-    const target = wall[i] ? walls : field;
-    const idx = wall[i] ? a : b;
+function webLayer(name, seed, radius, nCells, nPoints, range) {
+  const { pts, kind } = makeVoronoiWeb(seed, radius, nCells, nPoints);
+  const filaments = new Float64Array(kind.reduce((n, k) => n + (k === 1), 0) * 2);
+  const nodes = new Float64Array(kind.reduce((n, k) => n + (k === 2), 0) * 2);
+  const field = new Float64Array(kind.reduce((n, k) => n + (k === 0), 0) * 2);
+  const indices = [0, 0, 0];
+  for (let i = 0; i < kind.length; i++) {
+    const target = kind[i] === 2 ? nodes : kind[i] === 1 ? filaments : field;
+    const idx = indices[kind[i]];
     target[idx] = pts[2 * i];
     target[idx + 1] = pts[2 * i + 1];
-    if (wall[i]) a += 2; else b += 2;
+    indices[kind[i]] += 2;
   }
   return {
     name,
     range,
     draw(ctx, view, alpha) {
-      drawPoints(ctx, view, field, 0, 0, '#8a90b8', 0.3 * alpha);
-      drawPoints(ctx, view, walls, 0, 0, '#d6dcff', 0.7 * alpha, 1.5);
+      drawPoints(ctx, view, field, 0, 0, '#78809f', 0.18 * alpha);
+      drawPoints(ctx, view, filaments, 0, 0, '#c8d0f0', 0.7 * alpha, 1.25);
+      drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.9 * alpha, 2);
     },
   };
 }
@@ -514,6 +484,8 @@ const horizon = {
     ctx.arc(x, y, r, 0, TAU);
     ctx.stroke();
     label(view, x, y - r, 'Edge of the observable universe', alpha, 2);
+    ringHit(view, x, y, r, 'Edge of the observable universe', alpha,
+      observableUniverseSummary(UNIVERSE.radius));
   },
 };
 
