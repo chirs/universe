@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
-  hashForView, moonSystemRadius, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
+  levelFromShortcut, hashForView, moonSystemRadius, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -135,11 +135,25 @@ test('skyToPlane keeps the true distance', () => {
 });
 
 test('levelFromHash falls back to the first level', () => {
-  const levels = [{ id: 'inner' }, { id: 'milky-way' }];
+  const levels = [{ id: 'inner' }, { id: 'trans-neptunian' }, { id: 'milky-way' }];
+  assert.equal(levelFromHash('#trans-neptunian', levels).id, 'trans-neptunian');
   assert.equal(levelFromHash('#milky-way', levels).id, 'milky-way');
   assert.equal(levelFromHash('#nope', levels).id, 'inner');
   assert.equal(levelFromHash('', levels).id, 'inner');
   assert.equal(levelFromHash(undefined, levels).id, 'inner');
+});
+
+test('level shortcuts preserve digits and add the trans-Neptunian key', () => {
+  const levels = [
+    { id: 'outer', shortcut: '5' },
+    { id: 'trans-neptunian', shortcut: 'k' },
+    { id: 'stars', shortcut: '6' },
+  ];
+  assert.equal(levelFromShortcut('5', levels).id, 'outer');
+  assert.equal(levelFromShortcut('k', levels).id, 'trans-neptunian');
+  assert.equal(levelFromShortcut('K', levels).id, 'trans-neptunian');
+  assert.equal(levelFromShortcut('6', levels).id, 'stars');
+  assert.equal(levelFromShortcut('x', levels), null);
 });
 
 test('view hashes distinguish overview from the last level', () => {
@@ -298,4 +312,6 @@ test('tour legs take longer over more decades and never go to zero', () => {
   assert.equal(new Set(TOUR).size, TOUR.length);
   assert.equal(TOUR[0], 'earth-moon');
   assert.equal(TOUR[TOUR.length - 1], 'universe');
+  assert.ok(TOUR.indexOf('outer') < TOUR.indexOf('trans-neptunian'));
+  assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));
 });

@@ -1,7 +1,7 @@
 import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, hashForView, moonSystemRadius, formatDate, shouldIgnoreGlobalKeys,
+  levelFromHash, levelFromShortcut, hashForView, moonSystemRadius, formatDate, shouldIgnoreGlobalKeys,
   skyToPlane, orbitalPosition, placeLabel, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
@@ -14,16 +14,18 @@ const planet = (name) => PLANETS.find((p) => p.name === name);
 
 // A level with `follow` is centered on that planet's current position.
 export const LEVELS = [
-  { id: 'earth-moon', name: 'Earth & Moon', radius: 5e5 * KM, follow: planet('Earth') },
-  { id: 'jupiter', name: 'Jupiter & moons', radius: 2.4e6 * KM, follow: planet('Jupiter') },
-  { id: 'saturn', name: 'Saturn & moons', radius: moonSystemRadius(planet('Saturn')), follow: planet('Saturn') },
-  { id: 'inner', name: 'Inner solar system', radius: 2 * AU, cx: 0, cy: 0 },
-  { id: 'outer', name: 'Outer solar system', radius: 50 * AU, cx: 0, cy: 0 },
-  { id: 'stars', name: 'Stellar neighborhood', radius: 20 * LY, cx: 0, cy: 0 },
-  { id: 'milky-way', name: 'Milky Way', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y },
-  { id: 'local-group', name: 'Local Group', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
-  { id: 'virgo', name: 'Virgo Supercluster', radius: 60e6 * LY, cx: VIRGO.x / 2, cy: VIRGO.y / 2 },
-  { id: 'universe', name: 'Observable universe', radius: 50e9 * LY, cx: 0, cy: 0 },
+  { id: 'earth-moon', name: 'Earth & Moon', shortcut: '1', radius: 5e5 * KM, follow: planet('Earth') },
+  { id: 'jupiter', name: 'Jupiter & moons', shortcut: '2', radius: 2.4e6 * KM, follow: planet('Jupiter') },
+  { id: 'saturn', name: 'Saturn & moons', shortcut: '3', radius: moonSystemRadius(planet('Saturn')), follow: planet('Saturn') },
+  { id: 'inner', name: 'Inner solar system', shortcut: '4', radius: 2 * AU, cx: 0, cy: 0 },
+  { id: 'outer', name: 'Outer solar system', shortcut: '5', radius: 50 * AU, cx: 0, cy: 0 },
+  { id: 'trans-neptunian', name: 'TNOs', shortcut: 'k', radius: 120 * AU, cx: 0, cy: 0,
+    caption: 'Official dwarf planets: Pluto, Haumea, Makemake, Eris. Other labeled TNOs are candidates.' },
+  { id: 'stars', name: 'Stellar neighborhood', shortcut: '6', radius: 20 * LY, cx: 0, cy: 0 },
+  { id: 'milky-way', name: 'Milky Way', shortcut: '7', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y },
+  { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
+  { id: 'virgo', name: 'Virgo Supercluster', shortcut: '9', radius: 60e6 * LY, cx: VIRGO.x / 2, cy: VIRGO.y / 2 },
+  { id: 'universe', name: 'Observable universe', shortcut: '0', radius: 50e9 * LY, cx: 0, cy: 0 },
 ];
 
 // Moon systems without a button, reached by clicking the planet or by hash.
@@ -55,6 +57,7 @@ const scalebarEl = document.getElementById('scalebar');
 const overviewBtn = document.getElementById('overview');
 const tourBtn = document.getElementById('tour');
 const captionEl = document.getElementById('caption');
+const DEFAULT_CAPTION = 'Distances to scale. Dots are not.';
 
 const cam = { cx: 0, cy: 0, mpp: 1, follow: null, followPos: null };
 let anim = null;
@@ -240,6 +243,7 @@ function updateHud() {
   tourBtn.classList.toggle('active', !!tour);
   scalebarEl.hidden = overview;
   captionEl.hidden = overview;
+  captionEl.textContent = near.caption || DEFAULT_CAPTION;
 }
 
 function frame(now) {
@@ -278,11 +282,11 @@ function frame(now) {
 }
 
 function buildHud() {
-  LEVELS.forEach((lv, i) => {
+  LEVELS.forEach((lv) => {
     const b = document.createElement('button');
     b.textContent = lv.name;
     b.dataset.id = lv.id;
-    b.title = `${(i + 1) % 10}`;
+    b.title = lv.shortcut;
     b.addEventListener('click', () => { stopTour(); goTo(lv); });
     levelsEl.appendChild(b);
   });
@@ -310,9 +314,10 @@ canvas.addEventListener('click', () => {
 
 window.addEventListener('keydown', (e) => {
   if (shouldIgnoreGlobalKeys(e.target.tagName, e.target.isContentEditable)) return;
+  const level = levelFromShortcut(e.key, LEVELS);
   if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
-  else if (/^[0-9]$/.test(e.key) && LEVELS[(Number(e.key) + 9) % 10]) { stopTour(); goTo(LEVELS[(Number(e.key) + 9) % 10]); }
+  else if (level) { stopTour(); goTo(level); }
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
   else if (e.key === 'o') { stopTour(); setOverview(!overview); }
   else if (e.key === 'p') { if (tour) stopTour(); else startTour(); }

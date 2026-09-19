@@ -99,6 +99,10 @@ export function levelFromHash(hash, levels) {
   return levels.find((lv) => lv.id === id) || levels[0];
 }
 
+export function levelFromShortcut(key, levels) {
+  return levels.find((lv) => lv.shortcut === key.toLowerCase()) || null;
+}
+
 export function hashForView(overview, levelId) {
   return overview ? '#overview' : `#${levelId}`;
 }
@@ -136,7 +140,10 @@ export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
 
 // Stops of the guided tour, in order, and how long a leg between two zooms
 // should take: a fixed rate of about a second per decade, plus a floor.
-export const TOUR = ['earth-moon', 'inner', 'outer', 'stars', 'milky-way', 'local-group', 'virgo', 'universe'];
+export const TOUR = [
+  'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars',
+  'milky-way', 'local-group', 'virgo', 'universe',
+];
 export const TOUR_HOLD_MS = 2500;
 
 export function tourLegMs(fromMpp, toMpp) {

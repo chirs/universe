@@ -6,11 +6,13 @@ every level; the dots are not, because at true scale nothing but the Sun would
 be visible past the first level.
 
 Levels: Earth and Moon, Jupiter and its Galilean moons, Saturn with its rings
-and moons, inner solar system, outer solar system, stellar neighborhood, Milky
-Way, Local Group, Virgo Supercluster, observable universe. Planets move on
+and moons, inner solar system, outer solar system, trans-Neptunian region,
+stellar neighborhood, Milky Way, Local Group, Virgo Supercluster, observable
+universe. Planets move on
 approximate fixed ellipses with their real periods, initialized from J2000
 elements, with a time-speed control. Scroll to zoom continuously between
-levels; `#milky-way` and the other level ids link straight to a level.
+levels; `#trans-neptunian`, `#milky-way`, and the other level ids link straight
+to a level. The `k` key jumps to the trans-Neptunian view.
 
 The moon systems include the major satellites plus selected smaller bodies
 such as Phobos, Amalthea, Hyperion, Puck, Nereid, and Pluto's four small moons.
