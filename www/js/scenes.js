@@ -184,7 +184,19 @@ function belt(name, cfg, range, color, log = false) {
 
 const asteroidBelt = belt('asteroid belt', BELTS.asteroid, [0, 60 * AU], '#8f8a80');
 const kuiperBelt = belt('kuiper belt', BELTS.kuiper, [4 * AU, 1500 * AU], '#8fa0b8');
-const oortCloud = belt('oort cloud', BELTS.oort, [0.02 * LY, 60 * LY], '#7f8ea8', true);
+// Inferred, never observed, and presumably not unique to the Sun, so it fades
+// out before other stars come on screen rather than mark us out.
+const oortCloud = (() => {
+  const inner = belt('oort cloud', BELTS.oort, [0.02 * LY, 4 * LY], '#7f8ea8', true);
+  return {
+    ...inner,
+    draw(ctx, view, alpha) {
+      inner.draw(ctx, view, alpha);
+      const r = BELTS.oort.outer / view.mpp;
+      if (r > 60) label(view, view.sx(0), view.sy(0) - r, 'Oort cloud (inferred)', alpha, 0);
+    },
+  };
+})();
 
 // The Sun as a bare dot once the planets are sub-pixel.
 const sunDot = {
