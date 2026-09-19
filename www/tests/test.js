@@ -1,0 +1,107 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  meanLongitude, orbitalPosition, lerpLog, easeInOut, layerAlpha,
+  niceScaleBar, mulberry32, galacticToPlane, levelFromHash, daysSinceJ2000,
+} from '../js/util.js';
+import { PLANETS, STARS, LOCAL_GROUP, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+
+const earth = PLANETS.find((p) => p.name === 'Earth');
+
+test('mean longitude at J2000 is L0 and advances a full turn per period', () => {
+  assert.equal(meanLongitude(earth, 0), earth.L0);
+  assert.ok(Math.abs(meanLongitude(earth, earth.period) - earth.L0) < 1e-9);
+  assert.ok(Math.abs(meanLongitude(earth, earth.period / 2) - ((earth.L0 + 180) % 360)) < 1e-9);
+});
+
+test('orbital position stays at the semi-major axis', () => {
+  for (const d of [0, 100, 1000]) {
+    const { x, y } = orbitalPosition(earth, d);
+    assert.ok(Math.abs(Math.hypot(x, y) - earth.a) < 1);
+  }
+});
+
+test('daysSinceJ2000 is zero at the epoch', () => {
+  assert.equal(daysSinceJ2000(J2000_MS), 0);
+  assert.equal(daysSinceJ2000(J2000_MS + 86400e3), 1);
+});
+
+test('lerpLog hits endpoints and the geometric midpoint', () => {
+  assert.equal(lerpLog(1, 100, 0), 1);
+  assert.ok(Math.abs(lerpLog(1, 100, 1) - 100) < 1e-9);
+  assert.ok(Math.abs(lerpLog(1, 100, 0.5) - 10) < 1e-9);
+});
+
+test('easeInOut is monotonic through the endpoints', () => {
+  assert.equal(easeInOut(0), 0);
+  assert.equal(easeInOut(1), 1);
+  assert.equal(easeInOut(0.5), 0.5);
+  assert.ok(easeInOut(0.25) < easeInOut(0.5));
+});
+
+test('layerAlpha is 1 inside the range and fades to 0 outside', () => {
+  const r = [1e6, 1e9];
+  assert.equal(layerAlpha(1e7, r), 1);
+  assert.equal(layerAlpha(1e6, r), 1);
+  assert.ok(layerAlpha(10 ** 5.75, r) > 0 && layerAlpha(10 ** 5.75, r) < 1);
+  assert.equal(layerAlpha(1e5, r), 0);
+  assert.equal(layerAlpha(1e10, r), 0);
+});
+
+test('niceScaleBar picks a 1/2/5 length that fits', () => {
+  for (const mpp of [1e3, 1e7, 1e9, 1e12, 1e15, 1e20, 1e24]) {
+    const bar = niceScaleBar(mpp, 200, SCALE_UNITS);
+    assert.ok(bar.px <= 200 && bar.px > 40, `${mpp}: ${bar.px}`);
+    const mant = Number(bar.label.split(' ')[0].replace(/,/g, ''));
+    const lead = Number(String(mant).replace(/0+$/, '').replace(/\./, ''));
+    assert.ok([1, 2, 5].includes(lead), bar.label);
+  }
+  assert.equal(niceScaleBar(AU / 100, 200, SCALE_UNITS).label, '2 AU');
+  assert.equal(niceScaleBar(LY * 1e6 / 100, 200, SCALE_UNITS).label, '2 Mly');
+});
+
+test('mulberry32 is deterministic and in [0, 1)', () => {
+  const a = mulberry32(42);
+  const b = mulberry32(42);
+  for (let i = 0; i < 100; i++) {
+    const x = a();
+    assert.equal(x, b());
+    assert.ok(x >= 0 && x < 1);
+  }
+  assert.notEqual(mulberry32(1)(), mulberry32(2)());
+});
+
+test('galacticToPlane projects along the plane', () => {
+  const p = galacticToPlane(0, 0, 10);
+  assert.ok(Math.abs(p.x - 10) < 1e-9 && Math.abs(p.y) < 1e-9);
+  const q = galacticToPlane(90, 0, 10);
+  assert.ok(Math.abs(q.x) < 1e-9 && Math.abs(q.y - 10) < 1e-9);
+  const pole = galacticToPlane(123, 90, 10);
+  assert.ok(Math.hypot(pole.x, pole.y) < 1e-9);
+  const mid = galacticToPlane(0, 60, 10);
+  assert.ok(Math.abs(mid.x - 5) < 1e-9);
+});
+
+test('levelFromHash falls back to the first level', () => {
+  const levels = [{ id: 'inner' }, { id: 'milky-way' }];
+  assert.equal(levelFromHash('#milky-way', levels).id, 'milky-way');
+  assert.equal(levelFromHash('#nope', levels).id, 'inner');
+  assert.equal(levelFromHash('', levels).id, 'inner');
+  assert.equal(levelFromHash(undefined, levels).id, 'inner');
+});
+
+test('planet data is complete and ordered outward', () => {
+  let last = 0;
+  for (const p of PLANETS) {
+    assert.ok(p.a > last, p.name);
+    assert.ok(p.period > 0 && p.radius > 0 && p.L0 >= 0 && p.L0 < 360, p.name);
+    last = p.a;
+  }
+});
+
+test('star and galaxy coordinates are in range', () => {
+  for (const s of [...STARS, ...LOCAL_GROUP]) {
+    assert.ok(s.dist >= 0 && s.l >= 0 && s.l < 360 && s.b >= -90 && s.b <= 90, s.name);
+  }
+  assert.ok(STARS.every((s) => s.dist < 20));
+});
