@@ -4,7 +4,7 @@ import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
 } from '../js/util.js';
-import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -215,4 +215,13 @@ test('placeLabel keeps labels inside the bounds', () => {
   const nearTop = placeLabel(5, 40, 60, 16, [], bounds);
   assert.deepEqual(nearTop, { x: 13, y: 32, w: 60, h: 16 });
   assert.equal(placeLabel(5, 5, 60, 16, [], bounds), null);
+});
+
+test('signposts have ordered, non-overlapping ranges', () => {
+  let last = 0;
+  for (const sp of SIGNPOSTS) {
+    assert.ok(sp.range[0] > last && sp.range[1] > sp.range[0], sp.text);
+    assert.ok(sp.text.length > 0 && sp.text.length < 160, sp.text);
+    last = sp.range[1];
+  }
 });

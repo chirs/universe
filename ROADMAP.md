@@ -7,7 +7,6 @@ Open work only; completed items are removed as they land (see git history).
 ## Interface
 
 - [ ] Smarter label placement: try left, above, and below before dropping a label that collides
-- [ ] Signpost the empty stretches (Kuiper belt to Oort cloud, Local Group to superclusters) with running commentary in the manner of Worth's "If the Moon Were Only 1 Pixel", so scrolling through nothing reads as intended
 - [ ] Guided tour: a play button that pulls back at a fixed rate through all ten levels with the scale bar ticking, after Powers of Ten
 
 ## Views

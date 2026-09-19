@@ -230,6 +230,14 @@ export const CLUSTERS = [
   { name: 'Coma Cluster', dist: 320, l: 58, size: 20, n: 400 },
 ];
 
+// Notes shown while the view radius is inside an otherwise empty stretch,
+// so the emptiness reads as real space rather than a rendering gap.
+export const SIGNPOSTS = [
+  { range: [120 * AU, 1000 * AU], text: 'Nothing out here but Sedna\u2019s orbit. The Kuiper belt ends near 50 AU; the Oort cloud, if it is there, begins around 2,000 AU.' },
+  { range: [2 * LY, 3.6 * LY], text: 'The nearest star, Proxima Centauri, is 4.2 light-years away, just off the edge.' },
+  { range: [4e6 * LY, 8e6 * LY], text: 'The Local Group is on its own out to about 10 million light-years, where the Maffei and M81 groups begin.' },
+];
+
 export const UNIVERSE = {
   radius: 46.5e9 * LY,        // comoving radius of the observable universe
   webSeed: 5,

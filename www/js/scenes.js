@@ -1,6 +1,6 @@
 import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  UNIVERSE,
+  UNIVERSE, SIGNPOSTS,
 } from './data.js';
 import { orbitalPosition, mulberry32, skyToPlane } from './util.js';
 
@@ -510,10 +510,25 @@ const horizon = {
   },
 };
 
+const signposts = SIGNPOSTS.map((sp) => ({
+  name: 'signpost',
+  range: sp.range,
+  draw(ctx, view, alpha) {
+    ctx.font = 'italic 13px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.8 * alpha;
+    ctx.fillStyle = '#8a90a0';
+    ctx.fillText(sp.text, view.w / 2, view.h * 0.8);
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'start';
+  },
+}));
+
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, clusters, localGroup, milkyWay, fieldStars,
   oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
-  youAreHere, horizon,
+  youAreHere, horizon, ...signposts,
 ];
 
 export const GALACTIC_CENTER = GC;
