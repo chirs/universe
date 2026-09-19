@@ -142,7 +142,7 @@ export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
 // should take: a fixed rate of about a second per decade, plus a floor.
 export const TOUR = [
   'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars',
-  'milky-way', 'local-group', 'virgo', 'universe',
+  'milky-way', 'milky-way-halo', 'local-group', 'virgo', 'universe',
 ];
 export const TOUR_HOLD_MS = 2500;
 

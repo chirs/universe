@@ -2,7 +2,7 @@ import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   UNIVERSE, SIGNPOSTS,
 } from './data.js';
-import { orbitalPosition, mulberry32, skyToPlane } from './util.js';
+import { orbitalPosition, mulberry32, skyToPlane, layerAlpha } from './util.js';
 
 const TAU = Math.PI * 2;
 const INF = Infinity;
@@ -329,17 +329,19 @@ const localGroup = (() => {
     range: [250e3 * LY, 25e6 * LY],
     draw(ctx, view, alpha) {
       for (const g of members) {
+        const gAlpha = g.name === 'Milky Way' ? alpha * (1 - layerAlpha(view.radius, milkyWay.range)) : alpha;
+        if (gAlpha <= 0.05) continue;
         const x = view.sx(g.x);
         const y = view.sy(g.y);
         if (!onScreen(view, x, y, 200)) continue;
         const r = g.sizeM / view.mpp;
         if (g.spiral) {
-          glow(ctx, x, y, Math.max(r, 3), 'rgba(140,150,200,0.5)', alpha);
+          glow(ctx, x, y, Math.max(r, 3), 'rgba(140,150,200,0.5)', gAlpha);
           ctx.save();
           ctx.translate(x, y);
           ctx.rotate(g.angle);
           ctx.fillStyle = '#e4e9ff';
-          ctx.globalAlpha = 0.6 * alpha;
+          ctx.globalAlpha = 0.6 * gAlpha;
           const s = Math.max(r, 2);
           for (let i = 0; i < galaxyGlyph.length; i += 2) {
             ctx.fillRect(galaxyGlyph[i] * s, galaxyGlyph[i + 1] * s, 1, 1);
@@ -351,11 +353,11 @@ const localGroup = (() => {
           ctx.restore();
           ctx.globalAlpha = 1;
         } else {
-          glow(ctx, x, y, Math.max(r * 2, 5), 'rgba(220,210,190,0.7)', alpha);
-          dot(ctx, x, y, Math.max(r * 0.5, 1.5), '#e6dcc8', alpha);
+          glow(ctx, x, y, Math.max(r * 2, 5), 'rgba(220,210,190,0.7)', gAlpha);
+          dot(ctx, x, y, Math.max(r * 0.5, 1.5), '#e6dcc8', gAlpha);
         }
-        label(view, x, y, g.name, alpha, g.spiral ? 2 : 0);
-        hit(view, x, y, g.name, alpha);
+        label(view, x, y, g.name, gAlpha, g.spiral ? 2 : 0);
+        hit(view, x, y, g.name, gAlpha);
       }
     },
   };

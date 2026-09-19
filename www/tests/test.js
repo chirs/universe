@@ -135,24 +135,35 @@ test('skyToPlane keeps the true distance', () => {
 });
 
 test('levelFromHash falls back to the first level', () => {
-  const levels = [{ id: 'inner' }, { id: 'trans-neptunian' }, { id: 'milky-way' }];
+  const levels = [
+    { id: 'inner' }, { id: 'trans-neptunian' },
+    { id: 'milky-way' }, { id: 'milky-way-halo' },
+  ];
   assert.equal(levelFromHash('#trans-neptunian', levels).id, 'trans-neptunian');
   assert.equal(levelFromHash('#milky-way', levels).id, 'milky-way');
+  assert.equal(levelFromHash('#milky-way-halo', levels).id, 'milky-way-halo');
   assert.equal(levelFromHash('#nope', levels).id, 'inner');
   assert.equal(levelFromHash('', levels).id, 'inner');
   assert.equal(levelFromHash(undefined, levels).id, 'inner');
 });
 
-test('level shortcuts preserve digits and add the trans-Neptunian key', () => {
+test('level shortcuts preserve digits and add named intermediate keys', () => {
   const levels = [
     { id: 'outer', shortcut: '5' },
     { id: 'trans-neptunian', shortcut: 'k' },
     { id: 'stars', shortcut: '6' },
+    { id: 'milky-way', shortcut: '7' },
+    { id: 'milky-way-halo', shortcut: 'h' },
+    { id: 'local-group', shortcut: '8' },
   ];
   assert.equal(levelFromShortcut('5', levels).id, 'outer');
   assert.equal(levelFromShortcut('k', levels).id, 'trans-neptunian');
   assert.equal(levelFromShortcut('K', levels).id, 'trans-neptunian');
   assert.equal(levelFromShortcut('6', levels).id, 'stars');
+  assert.equal(levelFromShortcut('7', levels).id, 'milky-way');
+  assert.equal(levelFromShortcut('h', levels).id, 'milky-way-halo');
+  assert.equal(levelFromShortcut('H', levels).id, 'milky-way-halo');
+  assert.equal(levelFromShortcut('8', levels).id, 'local-group');
   assert.equal(levelFromShortcut('x', levels), null);
 });
 
@@ -314,4 +325,6 @@ test('tour legs take longer over more decades and never go to zero', () => {
   assert.equal(TOUR[TOUR.length - 1], 'universe');
   assert.ok(TOUR.indexOf('outer') < TOUR.indexOf('trans-neptunian'));
   assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));
+  assert.ok(TOUR.indexOf('milky-way') < TOUR.indexOf('milky-way-halo'));
+  assert.ok(TOUR.indexOf('milky-way-halo') < TOUR.indexOf('local-group'));
 });
