@@ -13,10 +13,6 @@ Open work only; completed items are removed as they land (see git history).
 
 - [ ] Log-radius overview after Gott and Jurić's Map of the Universe: a second mode with distance from the Sun log-scaled, so every level shows on one screen
 
-## Data
-
-- [ ] Cross-check star, Local Group and Virgo positions against Powell's Atlas of the Universe, whose Sun-centered plates line up with those levels
-
 ## Deferred
 
 - 3D rendering (Three.js). The 2D top-down view reads better at the galaxy and

@@ -11,6 +11,9 @@
 // where the real orbit is steeply tilted to the ecliptic (Uranus, Pluto);
 // orbits inclined past 90 degrees run clockwise from above and are flagged
 // retrograde.
+// The star, Local Group and galaxy-group positions were cross-checked against
+// Richard Powell's Atlas of the Universe (atlasoftheuniverse.com); group
+// directions use his centroids, distances stay with newer values.
 // Everything is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
@@ -107,7 +110,7 @@ export const STARS = [
   { name: 'Sirius', dist: 8.60, l: 227.2, b: -8.9, bright: true },
   { name: 'Luyten 726-8', dist: 8.73, l: 175.5, b: -75.7 },
   { name: 'Ross 154', dist: 9.70, l: 11.3, b: -10.3 },
-  { name: 'Ross 248', dist: 10.3, l: 110.0, b: -20.1 },
+  { name: 'Ross 248', dist: 10.3, l: 110.0, b: -16.9 },
   { name: 'Epsilon Eridani', dist: 10.5, l: 195.8, b: -48.1, bright: true },
   { name: 'Lacaille 9352', dist: 10.7, l: 5.1, b: -66.0 },
   { name: 'Ross 128', dist: 11.0, l: 270.1, b: 59.6 },
@@ -143,7 +146,7 @@ export const BRIGHT_STARS = [
   { name: 'Alioth', dist: 83, l: 122.2, mag: 1.76, hue: 'w' },
   { name: 'Gacrux', dist: 89, l: 300.2, mag: 1.63, hue: 'o' },
   { name: 'Algol', dist: 90, l: 149.0, mag: 2.12, hue: 'b' },
-  { name: 'Diphda', dist: 96, l: 111.3, mag: 2.0, hue: 'o' },
+  { name: 'Diphda', dist: 96, l: 112.0, mag: 2.0, hue: 'o' },
   { name: 'Alpheratz', dist: 97, l: 111.7, mag: 2.06, hue: 'b' },
   { name: 'Alnair', dist: 101, l: 350.0, mag: 1.74, hue: 'b' },
   { name: 'Alkaid', dist: 104, l: 100.7, mag: 1.86, hue: 'b' },
@@ -154,7 +157,7 @@ export const BRIGHT_STARS = [
   { name: 'Achernar', dist: 139, l: 290.8, mag: 0.46, hue: 'b' },
   { name: 'Alphard', dist: 177, l: 241.5, mag: 2.0, hue: 'o' },
   { name: 'Peacock', dist: 179, l: 340.9, mag: 1.94, hue: 'b' },
-  { name: 'Nunki', dist: 228, l: 13.3, mag: 2.05, hue: 'b' },
+  { name: 'Nunki', dist: 228, l: 9.5, mag: 2.05, hue: 'b' },
   { name: 'Bellatrix', dist: 250, l: 196.9, mag: 1.64, hue: 'b' },
   { name: 'Spica', dist: 250, l: 316.1, mag: 0.97, hue: 'b' },
   { name: 'Sargas', dist: 270, l: 347.1, mag: 1.86, hue: 'y' },
@@ -209,18 +212,18 @@ export const LOCAL_GROUP = [
 // of points drawn (a stand-in for richness).
 export const CLUSTERS = [
   { name: 'Local Group', dist: 0, l: 0, size: 6, n: 40 },
+  { name: 'Sculptor Group', dist: 9, l: 343, size: 4, n: 40 },
   { name: 'Maffei Group', dist: 10.7, l: 138, size: 3, n: 30 },
   { name: 'M81 Group', dist: 12, l: 142, size: 4, n: 40 },
   { name: 'Centaurus A Group', dist: 12.5, l: 309.5, size: 5, n: 50 },
-  { name: 'Sculptor Group', dist: 12.7, l: 100, size: 4, n: 40 },
-  { name: 'Canes Venatici I', dist: 14, l: 130, size: 5, n: 40 },
+  { name: 'Canes Venatici I', dist: 14, l: 160, size: 5, n: 40 },
   { name: 'M101 Group', dist: 21, l: 102, size: 4, n: 30 },
-  { name: 'NGC 1023 Group', dist: 33, l: 146, size: 4, n: 30 },
-  { name: 'Leo I Group', dist: 35, l: 234, size: 5, n: 40 },
+  { name: 'NGC 1023 Group', dist: 33, l: 144, size: 4, n: 30 },
+  { name: 'Leo I Group', dist: 35, l: 236, size: 5, n: 40 },
   { name: 'Virgo Cluster', dist: 54, l: 284, size: 15, n: 400 },
   { name: 'Ursa Major Cluster', dist: 60, l: 145, size: 12, n: 120 },
   { name: 'Fornax Cluster', dist: 62, l: 237, size: 8, n: 120 },
-  { name: 'Eridanus Cluster', dist: 75, l: 209, size: 8, n: 80 },
+  { name: 'Eridanus Cluster', dist: 75, l: 213, size: 8, n: 80 },
   { name: 'Antlia Cluster', dist: 130, l: 273, size: 8, n: 100 },
   { name: 'Hydra Cluster', dist: 160, l: 270, size: 10, n: 150 },
   { name: 'Centaurus Cluster', dist: 170, l: 302, size: 12, n: 200 },
