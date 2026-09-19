@@ -4,7 +4,7 @@ import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000,
 } from '../js/util.js';
-import { PLANETS, STARS, LOCAL_GROUP, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -156,4 +156,10 @@ test('star and galaxy coordinates are in range', () => {
     assert.ok(s.dist >= 0 && s.l >= 0 && s.l < 360 && s.b >= -90 && s.b <= 90, s.name);
   }
   assert.ok(STARS.every((s) => s.dist < 20));
+  let last = 0;
+  for (const s of BRIGHT_STARS) {
+    assert.ok(s.dist >= last && s.dist > 20 && s.l >= 0 && s.l < 360, s.name);
+    assert.ok(s.mag > -2 && s.mag < 3 && 'bwyo'.includes(s.hue), s.name);
+    last = s.dist;
+  }
 });

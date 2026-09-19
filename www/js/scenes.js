@@ -1,5 +1,5 @@
 import {
-  AU, LY, SUN, PLANETS, BELTS, STARS, MILKY_WAY, LOCAL_GROUP, UNIVERSE,
+  AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, UNIVERSE,
 } from './data.js';
 import { orbitalPosition, mulberry32, skyToPlane } from './util.js';
 
@@ -204,6 +204,28 @@ const nearestStars = {
       glow(ctx, x, y, r * 4, '#ffffff', 0.25 * alpha);
       dot(ctx, x, y, r, s.bright ? '#fff6dc' : '#d9c9b0', alpha);
       label(view, x, y, s.name, alpha, s.bright ? 1 : 0);
+      hit(view, x, y, s.name, alpha);
+    }
+  },
+};
+
+const HUES = { b: '#c8d8ff', w: '#f4f4ff', y: '#fff0c0', o: '#ffb884' };
+
+const brightPositions = BRIGHT_STARS.map((s) => ({ ...s, ...skyToPlane(s.l, s.dist * LY) }));
+
+const brightStars = {
+  name: 'bright stars',
+  range: [5 * LY, 3000 * LY],
+  draw(ctx, view, alpha) {
+    for (const s of brightPositions) {
+      const x = view.sx(s.x);
+      const y = view.sy(s.y);
+      if (!onScreen(view, x, y)) continue;
+      const r = Math.min(3.2, Math.max(1.3, 2.6 - 0.6 * s.mag));
+      const color = HUES[s.hue];
+      glow(ctx, x, y, r * 4, color, 0.3 * alpha);
+      dot(ctx, x, y, r, color, alpha);
+      label(view, x, y, s.name, alpha, s.mag < 1.5 ? 1 : 0);
       hit(view, x, y, s.name, alpha);
     }
   },
@@ -440,7 +462,7 @@ const horizon = {
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, localGroup, milkyWay, fieldStars,
-  oortCloud, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon,
 ];
 

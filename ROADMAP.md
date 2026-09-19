@@ -9,7 +9,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Outer levels
 
-- [ ] Real positions for the brightest stars beyond 20 ly instead of a hard cutoff
 - [ ] Virgo Cluster / Laniakea level between the Local Group and the observable universe
 
 ## Deferred

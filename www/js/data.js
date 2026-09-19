@@ -84,6 +84,56 @@ export const STARS = [
   { name: 'Altair', dist: 16.7, l: 47.7, b: -8.9, bright: true },
 ];
 
+// Naked-eye stars beyond the nearest-star list. Distance in light-years
+// (Hipparcos-derived, rounded), galactic longitude in degrees, apparent
+// magnitude, and a color class: b blue-white, w white, y yellow, o orange-red.
+export const BRIGHT_STARS = [
+  { name: 'Vega', dist: 25, l: 67.4, mag: 0.03, hue: 'w' },
+  { name: 'Fomalhaut', dist: 25, l: 20.5, mag: 1.16, hue: 'w' },
+  { name: 'Pollux', dist: 34, l: 192.2, mag: 1.14, hue: 'o' },
+  { name: 'Denebola', dist: 36, l: 250.9, mag: 2.14, hue: 'w' },
+  { name: 'Arcturus', dist: 37, l: 15.1, mag: -0.05, hue: 'o' },
+  { name: 'Capella', dist: 43, l: 162.6, mag: 0.08, hue: 'y' },
+  { name: 'Rasalhague', dist: 49, l: 35.9, mag: 2.08, hue: 'w' },
+  { name: 'Castor', dist: 51, l: 187.4, mag: 1.58, hue: 'w' },
+  { name: 'Aldebaran', dist: 65, l: 181.0, mag: 0.86, hue: 'o' },
+  { name: 'Hamal', dist: 66, l: 144.6, mag: 2.0, hue: 'o' },
+  { name: 'Alphecca', dist: 75, l: 41.9, mag: 2.23, hue: 'w' },
+  { name: 'Regulus', dist: 79, l: 226.4, mag: 1.36, hue: 'b' },
+  { name: 'Menkalinan', dist: 81, l: 167.5, mag: 1.9, hue: 'w' },
+  { name: 'Mizar', dist: 83, l: 113.1, mag: 2.23, hue: 'w' },
+  { name: 'Alioth', dist: 83, l: 122.2, mag: 1.76, hue: 'w' },
+  { name: 'Gacrux', dist: 89, l: 300.2, mag: 1.63, hue: 'o' },
+  { name: 'Algol', dist: 90, l: 149.0, mag: 2.12, hue: 'b' },
+  { name: 'Diphda', dist: 96, l: 111.3, mag: 2.0, hue: 'o' },
+  { name: 'Alpheratz', dist: 97, l: 111.7, mag: 2.06, hue: 'b' },
+  { name: 'Alnair', dist: 101, l: 350.0, mag: 1.74, hue: 'b' },
+  { name: 'Alkaid', dist: 104, l: 100.7, mag: 1.86, hue: 'b' },
+  { name: 'Alhena', dist: 109, l: 196.8, mag: 1.93, hue: 'w' },
+  { name: 'Dubhe', dist: 123, l: 142.8, mag: 1.79, hue: 'o' },
+  { name: 'Algieba', dist: 130, l: 216.6, mag: 2.0, hue: 'o' },
+  { name: 'Elnath', dist: 134, l: 178.0, mag: 1.65, hue: 'b' },
+  { name: 'Achernar', dist: 139, l: 290.8, mag: 0.46, hue: 'b' },
+  { name: 'Alphard', dist: 177, l: 241.5, mag: 2.0, hue: 'o' },
+  { name: 'Peacock', dist: 179, l: 340.9, mag: 1.94, hue: 'b' },
+  { name: 'Nunki', dist: 228, l: 13.3, mag: 2.05, hue: 'b' },
+  { name: 'Bellatrix', dist: 250, l: 196.9, mag: 1.64, hue: 'b' },
+  { name: 'Spica', dist: 250, l: 316.1, mag: 0.97, hue: 'b' },
+  { name: 'Sargas', dist: 270, l: 347.1, mag: 1.86, hue: 'y' },
+  { name: 'Mimosa', dist: 280, l: 302.5, mag: 1.25, hue: 'b' },
+  { name: 'Canopus', dist: 310, l: 261.2, mag: -0.74, hue: 'w' },
+  { name: 'Acrux', dist: 320, l: 300.1, mag: 0.77, hue: 'b' },
+  { name: 'Hadar', dist: 390, l: 311.8, mag: 0.61, hue: 'b' },
+  { name: 'Adhara', dist: 430, l: 239.8, mag: 1.5, hue: 'b' },
+  { name: 'Polaris', dist: 433, l: 123.3, mag: 1.98, hue: 'y' },
+  { name: 'Mirzam', dist: 500, l: 226.1, mag: 1.98, hue: 'b' },
+  { name: 'Mirfak', dist: 510, l: 146.6, mag: 1.79, hue: 'y' },
+  { name: 'Betelgeuse', dist: 550, l: 199.8, mag: 0.42, hue: 'o' },
+  { name: 'Antares', dist: 550, l: 351.9, mag: 0.96, hue: 'o' },
+  { name: 'Shaula', dist: 570, l: 351.7, mag: 1.62, hue: 'b' },
+  { name: 'Rigel', dist: 860, l: 209.2, mag: 0.13, hue: 'b' },
+];
+
 export const MILKY_WAY = {
   sunDistance: 26000 * LY,   // Sun to galactic center
   diskRadius: 50000 * LY,
