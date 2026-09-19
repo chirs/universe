@@ -20,7 +20,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut.
 - `www/js/main.js` — camera state `{center, metersPerPixel}`, the animation
-  loop, level stops, and input (buttons, wheel, keys, hash).
+  loop, level stops, and input (buttons, wheel, keys, hash). A level with
+  `follow` keeps the camera pinned to that planet as it moves; following
+  drops automatically once the view is wider than a fraction of an AU.
 
 ## Conventions
 

@@ -6,7 +6,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Solar system
 
-- [ ] Major moons at a seventh, inner-most level (Earth–Moon, Galilean moons)
 
 ## Outer levels
 

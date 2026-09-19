@@ -4,6 +4,10 @@
 // sheets. Nearest stars: RECONS 10 pc list; galactic coordinates rounded to
 // a tenth of a degree. Local Group members: McConnachie (2012). Galaxy and
 // supercluster sizes are round numbers from the usual encyclopedia values.
+// Moons: NASA fact sheets for sizes and orbits; the Moon's J2000 mean longitude
+// and perigee from Meeus ch. 47, the Galilean mean longitudes from Lieske's E5
+// theory (Meeus ch. 44) propagated to J2000. Moons orbit in their planet's
+// plane here, which is drawn as the ecliptic.
 // Everything is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
@@ -31,9 +35,18 @@ export const SUN = { name: 'Sun', radius: 695700 * KM, color: '#ffd76a' };
 export const PLANETS = [
   { name: 'Mercury', a: 0.387098 * AU, period: 87.969, radius: 2439.7 * KM, L0: 252.251, e: 0.20563593, varpi: 77.458, color: '#b5b1a8' },
   { name: 'Venus', a: 0.723332 * AU, period: 224.701, radius: 6051.8 * KM, L0: 181.980, e: 0.00677672, varpi: 131.602, color: '#e8cda0' },
-  { name: 'Earth', a: 1.000000 * AU, period: 365.256, radius: 6371.0 * KM, L0: 100.464, e: 0.01671123, varpi: 102.938, color: '#6b9bd8' },
+  { name: 'Earth', a: 1.000000 * AU, period: 365.256, radius: 6371.0 * KM, L0: 100.464, e: 0.01671123, varpi: 102.938, color: '#6b9bd8',
+    moons: [
+      { name: 'Moon', a: 384400 * KM, period: 27.321661, radius: 1737.4 * KM, L0: 218.316, e: 0.0549, varpi: 83.353, color: '#c8c4bc' },
+    ] },
   { name: 'Mars', a: 1.523679 * AU, period: 686.980, radius: 3389.5 * KM, L0: 355.453, e: 0.0933941, varpi: 336.056, color: '#d1693f' },
-  { name: 'Jupiter', a: 5.2044 * AU, period: 4332.59, radius: 69911 * KM, L0: 34.404, e: 0.04838624, varpi: 14.728, color: '#d9b48a' },
+  { name: 'Jupiter', a: 5.2044 * AU, period: 4332.59, radius: 69911 * KM, L0: 34.404, e: 0.04838624, varpi: 14.728, color: '#d9b48a',
+    moons: [
+      { name: 'Io', a: 421800 * KM, period: 1.769138, radius: 1821.6 * KM, L0: 17.46, color: '#e0c66a' },
+      { name: 'Europa', a: 671100 * KM, period: 3.551181, radius: 1560.8 * KM, L0: 212.067, color: '#d8cfc0' },
+      { name: 'Ganymede', a: 1070400 * KM, period: 7.154553, radius: 2634.1 * KM, L0: 219.371, color: '#b8ada0' },
+      { name: 'Callisto', a: 1882700 * KM, period: 16.689018, radius: 2410.3 * KM, L0: 78.462, color: '#8f8478' },
+    ] },
   { name: 'Saturn', a: 9.5826 * AU, period: 10759.22, radius: 58232 * KM, L0: 49.944, e: 0.05386179, varpi: 92.599, color: '#e6d2a0' },
   { name: 'Uranus', a: 19.2184 * AU, period: 30688.5, radius: 25362 * KM, L0: 313.232, e: 0.04725744, varpi: 170.954, color: '#9fd6dc' },
   { name: 'Neptune', a: 30.11 * AU, period: 60182, radius: 24622 * KM, L0: 304.880, e: 0.00859048, varpi: 44.965, color: '#5a7fd6' },

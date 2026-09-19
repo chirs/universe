@@ -126,6 +126,39 @@ const solarSystem = {
   },
 };
 
+const moons = {
+  name: 'moons',
+  range: [0, 0.08 * AU],
+  draw(ctx, view, alpha, days) {
+    for (const p of PLANETS) {
+      if (!p.moons) continue;
+      const pos = orbitalPosition(p, days);
+      const px = view.sx(pos.x);
+      const py = view.sy(pos.y);
+      if (!onScreen(view, px, py, 2000)) continue;
+      ctx.lineWidth = 1;
+      for (const m of p.moons) {
+        const a = m.a / view.mpp;
+        const e = m.e || 0;
+        const varpi = (m.varpi || 0) * Math.PI / 180;
+        ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+        ctx.beginPath();
+        ctx.ellipse(px - a * e * Math.cos(varpi), py + a * e * Math.sin(varpi),
+          a, a * Math.sqrt(1 - e * e), -varpi, 0, TAU);
+        ctx.stroke();
+        const mp = orbitalPosition(m, days);
+        const x = view.sx(pos.x + mp.x);
+        const y = view.sy(pos.y + mp.y);
+        if (!onScreen(view, x, y)) continue;
+        dot(ctx, x, y, Math.max(m.radius / view.mpp, 2), m.color, alpha);
+        const far = Math.hypot(x - px, y - py) > 14;
+        label(view, x, y, m.name, far ? alpha : 0, 0);
+        hit(view, x, y, m.name, far ? alpha : 0);
+      }
+    }
+  },
+};
+
 function belt(name, cfg, range, color, log = false) {
   const pts = annulus(cfg.seed, cfg.count, cfg.inner, cfg.outer, log);
   return {
@@ -407,7 +440,7 @@ const horizon = {
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, localGroup, milkyWay, fieldStars,
-  oortCloud, nearestStars, kuiperBelt, asteroidBelt, solarSystem, sunDot,
+  oortCloud, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon,
 ];
 

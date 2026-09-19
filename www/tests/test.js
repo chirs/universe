@@ -134,6 +134,23 @@ test('planet data is complete and ordered outward', () => {
   }
 });
 
+test('moons orbit well inside their planet\'s neighborhood', () => {
+  const withMoons = PLANETS.filter((p) => p.moons);
+  assert.deepEqual(withMoons.map((p) => p.name), ['Earth', 'Jupiter']);
+  for (const p of withMoons) {
+    let last = 0;
+    for (const m of p.moons) {
+      assert.ok(m.a > last && m.a < p.a / 50, m.name);
+      assert.ok(m.period > 0 && m.radius > 0 && m.L0 >= 0 && m.L0 < 360, m.name);
+      last = m.a;
+    }
+  }
+  const moon = withMoons[0].moons[0];
+  const { x, y } = orbitalPosition(moon, 0);
+  const r = Math.hypot(x, y);
+  assert.ok(r > moon.a * (1 - moon.e) - 1 && r < moon.a * (1 + moon.e) + 1);
+});
+
 test('star and galaxy coordinates are in range', () => {
   for (const s of [...STARS, ...LOCAL_GROUP]) {
     assert.ok(s.dist >= 0 && s.l >= 0 && s.l < 360 && s.b >= -90 && s.b <= 90, s.name);

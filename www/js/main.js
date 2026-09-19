@@ -1,13 +1,18 @@
-import { AU, LY, SCALE_UNITS, DAY_S } from './data.js';
+import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, formatDate, skyToPlane,
+  levelFromHash, formatDate, skyToPlane, orbitalPosition,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
 
+const planet = (name) => PLANETS.find((p) => p.name === name);
+
+// A level with `follow` is centered on that planet's current position.
 export const LEVELS = [
+  { id: 'earth-moon', name: 'Earth & Moon', radius: 5e5 * KM, follow: planet('Earth') },
+  { id: 'jupiter', name: 'Jupiter & moons', radius: 2.4e6 * KM, follow: planet('Jupiter') },
   { id: 'inner', name: 'Inner solar system', radius: 2 * AU, cx: 0, cy: 0 },
   { id: 'outer', name: 'Outer solar system', radius: 50 * AU, cx: 0, cy: 0 },
   { id: 'stars', name: 'Stellar neighborhood', radius: 20 * LY, cx: 0, cy: 0 },
@@ -18,6 +23,7 @@ export const LEVELS = [
 
 const SPEEDS = [
   { label: 'paused', perSec: 0 },
+  { label: '1 hour/s', perSec: 3600 },
   { label: '1 day/s', perSec: DAY_S },
   { label: '1 month/s', perSec: 30 * DAY_S },
   { label: '1 year/s', perSec: 365.25 * DAY_S },
@@ -31,13 +37,13 @@ const dateEl = document.getElementById('date');
 const barEl = document.querySelector('#scalebar .bar');
 const barLabel = document.querySelector('#scalebar .label');
 
-const cam = { cx: 0, cy: 0, mpp: 1 };
+const cam = { cx: 0, cy: 0, mpp: 1, follow: null, followPos: null };
 let anim = null;
 let w = 0;
 let h = 0;
 let dpr = 1;
 let simMs = Date.now();
-let speed = SPEEDS[1];
+let speed = SPEEDS[2];
 let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
@@ -59,13 +65,35 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
+function levelCenter(level) {
+  if (!level.follow) return { cx: level.cx, cy: level.cy };
+  const p = orbitalPosition(level.follow, daysSinceJ2000(simMs));
+  return { cx: p.x, cy: p.y };
+}
+
+function setFollow(body) {
+  cam.follow = body;
+  cam.followPos = body ? orbitalPosition(body, daysSinceJ2000(simMs)) : null;
+}
+
+// Keep the camera pinned to the followed body as it moves.
+function trackFollow() {
+  if (!cam.follow) return;
+  const p = orbitalPosition(cam.follow, daysSinceJ2000(simMs));
+  cam.cx += p.x - cam.followPos.x;
+  cam.cy += p.y - cam.followPos.y;
+  cam.followPos = p;
+}
+
 function goTo(level, instant = false) {
-  const to = { cx: level.cx, cy: level.cy, mpp: mppFor(level) };
+  setFollow(null);
+  const to = { ...levelCenter(level), mpp: mppFor(level) };
   if (instant) {
     Object.assign(cam, to);
+    setFollow(level.follow || null);
     anim = null;
   } else {
-    anim = { from: { ...cam }, to, start: performance.now(), dur: 1400 };
+    anim = { from: { cx: cam.cx, cy: cam.cy, mpp: cam.mpp }, level, start: performance.now(), dur: 1400 };
   }
   history.replaceState(null, '', `#${level.id}`);
 }
@@ -74,14 +102,18 @@ function stepAnim(now) {
   if (!anim) return;
   const u = Math.min(1, (now - anim.start) / anim.dur);
   const e = easeInOut(u);
-  const { from, to } = anim;
+  const { from } = anim;
+  const to = { ...levelCenter(anim.level), mpp: mppFor(anim.level) };
   cam.mpp = lerpLog(from.mpp, to.mpp, e);
   // Move the center in step with the zoom so nothing flies off screen.
   const ratio = to.mpp / from.mpp;
   const wgt = Math.abs(Math.log(ratio)) < 1e-6 ? e : (Math.pow(ratio, e) - 1) / (ratio - 1);
   cam.cx = lerp(from.cx, to.cx, wgt);
   cam.cy = lerp(from.cy, to.cy, wgt);
-  if (u >= 1) anim = null;
+  if (u >= 1) {
+    setFollow(anim.level.follow || null);
+    anim = null;
+  }
 }
 
 function zoomAt(sx, sy, factor) {
@@ -159,6 +191,8 @@ function frame(now) {
   lastFrame = now;
   simMs += speed.perSec * dt * 1000;
   stepAnim(now);
+  trackFollow();
+  if (cam.follow && cam.mpp * halfMin() > 0.2 * AU) setFollow(null);
 
   ctx.fillStyle = '#05060a';
   ctx.fillRect(0, 0, w, h);
