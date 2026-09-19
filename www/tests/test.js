@@ -49,6 +49,13 @@ test('perihelion lies in the direction of varpi', () => {
   assert.ok(Math.abs(Math.hypot(x, y) - mercury.a * (1 - mercury.e)) < 1);
 });
 
+test('a retrograde moon runs backward', () => {
+  const triton = PLANETS.find((p) => p.name === 'Neptune').moons.find((m) => m.name === 'Triton');
+  assert.ok(triton.retrograde);
+  const later = meanLongitude(triton, triton.period / 4);
+  assert.ok(Math.abs(later - ((triton.L0 - 90 + 360) % 360)) < 1e-9);
+});
+
 test('a circular orbit stays at the semi-major axis', () => {
   const circle = { ...earth, e: 0 };
   for (const d of [0, 100, 1000]) {
@@ -136,15 +143,16 @@ test('planet data is complete and ordered outward', () => {
 
 test('moons orbit well inside their planet\'s neighborhood', () => {
   const withMoons = PLANETS.filter((p) => p.moons);
-  assert.deepEqual(withMoons.map((p) => p.name), ['Earth', 'Jupiter', 'Saturn']);
+  assert.deepEqual(withMoons.map((p) => p.name), ['Earth', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']);
   for (const p of withMoons) {
     let last = 0;
     for (const m of p.moons) {
       assert.ok(m.a > last && m.a < p.a / 50, m.name);
-      assert.ok(m.period > 0 && m.radius > 0 && m.L0 >= 0 && m.L0 < 360, m.name);
+      assert.ok(m.period > 0 && m.radius >= 195e3 && m.L0 >= 0 && m.L0 < 360, m.name);
       last = m.a;
     }
   }
+  assert.equal(withMoons.flatMap((p) => p.moons).length, 20);
   const moon = withMoons[0].moons[0];
   const { x, y } = orbitalPosition(moon, 0);
   const r = Math.hypot(x, y);

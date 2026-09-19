@@ -16,7 +16,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Data
 
-- [ ] Epoch-accurate phases for Saturn's moons; the current L0 values are placeholders
 - [ ] Cross-check star, Local Group and Virgo positions against Powell's Atlas of the Universe, whose Sun-centered plates line up with those levels
 
 ## Deferred

@@ -6,7 +6,7 @@ export function daysSinceJ2000(ms) {
 
 // Mean longitude in degrees at `days` after J2000, for a circular orbit.
 export function meanLongitude(body, days) {
-  const L = body.L0 + 360 * days / body.period;
+  const L = body.L0 + (body.retrograde ? -360 : 360) * days / body.period;
   return ((L % 360) + 360) % 360;
 }
 

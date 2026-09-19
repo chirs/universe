@@ -4,12 +4,13 @@
 // sheets. Nearest stars: RECONS 10 pc list; galactic coordinates rounded to
 // a tenth of a degree. Local Group members: McConnachie (2012). Galaxy and
 // supercluster sizes are round numbers from the usual encyclopedia values.
-// Moons: NASA fact sheets for sizes and orbits; the Moon's J2000 mean longitude
-// and perigee from Meeus ch. 47, the Galilean mean longitudes from Lieske's E5
-// theory (Meeus ch. 44) propagated to J2000. Saturn's moon phases are not
-// epoch-accurate; their L0 values are placeholders. Ring radii from NASA's
-// Saturnian rings fact sheet. Moons orbit in their planet's plane here, which
-// is drawn as the ecliptic.
+// Moons: every satellite at least ~400 km across. Orbits and radii from the
+// NASA fact sheets; each moon's mean longitude at J2000 (L0) is taken from JPL
+// Horizons osculating elements in the ecliptic frame, as node + periapsis +
+// mean anomaly. Moons are drawn as face-on circles around their planet even
+// where the real orbit is steeply tilted to the ecliptic (Uranus, Pluto);
+// orbits inclined past 90 degrees run clockwise from above and are flagged
+// retrograde.
 // Everything is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
@@ -39,15 +40,15 @@ export const PLANETS = [
   { name: 'Venus', a: 0.723332 * AU, period: 224.701, radius: 6051.8 * KM, L0: 181.980, e: 0.00677672, varpi: 131.602, color: '#e8cda0' },
   { name: 'Earth', a: 1.000000 * AU, period: 365.256, radius: 6371.0 * KM, L0: 100.464, e: 0.01671123, varpi: 102.938, color: '#6b9bd8',
     moons: [
-      { name: 'Moon', a: 384400 * KM, period: 27.321661, radius: 1737.4 * KM, L0: 218.316, e: 0.0549, varpi: 83.353, color: '#c8c4bc' },
+      { name: 'Moon', a: 384400 * KM, period: 27.321661, radius: 1737.4 * KM, L0: 219.554, e: 0.0549, varpi: 83.353, color: '#c8c4bc' },
     ] },
   { name: 'Mars', a: 1.523679 * AU, period: 686.980, radius: 3389.5 * KM, L0: 355.453, e: 0.0933941, varpi: 336.056, color: '#d1693f' },
   { name: 'Jupiter', a: 5.2044 * AU, period: 4332.59, radius: 69911 * KM, L0: 34.404, e: 0.04838624, varpi: 14.728, color: '#d9b48a',
     moons: [
-      { name: 'Io', a: 421800 * KM, period: 1.769138, radius: 1821.6 * KM, L0: 17.46, color: '#e0c66a' },
-      { name: 'Europa', a: 671100 * KM, period: 3.551181, radius: 1560.8 * KM, L0: 212.067, color: '#d8cfc0' },
-      { name: 'Ganymede', a: 1070400 * KM, period: 7.154553, radius: 2634.1 * KM, L0: 219.371, color: '#b8ada0' },
-      { name: 'Callisto', a: 1882700 * KM, period: 16.689018, radius: 2410.3 * KM, L0: 78.462, color: '#8f8478' },
+      { name: 'Io', a: 421800 * KM, period: 1.769138, radius: 1821.6 * KM, L0: 18.171, color: '#e0c66a' },
+      { name: 'Europa', a: 671100 * KM, period: 3.551181, radius: 1560.8 * KM, L0: 212.687, color: '#d8cfc0' },
+      { name: 'Ganymede', a: 1070400 * KM, period: 7.154553, radius: 2634.1 * KM, L0: 220.029, color: '#b8ada0' },
+      { name: 'Callisto', a: 1882700 * KM, period: 16.689018, radius: 2410.3 * KM, L0: 79.188, color: '#8f8478' },
     ] },
   { name: 'Saturn', a: 9.5826 * AU, period: 10759.22, radius: 58232 * KM, L0: 49.944, e: 0.05386179, varpi: 92.599, color: '#e6d2a0',
     rings: [
@@ -56,17 +57,31 @@ export const PLANETS = [
       { name: 'A ring', inner: 122170 * KM, outer: 136775 * KM, alpha: 0.5 },
     ],
     moons: [
-      { name: 'Mimas', a: 185539 * KM, period: 0.942, radius: 198 * KM, L0: 40, color: '#cfcac0' },
-      { name: 'Enceladus', a: 237948 * KM, period: 1.370, radius: 252 * KM, L0: 150, color: '#f0f0f4' },
-      { name: 'Tethys', a: 294619 * KM, period: 1.888, radius: 531 * KM, L0: 260, color: '#d8d4cc' },
-      { name: 'Dione', a: 377396 * KM, period: 2.737, radius: 561 * KM, L0: 15, color: '#cfc8bc' },
-      { name: 'Rhea', a: 527108 * KM, period: 4.518, radius: 764 * KM, L0: 200, color: '#c8c0b4' },
-      { name: 'Titan', a: 1221870 * KM, period: 15.945, radius: 2575 * KM, L0: 95, color: '#d9a85a' },
-      { name: 'Iapetus', a: 3560820 * KM, period: 79.32, radius: 735 * KM, L0: 300, color: '#9a9088' },
+      { name: 'Mimas', a: 185539 * KM, period: 0.942, radius: 198.2 * KM, L0: 318.18, color: '#cfcac0' },
+      { name: 'Enceladus', a: 237948 * KM, period: 1.37, radius: 252.1 * KM, L0: 311.943, color: '#f0f0f4' },
+      { name: 'Tethys', a: 294619 * KM, period: 1.888, radius: 531.1 * KM, L0: 316.438, color: '#d8d4cc' },
+      { name: 'Dione', a: 377396 * KM, period: 2.737, radius: 561.4 * KM, L0: 306.462, color: '#cfc8bc' },
+      { name: 'Rhea', a: 527108 * KM, period: 4.518, radius: 763.8 * KM, L0: 181.668, color: '#c8c0b4' },
+      { name: 'Titan', a: 1221870 * KM, period: 15.945, radius: 2574.7 * KM, L0: 137.084, color: '#d9a85a' },
+      { name: 'Iapetus', a: 3560820 * KM, period: 79.32, radius: 734.5 * KM, L0: 217.368, color: '#9a9088' },
     ] },
-  { name: 'Uranus', a: 19.2184 * AU, period: 30688.5, radius: 25362 * KM, L0: 313.232, e: 0.04725744, varpi: 170.954, color: '#9fd6dc' },
-  { name: 'Neptune', a: 30.11 * AU, period: 60182, radius: 24622 * KM, L0: 304.880, e: 0.00859048, varpi: 44.965, color: '#5a7fd6' },
-  { name: 'Pluto', a: 39.482 * AU, period: 90560, radius: 1188.3 * KM, L0: 238.93, e: 0.2488273, varpi: 224.069, color: '#c9b8a8', dwarf: true },
+  { name: 'Uranus', a: 19.2184 * AU, period: 30688.5, radius: 25362 * KM, L0: 313.232, e: 0.04725744, varpi: 170.954, color: '#9fd6dc',
+    moons: [
+      { name: 'Miranda', a: 129900 * KM, period: 1.413, radius: 235.8 * KM, L0: 209.004, retrograde: true, color: '#c4c8d0' },
+      { name: 'Ariel', a: 190900 * KM, period: 2.52, radius: 578.9 * KM, L0: 329.494, retrograde: true, color: '#d0d4dc' },
+      { name: 'Umbriel', a: 266000 * KM, period: 4.144, radius: 584.7 * KM, L0: 281.463, retrograde: true, color: '#8c9098' },
+      { name: 'Titania', a: 436300 * KM, period: 8.706, radius: 788.4 * KM, L0: 251.084, retrograde: true, color: '#b8bcc4' },
+      { name: 'Oberon', a: 583500 * KM, period: 13.463, radius: 761.4 * KM, L0: 180.253, retrograde: true, color: '#a8acb4' },
+    ] },
+  { name: 'Neptune', a: 30.11 * AU, period: 60182, radius: 24622 * KM, L0: 304.880, e: 0.00859048, varpi: 44.965, color: '#5a7fd6',
+    moons: [
+      { name: 'Proteus', a: 117647 * KM, period: 1.122, radius: 210.0 * KM, L0: 298.707, color: '#8890a0' },
+      { name: 'Triton', a: 354760 * KM, period: 5.877, radius: 1353.4 * KM, L0: 141.227, retrograde: true, color: '#d8c8c0' },
+    ] },
+  { name: 'Pluto', a: 39.482 * AU, period: 90560, radius: 1188.3 * KM, L0: 238.93, e: 0.2488273, varpi: 224.069, color: '#c9b8a8', dwarf: true,
+    moons: [
+      { name: 'Charon', a: 19591 * KM, period: 6.387, radius: 606.0 * KM, L0: 266.141, retrograde: true, color: '#a8a4a0' },
+    ] },
 ];
 
 export const BELTS = {

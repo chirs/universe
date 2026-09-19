@@ -11,6 +11,9 @@ Way, Local Group, Virgo Supercluster, observable universe. Planets orbit on thei
 from the J2000 epoch, with a time-speed control. Scroll to zoom continuously
 between levels; `#milky-way` and the other level ids link straight to a level.
 
+Every moon at least about 400 km across is included, with positions from JPL
+Horizons at J2000. Clicking Uranus, Neptune or Pluto zooms to their moons.
+
 No build step, no dependencies. 2D canvas.
 
 ### Development

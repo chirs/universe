@@ -24,6 +24,16 @@ export const LEVELS = [
   { id: 'universe', name: 'Observable universe', radius: 50e9 * LY, cx: 0, cy: 0 },
 ];
 
+// Moon systems without a button, reached by clicking the planet or by hash.
+export const EXTRA_LEVELS = PLANETS.filter((p) => p.moons && !LEVELS.some((lv) => lv.follow === p))
+  .map((p) => ({
+    id: p.name.toLowerCase(),
+    name: `${p.name} & moons`,
+    radius: 1.3 * Math.max(...p.moons.map((mn) => mn.a)),
+    follow: p,
+  }));
+const ALL_LEVELS = [...LEVELS, ...EXTRA_LEVELS];
+
 const SPEEDS = [
   { label: 'paused', perSec: 0 },
   { label: '1 hour/s', perSec: 3600 },
@@ -243,6 +253,11 @@ canvas.addEventListener('wheel', (e) => {
 
 canvas.addEventListener('mousemove', (e) => { mouse = { x: e.offsetX, y: e.offsetY }; });
 canvas.addEventListener('mouseleave', () => { mouse = null; });
+canvas.addEventListener('click', () => {
+  if (!hover) return;
+  const level = ALL_LEVELS.find((lv) => lv.follow && lv.follow.name === hover.name);
+  if (level) goTo(level);
+});
 
 window.addEventListener('keydown', (e) => {
   if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
@@ -251,7 +266,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
 });
 
-window.addEventListener('hashchange', () => goTo(levelFromHash(location.hash, LEVELS)));
+window.addEventListener('hashchange', () => goTo(levelFromHash(location.hash, ALL_LEVELS)));
 window.addEventListener('resize', () => {
   const level = nearestLevel();
   const ratio = cam.mpp / mppFor(level);
@@ -261,5 +276,5 @@ window.addEventListener('resize', () => {
 
 buildHud();
 resize();
-goTo(levelFromHash(location.hash, LEVELS), true);
+goTo(levelFromHash(location.hash, ALL_LEVELS), true);
 requestAnimationFrame(frame);

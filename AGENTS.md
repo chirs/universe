@@ -23,6 +23,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   loop, level stops, and input (buttons, wheel, keys, hash). A level with
   `follow` keeps the camera pinned to that planet as it moves; following
   drops automatically once the view is wider than a fraction of an AU.
+  Planets with moons but no button get an `EXTRA_LEVELS` entry, reached by
+  clicking the planet or by `#uranus` and the like.
 
 ## Conventions
 
