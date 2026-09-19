@@ -4,10 +4,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ---
 
-## Interface
-
-- [ ] Guided tour: a play button that pulls back at a fixed rate through all ten levels with the scale bar ticking, after Powers of Ten
-
 ## Deferred
 
 - 3D rendering (Three.js). The 2D top-down view reads better at the galaxy and

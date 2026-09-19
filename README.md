@@ -15,7 +15,9 @@ Every moon at least about 400 km across is included, and the dwarf planets
 Ceres, Haumea, Makemake, Eris and Sedna, with positions from JPL Horizons at
 J2000. Clicking Uranus, Neptune or Pluto zooms to their moons.
 
-The Overview button (or `o`) switches to a log-radius map after Gott and
+The Tour button (or `p`) pulls back from the Earth and Moon to the observable
+universe at a steady rate, pausing at each level, after Powers of Ten. The
+Overview button (or `o`) switches to a log-radius map after Gott and
 Jurić: direction across, distance from the Sun up on a log scale, everything
 on one screen.
 

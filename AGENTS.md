@@ -28,7 +28,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `follow` keeps the camera pinned to that planet as it moves; following
   drops automatically once the view is wider than a fraction of an AU.
   Planets with moons but no button get an `EXTRA_LEVELS` entry, reached by
-  clicking the planet or by `#uranus` and the like.
+  clicking the planet or by `#uranus` and the like. The guided tour walks
+  the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
+  any user input stops it.
 
 ## Conventions
 

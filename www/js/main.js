@@ -1,7 +1,7 @@
 import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, formatDate, skyToPlane, orbitalPosition, placeLabel,
+  levelFromHash, formatDate, skyToPlane, orbitalPosition, placeLabel, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
@@ -52,6 +52,7 @@ const barEl = document.querySelector('#scalebar .bar');
 const barLabel = document.querySelector('#scalebar .label');
 const scalebarEl = document.getElementById('scalebar');
 const overviewBtn = document.getElementById('overview');
+const tourBtn = document.getElementById('tour');
 const captionEl = document.getElementById('caption');
 
 const cam = { cx: 0, cy: 0, mpp: 1, follow: null, followPos: null };
@@ -65,6 +66,7 @@ let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
 let overview = false;
+let tour = null;
 
 function halfMin() {
   return Math.min(w, h) / 2;
@@ -108,7 +110,7 @@ function setOverview(on) {
   if (on) history.replaceState(null, '', '#overview');
 }
 
-function goTo(level, instant = false) {
+function goTo(level, instant = false, dur = 1400) {
   setOverview(false);
   setFollow(null);
   const to = { ...levelCenter(level), mpp: mppFor(level) };
@@ -117,7 +119,7 @@ function goTo(level, instant = false) {
     setFollow(level.follow || null);
     anim = null;
   } else {
-    anim = { from: { cx: cam.cx, cy: cam.cy, mpp: cam.mpp }, level, start: performance.now(), dur: 1400 };
+    anim = { from: { cx: cam.cx, cy: cam.cy, mpp: cam.mpp }, level, start: performance.now(), dur };
   }
   history.replaceState(null, '', `#${level.id}`);
 }
@@ -140,8 +142,30 @@ function stepAnim(now) {
   }
 }
 
+// The guided tour: pull back through TOUR at a fixed rate, holding at each stop.
+function startTour() {
+  tour = { index: 0, holdUntil: 0 };
+  goTo(LEVELS.find((lv) => lv.id === TOUR[0]));
+}
+
+function stopTour() {
+  tour = null;
+}
+
+function stepTour(now) {
+  if (!tour || anim) return;
+  if (!tour.holdUntil) { tour.holdUntil = now + TOUR_HOLD_MS; return; }
+  if (now < tour.holdUntil) return;
+  tour.index += 1;
+  if (tour.index >= TOUR.length) { stopTour(); return; }
+  const level = LEVELS.find((lv) => lv.id === TOUR[tour.index]);
+  tour.holdUntil = 0;
+  goTo(level, false, tourLegMs(cam.mpp, mppFor(level)));
+}
+
 function zoomAt(sx, sy, factor) {
   if (overview) return;
+  stopTour();
   anim = null;
   const minMpp = mppFor(LEVELS[0]) / 4;
   const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
@@ -209,6 +233,8 @@ function updateHud() {
   for (const b of levelsEl.children) b.classList.toggle('active', !overview && b.dataset.id === near.id);
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
   overviewBtn.classList.toggle('active', overview);
+  tourBtn.textContent = tour ? 'Stop tour' : 'Tour';
+  tourBtn.classList.toggle('active', !!tour);
   scalebarEl.hidden = overview;
   captionEl.hidden = overview;
 }
@@ -218,6 +244,7 @@ function frame(now) {
   lastFrame = now;
   simMs += speed.perSec * dt * 1000;
   stepAnim(now);
+  stepTour(now);
   trackFollow();
   if (cam.follow && cam.mpp * halfMin() > 0.2 * AU) setFollow(null);
 
@@ -253,7 +280,7 @@ function buildHud() {
     b.textContent = lv.name;
     b.dataset.id = lv.id;
     b.title = `${(i + 1) % 10}`;
-    b.addEventListener('click', () => goTo(lv));
+    b.addEventListener('click', () => { stopTour(); goTo(lv); });
     levelsEl.appendChild(b);
   });
   for (const s of SPEEDS) {
@@ -275,22 +302,24 @@ canvas.addEventListener('mouseleave', () => { mouse = null; });
 canvas.addEventListener('click', () => {
   if (!hover) return;
   const level = ALL_LEVELS.find((lv) => lv.follow && lv.follow.name === hover.name);
-  if (level) goTo(level);
+  if (level) { stopTour(); goTo(level); }
 });
 
 window.addEventListener('keydown', (e) => {
   if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
-  else if (/^[0-9]$/.test(e.key) && LEVELS[(Number(e.key) + 9) % 10]) goTo(LEVELS[(Number(e.key) + 9) % 10]);
+  else if (/^[0-9]$/.test(e.key) && LEVELS[(Number(e.key) + 9) % 10]) { stopTour(); goTo(LEVELS[(Number(e.key) + 9) % 10]); }
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
-  else if (e.key === 'o') setOverview(!overview);
+  else if (e.key === 'o') { stopTour(); setOverview(!overview); }
+  else if (e.key === 'p') { if (tour) stopTour(); else startTour(); }
 });
 
 window.addEventListener('hashchange', () => {
   if (location.hash === '#overview') setOverview(true);
   else goTo(levelFromHash(location.hash, ALL_LEVELS));
 });
-overviewBtn.addEventListener('click', () => setOverview(!overview));
+overviewBtn.addEventListener('click', () => { stopTour(); setOverview(!overview); });
+tourBtn.addEventListener('click', () => { if (tour) stopTour(); else startTour(); });
 window.addEventListener('resize', () => {
   const level = nearestLevel();
   const ratio = cam.mpp / mppFor(level);

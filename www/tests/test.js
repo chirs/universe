@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
-  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
+  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel, TOUR, tourLegMs,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -242,4 +242,13 @@ test('overview maps log distance and longitude into the frame', () => {
   assert.ok(Math.abs(angleX(180, fr) - fr.left) < 1e-9);
   assert.ok(Math.abs(angleX(-180, fr) - fr.left) < 1e-9);
   assert.ok(angleX(90, fr) > angleX(0, fr) && angleX(270, fr) < angleX(0, fr));
+});
+
+test('tour legs take longer over more decades and never go to zero', () => {
+  assert.ok(tourLegMs(1, 1) >= 900);
+  assert.ok(tourLegMs(1, 100) > tourLegMs(1, 10));
+  assert.equal(tourLegMs(1, 1000), tourLegMs(1000, 1));
+  assert.equal(new Set(TOUR).size, TOUR.length);
+  assert.equal(TOUR[0], 'earth-moon');
+  assert.equal(TOUR[TOUR.length - 1], 'universe');
 });
