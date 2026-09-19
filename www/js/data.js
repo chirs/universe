@@ -97,7 +97,7 @@ export const PLANETS = [
 export const BELTS = {
   asteroid: { inner: 2.2 * AU, outer: 3.2 * AU, count: 1500, seed: 1 },
   kuiper: { inner: 30 * AU, outer: 50 * AU, count: 2500, seed: 2 },
-  oort: { inner: 0.3 * LY, outer: 1.6 * LY, count: 4000, seed: 3 },
+  oort: { inner: 2000 * AU, outer: 1.6 * LY, count: 4000, seed: 3 },
 };
 
 // Distance in light-years, galactic longitude and latitude in degrees.

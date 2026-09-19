@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
-  shouldIgnoreGlobalKeys, TOUR, tourLegMs,
+  hashForView, moonSystemRadius, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
-import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -142,6 +142,11 @@ test('levelFromHash falls back to the first level', () => {
   assert.equal(levelFromHash(undefined, levels).id, 'inner');
 });
 
+test('view hashes distinguish overview from the last level', () => {
+  assert.equal(hashForView(true, 'saturn'), '#overview');
+  assert.equal(hashForView(false, 'saturn'), '#saturn');
+});
+
 test('planet data is complete and ordered outward', () => {
   let last = 0;
   for (const p of PLANETS) {
@@ -168,6 +173,14 @@ test('moons orbit well inside their planet\'s neighborhood', () => {
   const { x, y } = orbitalPosition(moon, 0);
   const r = Math.hypot(x, y);
   assert.ok(r > moon.a * (1 - moon.e) - 1 && r < moon.a * (1 + moon.e) + 1);
+  const saturn = PLANETS.find((p) => p.name === 'Saturn');
+  const iapetus = saturn.moons.find((m) => m.name === 'Iapetus');
+  assert.equal(moonSystemRadius(saturn), 1.3 * iapetus.a);
+});
+
+test('the modeled Oort cloud begins at the annotated distance', () => {
+  assert.equal(BELTS.oort.inner, 2000 * AU);
+  assert.ok(BELTS.oort.outer > BELTS.oort.inner);
 });
 
 test('Saturn\'s rings sit outside the planet and inside the moons', () => {

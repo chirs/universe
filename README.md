@@ -7,9 +7,10 @@ be visible past the first level.
 
 Levels: Earth and Moon, Jupiter and its Galilean moons, Saturn with its rings
 and moons, inner solar system, outer solar system, stellar neighborhood, Milky
-Way, Local Group, Virgo Supercluster, observable universe. Planets orbit on their real periods
-from the J2000 epoch, with a time-speed control. Scroll to zoom continuously
-between levels; `#milky-way` and the other level ids link straight to a level.
+Way, Local Group, Virgo Supercluster, observable universe. Planets move on
+approximate fixed ellipses with their real periods, initialized from J2000
+elements, with a time-speed control. Scroll to zoom continuously between
+levels; `#milky-way` and the other level ids link straight to a level.
 
 Every moon at least about 400 km across is included, and the dwarf planets
 Ceres, Haumea, Makemake, Eris and Sedna, with positions from JPL Horizons at

@@ -99,6 +99,14 @@ export function levelFromHash(hash, levels) {
   return levels.find((lv) => lv.id === id) || levels[0];
 }
 
+export function hashForView(overview, levelId) {
+  return overview ? '#overview' : `#${levelId}`;
+}
+
+export function moonSystemRadius(body) {
+  return 1.3 * Math.max(...body.moons.map((moon) => moon.a));
+}
+
 export function formatDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }

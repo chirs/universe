@@ -1,8 +1,8 @@
 import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, formatDate, shouldIgnoreGlobalKeys, skyToPlane, orbitalPosition, placeLabel,
-  TOUR, TOUR_HOLD_MS, tourLegMs,
+  levelFromHash, hashForView, moonSystemRadius, formatDate, shouldIgnoreGlobalKeys,
+  skyToPlane, orbitalPosition, placeLabel, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
@@ -16,7 +16,7 @@ const planet = (name) => PLANETS.find((p) => p.name === name);
 export const LEVELS = [
   { id: 'earth-moon', name: 'Earth & Moon', radius: 5e5 * KM, follow: planet('Earth') },
   { id: 'jupiter', name: 'Jupiter & moons', radius: 2.4e6 * KM, follow: planet('Jupiter') },
-  { id: 'saturn', name: 'Saturn & moons', radius: 1.5e6 * KM, follow: planet('Saturn') },
+  { id: 'saturn', name: 'Saturn & moons', radius: moonSystemRadius(planet('Saturn')), follow: planet('Saturn') },
   { id: 'inner', name: 'Inner solar system', radius: 2 * AU, cx: 0, cy: 0 },
   { id: 'outer', name: 'Outer solar system', radius: 50 * AU, cx: 0, cy: 0 },
   { id: 'stars', name: 'Stellar neighborhood', radius: 20 * LY, cx: 0, cy: 0 },
@@ -31,7 +31,7 @@ export const EXTRA_LEVELS = PLANETS.filter((p) => p.moons && !LEVELS.some((lv) =
   .map((p) => ({
     id: p.name.toLowerCase(),
     name: `${p.name} & moons`,
-    radius: 1.3 * Math.max(...p.moons.map((mn) => mn.a)),
+    radius: moonSystemRadius(p),
     follow: p,
   }));
 const ALL_LEVELS = [...LEVELS, ...EXTRA_LEVELS];
@@ -67,6 +67,7 @@ let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
 let overview = false;
+let lastLevelId = LEVELS[0].id;
 let tour = null;
 
 function halfMin() {
@@ -108,7 +109,7 @@ function trackFollow() {
 
 function setOverview(on) {
   overview = on;
-  if (on) history.replaceState(null, '', '#overview');
+  history.replaceState(null, '', hashForView(on, lastLevelId));
 }
 
 function goTo(level, instant = false, dur = 1400) {
@@ -122,7 +123,8 @@ function goTo(level, instant = false, dur = 1400) {
   } else {
     anim = { from: { cx: cam.cx, cy: cam.cy, mpp: cam.mpp }, level, start: performance.now(), dur };
   }
-  history.replaceState(null, '', `#${level.id}`);
+  lastLevelId = level.id;
+  history.replaceState(null, '', hashForView(false, lastLevelId));
 }
 
 function stepAnim(now) {
