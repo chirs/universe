@@ -6,7 +6,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Interface
 
-- [ ] Smarter label placement: try left, above, and below before dropping a label that collides
 - [ ] Guided tour: a play button that pulls back at a fixed rate through all ten levels with the scale bar ticking, after Powers of Ten
 
 ## Views
