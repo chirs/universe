@@ -182,6 +182,32 @@ export const LOCAL_GROUP = [
   { name: 'WLM', dist: 3000000, l: 75.9, b: -73.6, size: 3000 },
 ];
 
+// Nearby galaxy groups and clusters. Distance in millions of light-years,
+// galactic longitude in degrees, size a rough diameter in Mly, n the number
+// of points drawn (a stand-in for richness).
+export const CLUSTERS = [
+  { name: 'Local Group', dist: 0, l: 0, size: 6, n: 40 },
+  { name: 'Maffei Group', dist: 10.7, l: 138, size: 3, n: 30 },
+  { name: 'M81 Group', dist: 12, l: 142, size: 4, n: 40 },
+  { name: 'Centaurus A Group', dist: 12.5, l: 309.5, size: 5, n: 50 },
+  { name: 'Sculptor Group', dist: 12.7, l: 100, size: 4, n: 40 },
+  { name: 'Canes Venatici I', dist: 14, l: 130, size: 5, n: 40 },
+  { name: 'M101 Group', dist: 21, l: 102, size: 4, n: 30 },
+  { name: 'NGC 1023 Group', dist: 33, l: 146, size: 4, n: 30 },
+  { name: 'Leo I Group', dist: 35, l: 234, size: 5, n: 40 },
+  { name: 'Virgo Cluster', dist: 54, l: 284, size: 15, n: 400 },
+  { name: 'Ursa Major Cluster', dist: 60, l: 145, size: 12, n: 120 },
+  { name: 'Fornax Cluster', dist: 62, l: 237, size: 8, n: 120 },
+  { name: 'Eridanus Cluster', dist: 75, l: 209, size: 8, n: 80 },
+  { name: 'Antlia Cluster', dist: 130, l: 273, size: 8, n: 100 },
+  { name: 'Hydra Cluster', dist: 160, l: 270, size: 10, n: 150 },
+  { name: 'Centaurus Cluster', dist: 170, l: 302, size: 12, n: 200 },
+  { name: 'Norma Cluster', dist: 220, l: 325, size: 12, n: 250 },
+  { name: 'Perseus Cluster', dist: 240, l: 150, size: 15, n: 300 },
+  { name: 'Leo Cluster', dist: 300, l: 235, size: 12, n: 150 },
+  { name: 'Coma Cluster', dist: 320, l: 58, size: 20, n: 400 },
+];
+
 export const UNIVERSE = {
   radius: 46.5e9 * LY,        // comoving radius of the observable universe
   webSeed: 5,

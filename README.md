@@ -7,7 +7,7 @@ be visible past the first level.
 
 Levels: Earth and Moon, Jupiter and its Galilean moons, Saturn with its rings
 and moons, inner solar system, outer solar system, stellar neighborhood, Milky
-Way, Local Group, observable universe. Planets orbit on their real periods
+Way, Local Group, Virgo Supercluster, observable universe. Planets orbit on their real periods
 from the J2000 epoch, with a time-speed control. Scroll to zoom continuously
 between levels; `#milky-way` and the other level ids link straight to a level.
 

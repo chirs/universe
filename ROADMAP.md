@@ -4,12 +4,15 @@ Open work only; completed items are removed as they land (see git history).
 
 ---
 
-## Solar system
+## Interface
 
+- [ ] Verify and fix the phone layout: ten level buttons and five speed buttons need a stacked or scrollable arrangement under 700px
+- [ ] Smarter label placement: try left, above, and below before dropping a label that collides
+- [ ] Signpost the empty stretches (Kuiper belt to Oort cloud, Local Group to superclusters) so scrolling through them reads as intended
 
-## Outer levels
+## Data
 
-- [ ] Virgo Cluster / Laniakea level between the Local Group and the observable universe
+- [ ] Epoch-accurate phases for Saturn's moons; the current L0 values are placeholders
 
 ## Deferred
 

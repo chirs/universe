@@ -6,6 +6,7 @@ import {
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
+const VIRGO = skyToPlane(284, 54e6 * LY);
 
 const planet = (name) => PLANETS.find((p) => p.name === name);
 
@@ -19,6 +20,7 @@ export const LEVELS = [
   { id: 'stars', name: 'Stellar neighborhood', radius: 20 * LY, cx: 0, cy: 0 },
   { id: 'milky-way', name: 'Milky Way', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y },
   { id: 'local-group', name: 'Local Group', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
+  { id: 'virgo', name: 'Virgo Supercluster', radius: 60e6 * LY, cx: VIRGO.x / 2, cy: VIRGO.y / 2 },
   { id: 'universe', name: 'Observable universe', radius: 50e9 * LY, cx: 0, cy: 0 },
 ];
 
@@ -222,7 +224,7 @@ function buildHud() {
     const b = document.createElement('button');
     b.textContent = lv.name;
     b.dataset.id = lv.id;
-    b.title = `${i + 1}`;
+    b.title = `${(i + 1) % 10}`;
     b.addEventListener('click', () => goTo(lv));
     levelsEl.appendChild(b);
   });
@@ -246,7 +248,7 @@ canvas.addEventListener('mouseleave', () => { mouse = null; });
 window.addEventListener('keydown', (e) => {
   if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
-  else if (e.key >= '1' && e.key <= String(LEVELS.length)) goTo(LEVELS[Number(e.key) - 1]);
+  else if (/^[0-9]$/.test(e.key) && LEVELS[(Number(e.key) + 9) % 10]) goTo(LEVELS[(Number(e.key) + 9) % 10]);
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
 });
 

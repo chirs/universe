@@ -1,5 +1,6 @@
 import {
-  AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, UNIVERSE,
+  AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
+  UNIVERSE,
 } from './data.js';
 import { orbitalPosition, mulberry32, skyToPlane } from './util.js';
 
@@ -348,6 +349,32 @@ const localGroup = (() => {
   };
 })();
 
+// ---------------------------------------------------------------- clusters
+
+const clusters = (() => {
+  const items = CLUSTERS.map((c, i) => ({
+    ...c,
+    ...skyToPlane(c.l, c.dist * 1e6 * LY),
+    pts: makeBlob(40 + i, c.size * 1e6 * LY / 4, c.size * 1e6 * LY / 4, c.n),
+  }));
+  return {
+    name: 'clusters',
+    range: [5e6 * LY, 1.2e9 * LY],
+    draw(ctx, view, alpha) {
+      for (const c of items) {
+        const x = view.sx(c.x);
+        const y = view.sy(c.y);
+        if (!onScreen(view, x, y, 300)) continue;
+        const r = c.size * 1e6 * LY / 2 / view.mpp;
+        glow(ctx, x, y, Math.max(r, 4), 'rgba(200,190,230,0.35)', alpha);
+        drawPoints(ctx, view, c.pts, c.x, c.y, '#e8e4f4', 0.6 * alpha);
+        label(view, x, y, c.name, alpha, c.n >= 200 ? 2 : c.n >= 100 ? 1 : 0);
+        hit(view, x, y, c.name, alpha);
+      }
+    },
+  };
+})();
+
 // ---------------------------------------------------------------- cosmic web
 
 function makeWeb(seed, radius, nVoids, nPoints) {
@@ -409,7 +436,7 @@ function webLayer(name, seed, radius, nVoids, nPoints, range) {
 }
 
 const superclusters = webLayer('superclusters', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 7000,
-  [30e6 * LY, 4e9 * LY]);
+  [150e6 * LY, 4e9 * LY]);
 const cosmicWeb = webLayer('cosmic web', UNIVERSE.webSeed, UNIVERSE.radius, UNIVERSE.voids,
   UNIVERSE.webPoints, [2e9 * LY, INF]);
 
@@ -472,7 +499,7 @@ const horizon = {
 };
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, localGroup, milkyWay, fieldStars,
+  cosmicWeb, superclusters, landmarks, clusters, localGroup, milkyWay, fieldStars,
   oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon,
 ];

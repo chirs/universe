@@ -4,7 +4,7 @@ import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000,
 } from '../js/util.js';
-import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -160,6 +160,15 @@ test('Saturn\'s rings sit outside the planet and inside the moons', () => {
     last = ring.outer;
   }
   assert.ok(last < saturn.moons[0].a);
+});
+
+test('clusters are ordered outward with sane sizes', () => {
+  let last = -1;
+  for (const c of CLUSTERS) {
+    assert.ok(c.dist >= last && c.l >= 0 && c.l < 360, c.name);
+    assert.ok(c.size > 0 && c.size < c.dist + 10 && c.n > 0, c.name);
+    last = c.dist;
+  }
 });
 
 test('star and galaxy coordinates are in range', () => {
