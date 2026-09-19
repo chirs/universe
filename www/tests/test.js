@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  meanLongitude, orbitalPosition, lerpLog, easeInOut, layerAlpha,
+  meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000,
 } from '../js/util.js';
 import { PLANETS, STARS, LOCAL_GROUP, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -14,9 +14,45 @@ test('mean longitude at J2000 is L0 and advances a full turn per period', () => 
   assert.ok(Math.abs(meanLongitude(earth, earth.period / 2) - ((earth.L0 + 180) % 360)) < 1e-9);
 });
 
-test('orbital position stays at the semi-major axis', () => {
+test('solveKepler satisfies Kepler\'s equation', () => {
+  for (const e of [0, 0.0167, 0.2056, 0.25, 0.9]) {
+    for (const M of [0, 0.5, 2, Math.PI, 5]) {
+      const E = solveKepler(M, e);
+      assert.ok(Math.abs(E - e * Math.sin(E) - M) < 1e-9, `e=${e} M=${M}`);
+    }
+  }
+});
+
+test('orbital radius runs from perihelion to aphelion', () => {
+  const mercury = PLANETS.find((p) => p.name === 'Mercury');
+  const lo = mercury.a * (1 - mercury.e);
+  const hi = mercury.a * (1 + mercury.e);
+  let min = Infinity;
+  let max = 0;
+  for (let d = 0; d < mercury.period; d += 0.25) {
+    const { x, y } = orbitalPosition(mercury, d);
+    const r = Math.hypot(x, y);
+    min = Math.min(min, r);
+    max = Math.max(max, r);
+  }
+  assert.ok(Math.abs(min - lo) / lo < 1e-4);
+  assert.ok(Math.abs(max - hi) / hi < 1e-4);
+});
+
+test('perihelion lies in the direction of varpi', () => {
+  const mercury = PLANETS.find((p) => p.name === 'Mercury');
+  // Mean anomaly is zero when the mean longitude equals varpi.
+  const days = ((mercury.varpi - mercury.L0 + 360) % 360) / 360 * mercury.period;
+  const { x, y } = orbitalPosition(mercury, days);
+  const angle = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  assert.ok(Math.abs(angle - mercury.varpi) < 1e-6);
+  assert.ok(Math.abs(Math.hypot(x, y) - mercury.a * (1 - mercury.e)) < 1);
+});
+
+test('a circular orbit stays at the semi-major axis', () => {
+  const circle = { ...earth, e: 0 };
   for (const d of [0, 100, 1000]) {
-    const { x, y } = orbitalPosition(earth, d);
+    const { x, y } = orbitalPosition(circle, d);
     assert.ok(Math.abs(Math.hypot(x, y) - earth.a) < 1);
   }
 });
@@ -93,6 +129,7 @@ test('planet data is complete and ordered outward', () => {
   for (const p of PLANETS) {
     assert.ok(p.a > last, p.name);
     assert.ok(p.period > 0 && p.radius > 0 && p.L0 >= 0 && p.L0 < 360, p.name);
+    assert.ok(p.e >= 0 && p.e < 1 && p.varpi >= 0 && p.varpi < 360, p.name);
     last = p.a;
   }
 });

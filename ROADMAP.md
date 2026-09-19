@@ -6,7 +6,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Solar system
 
-- [ ] Elliptical orbits from eccentricity and argument of perihelion instead of circles
 - [ ] Major moons at a seventh, inner-most level (Earth–Moon, Galilean moons)
 
 ## Outer levels

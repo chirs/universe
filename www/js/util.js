@@ -10,10 +10,26 @@ export function meanLongitude(body, days) {
   return ((L % 360) + 360) % 360;
 }
 
-// Position in meters, Sun at the origin, counterclockwise from +x.
+// Eccentric anomaly from mean anomaly (radians) by Newton's method.
+export function solveKepler(M, e) {
+  let E = e < 0.8 ? M : Math.PI;
+  for (let i = 0; i < 30; i++) {
+    const d = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    E -= d;
+    if (Math.abs(d) < 1e-12) break;
+  }
+  return E;
+}
+
+// Position in meters, Sun at the focus, counterclockwise from +x.
 export function orbitalPosition(body, days) {
-  const theta = meanLongitude(body, days) * Math.PI / 180;
-  return { x: body.a * Math.cos(theta), y: body.a * Math.sin(theta) };
+  const e = body.e || 0;
+  const varpi = (body.varpi || 0) * Math.PI / 180;
+  const M = meanLongitude(body, days) * Math.PI / 180 - varpi;
+  const E = solveKepler(M, e);
+  const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+  const r = body.a * (1 - e * Math.cos(E));
+  return { x: r * Math.cos(nu + varpi), y: r * Math.sin(nu + varpi) };
 }
 
 export function lerp(a, b, u) {

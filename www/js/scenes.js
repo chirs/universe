@@ -95,11 +95,16 @@ const solarSystem = {
     const sy = view.sy(0);
     ctx.lineWidth = 1;
     for (const p of PLANETS) {
-      const rp = p.a / view.mpp;
-      if (rp > 30000) continue;
+      const a = p.a / view.mpp;
+      if (a > 30000) continue;
+      const e = p.e || 0;
+      const varpi = (p.varpi || 0) * Math.PI / 180;
+      // The Sun sits at a focus, a*e from the ellipse center toward perihelion.
+      const cx = sx - a * e * Math.cos(varpi);
+      const cy = sy + a * e * Math.sin(varpi);
       ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
       ctx.beginPath();
-      ctx.arc(sx, sy, rp, 0, TAU);
+      ctx.ellipse(cx, cy, a, a * Math.sqrt(1 - e * e), -varpi, 0, TAU);
       ctx.stroke();
     }
     const sunR = Math.max(SUN.radius / view.mpp, 4);
