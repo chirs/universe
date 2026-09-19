@@ -24,9 +24,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
 
 ## Conventions
 
-- The Sun is the world origin. World coordinates are meters. Galactic-plane
-  projection: +x toward the galactic center, +y in the direction of galactic
-  rotation.
+- The Sun is the world origin. World coordinates are meters. Objects are
+  placed at their true distance in the direction of their galactic longitude
+  (+x toward the galactic center, +y in the direction of galactic rotation).
+  Galactic latitude is dropped, not projected, so distances stay to scale.
 - Bodies smaller than the dot threshold draw as fixed-size dots. Never fake a
   distance to make something fit.
 - Procedural content (belts, spiral arms, cosmic web) comes from a fixed-seed

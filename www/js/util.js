@@ -70,12 +70,12 @@ export function mulberry32(seed) {
   };
 }
 
-// Galactic coordinates (l, b in degrees, distance in meters) projected onto
-// the galactic plane: +x toward the galactic center, +y toward l = 90.
-export function galacticToPlane(l, b, dist) {
+// Place an object at its true distance, in the direction of its galactic
+// longitude: +x toward the galactic center, +y toward l = 90. Latitude is
+// dropped rather than projected so distances stay to scale.
+export function skyToPlane(l, dist) {
   const lr = l * Math.PI / 180;
-  const br = b * Math.PI / 180;
-  return { x: dist * Math.cos(br) * Math.cos(lr), y: dist * Math.cos(br) * Math.sin(lr) };
+  return { x: dist * Math.cos(lr), y: dist * Math.sin(lr) };
 }
 
 export function levelFromHash(hash, levels) {

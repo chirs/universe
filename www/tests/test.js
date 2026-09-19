@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, lerpLog, easeInOut, layerAlpha,
-  niceScaleBar, mulberry32, galacticToPlane, levelFromHash, daysSinceJ2000,
+  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000,
 } from '../js/util.js';
 import { PLANETS, STARS, LOCAL_GROUP, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
@@ -71,15 +71,13 @@ test('mulberry32 is deterministic and in [0, 1)', () => {
   assert.notEqual(mulberry32(1)(), mulberry32(2)());
 });
 
-test('galacticToPlane projects along the plane', () => {
-  const p = galacticToPlane(0, 0, 10);
+test('skyToPlane keeps the true distance', () => {
+  const p = skyToPlane(0, 10);
   assert.ok(Math.abs(p.x - 10) < 1e-9 && Math.abs(p.y) < 1e-9);
-  const q = galacticToPlane(90, 0, 10);
+  const q = skyToPlane(90, 10);
   assert.ok(Math.abs(q.x) < 1e-9 && Math.abs(q.y - 10) < 1e-9);
-  const pole = galacticToPlane(123, 90, 10);
-  assert.ok(Math.hypot(pole.x, pole.y) < 1e-9);
-  const mid = galacticToPlane(0, 60, 10);
-  assert.ok(Math.abs(mid.x - 5) < 1e-9);
+  const r = skyToPlane(217, 10);
+  assert.ok(Math.abs(Math.hypot(r.x, r.y) - 10) < 1e-9);
 });
 
 test('levelFromHash falls back to the first level', () => {

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>universe</title>
+  <meta name="description" content="A cosmic zoom from the inner solar system to the observable universe.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div id="hud">
+    <div id="title">universe<span>a cosmic zoom</span></div>
+    <div id="help">scroll to zoom · 1–6 jump to a level · space pauses time</div>
+    <div id="levels"></div>
+    <div id="time">
+      <div id="speeds"></div>
+      <div id="date"></div>
+    </div>
+    <div id="scalebar"><div class="bar"></div><span class="label"></span></div>
+    <div id="caption">Distances to scale. Dots are not.</div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
