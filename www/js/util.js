@@ -104,7 +104,7 @@ export function hashForView(overview, levelId) {
 }
 
 export function moonSystemRadius(body) {
-  return 1.3 * Math.max(...body.moons.map((moon) => moon.a));
+  return 1.3 * Math.max(...body.moons.map((moon) => moon.a * (1 + (moon.e || 0))));
 }
 
 export function formatDate(ms) {

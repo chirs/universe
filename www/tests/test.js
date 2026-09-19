@@ -157,18 +157,30 @@ test('planet data is complete and ordered outward', () => {
   }
 });
 
+test('the selected dwarf planets and candidates are present', () => {
+  assert.deepEqual(
+    PLANETS.filter((p) => p.dwarf).map((p) => p.name),
+    ['Ceres', 'Orcus', 'Pluto', 'Máni', 'Salacia', 'Haumea', 'Quaoar', 'Makemake', 'Varda', 'Gonggong', 'Eris', 'Sedna'],
+  );
+});
+
 test('moons orbit well inside their planet\'s neighborhood', () => {
   const withMoons = PLANETS.filter((p) => p.moons);
-  assert.deepEqual(withMoons.map((p) => p.name), ['Earth', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']);
+  assert.deepEqual(withMoons.map((p) => p.name), [
+    'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Orcus',
+    'Pluto', 'Salacia', 'Haumea', 'Quaoar', 'Varda', 'Gonggong', 'Eris',
+  ]);
   for (const p of withMoons) {
     let last = 0;
     for (const m of p.moons) {
       assert.ok(m.a > last && m.a < p.a / 50, m.name);
-      assert.ok(m.period > 0 && m.radius >= 195e3 && m.L0 >= 0 && m.L0 < 360, m.name);
+      assert.ok(m.period > 0 && m.radius > 0 && m.L0 >= 0 && m.L0 < 360, m.name);
+      assert.ok((m.e || 0) >= 0 && (m.e || 0) < 1, m.name);
+      assert.ok((m.varpi || 0) >= 0 && (m.varpi || 0) < 360, m.name);
       last = m.a;
     }
   }
-  assert.equal(withMoons.flatMap((p) => p.moons).length, 20);
+  assert.equal(withMoons.flatMap((p) => p.moons).length, 38);
   const moon = withMoons[0].moons[0];
   const { x, y } = orbitalPosition(moon, 0);
   const r = Math.hypot(x, y);
@@ -176,6 +188,18 @@ test('moons orbit well inside their planet\'s neighborhood', () => {
   const saturn = PLANETS.find((p) => p.name === 'Saturn');
   const iapetus = saturn.moons.find((m) => m.name === 'Iapetus');
   assert.equal(moonSystemRadius(saturn), 1.3 * iapetus.a);
+  const neptune = PLANETS.find((p) => p.name === 'Neptune');
+  const nereid = neptune.moons.find((m) => m.name === 'Nereid');
+  assert.equal(moonSystemRadius(neptune), 1.3 * nereid.a * (1 + nereid.e));
+});
+
+test('inner planets and Pluto have the expected moon sets', () => {
+  const moons = (name) => PLANETS.find((p) => p.name === name).moons?.map((m) => m.name) || [];
+  assert.deepEqual(moons('Mercury'), []);
+  assert.deepEqual(moons('Venus'), []);
+  assert.deepEqual(moons('Mars'), ['Phobos', 'Deimos']);
+  assert.deepEqual(moons('Pluto'), ['Charon', 'Styx', 'Nix', 'Kerberos', 'Hydra']);
+  assert.deepEqual(moons('Eris'), ['Dysnomia']);
 });
 
 test('the modeled Oort cloud begins at the annotated distance', () => {

@@ -12,9 +12,14 @@ approximate fixed ellipses with their real periods, initialized from J2000
 elements, with a time-speed control. Scroll to zoom continuously between
 levels; `#milky-way` and the other level ids link straight to a level.
 
-Every moon at least about 400 km across is included, and the dwarf planets
-Ceres, Haumea, Makemake, Eris and Sedna, with positions from JPL Horizons at
-J2000. Clicking Uranus, Neptune or Pluto zooms to their moons.
+The moon systems include the major satellites plus selected smaller bodies
+such as Phobos, Amalthea, Hyperion, Puck, Nereid, and Pluto's four small moons.
+The dwarf-planet layer includes Ceres, Pluto, Haumea, Makemake, Eris, Sedna,
+and six large candidates: Orcus, Máni, Salacia, Quaoar, Varda, and Gonggong.
+Heliocentric positions come from JPL Horizons elements at J2000. Clicking any
+body with modeled moons zooms to its satellite system. For remote satellites
+without a published J2000 phase, the displayed phase is illustrative while
+the modeled orbit size, period, and eccentricity remain measured values.
 
 The Tour button (or `p`) pulls back from the Earth and Moon to the observable
 universe at a steady rate, pausing at each level, after Powers of Ten. The
