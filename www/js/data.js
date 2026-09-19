@@ -6,8 +6,10 @@
 // supercluster sizes are round numbers from the usual encyclopedia values.
 // Moons: NASA fact sheets for sizes and orbits; the Moon's J2000 mean longitude
 // and perigee from Meeus ch. 47, the Galilean mean longitudes from Lieske's E5
-// theory (Meeus ch. 44) propagated to J2000. Moons orbit in their planet's
-// plane here, which is drawn as the ecliptic.
+// theory (Meeus ch. 44) propagated to J2000. Saturn's moon phases are not
+// epoch-accurate; their L0 values are placeholders. Ring radii from NASA's
+// Saturnian rings fact sheet. Moons orbit in their planet's plane here, which
+// is drawn as the ecliptic.
 // Everything is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
@@ -47,7 +49,21 @@ export const PLANETS = [
       { name: 'Ganymede', a: 1070400 * KM, period: 7.154553, radius: 2634.1 * KM, L0: 219.371, color: '#b8ada0' },
       { name: 'Callisto', a: 1882700 * KM, period: 16.689018, radius: 2410.3 * KM, L0: 78.462, color: '#8f8478' },
     ] },
-  { name: 'Saturn', a: 9.5826 * AU, period: 10759.22, radius: 58232 * KM, L0: 49.944, e: 0.05386179, varpi: 92.599, color: '#e6d2a0' },
+  { name: 'Saturn', a: 9.5826 * AU, period: 10759.22, radius: 58232 * KM, L0: 49.944, e: 0.05386179, varpi: 92.599, color: '#e6d2a0',
+    rings: [
+      { name: 'C ring', inner: 74500 * KM, outer: 92000 * KM, alpha: 0.25 },
+      { name: 'B ring', inner: 92000 * KM, outer: 117580 * KM, alpha: 0.7 },
+      { name: 'A ring', inner: 122170 * KM, outer: 136775 * KM, alpha: 0.5 },
+    ],
+    moons: [
+      { name: 'Mimas', a: 185539 * KM, period: 0.942, radius: 198 * KM, L0: 40, color: '#cfcac0' },
+      { name: 'Enceladus', a: 237948 * KM, period: 1.370, radius: 252 * KM, L0: 150, color: '#f0f0f4' },
+      { name: 'Tethys', a: 294619 * KM, period: 1.888, radius: 531 * KM, L0: 260, color: '#d8d4cc' },
+      { name: 'Dione', a: 377396 * KM, period: 2.737, radius: 561 * KM, L0: 15, color: '#cfc8bc' },
+      { name: 'Rhea', a: 527108 * KM, period: 4.518, radius: 764 * KM, L0: 200, color: '#c8c0b4' },
+      { name: 'Titan', a: 1221870 * KM, period: 15.945, radius: 2575 * KM, L0: 95, color: '#d9a85a' },
+      { name: 'Iapetus', a: 3560820 * KM, period: 79.32, radius: 735 * KM, L0: 300, color: '#9a9088' },
+    ] },
   { name: 'Uranus', a: 19.2184 * AU, period: 30688.5, radius: 25362 * KM, L0: 313.232, e: 0.04725744, varpi: 170.954, color: '#9fd6dc' },
   { name: 'Neptune', a: 30.11 * AU, period: 60182, radius: 24622 * KM, L0: 304.880, e: 0.00859048, varpi: 44.965, color: '#5a7fd6' },
   { name: 'Pluto', a: 39.482 * AU, period: 90560, radius: 1188.3 * KM, L0: 238.93, e: 0.2488273, varpi: 224.069, color: '#c9b8a8', dwarf: true },

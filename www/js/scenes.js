@@ -137,6 +137,17 @@ const moons = {
       const py = view.sy(pos.y);
       if (!onScreen(view, px, py, 2000)) continue;
       ctx.lineWidth = 1;
+      for (const ring of p.rings || []) {
+        const ro = ring.outer / view.mpp;
+        if (ro < 6) continue;
+        ctx.globalAlpha = ring.alpha * alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(px, py, ro, 0, TAU);
+        ctx.arc(px, py, ring.inner / view.mpp, 0, TAU, true);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
       for (const m of p.moons) {
         const a = m.a / view.mpp;
         const e = m.e || 0;

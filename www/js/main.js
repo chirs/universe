@@ -13,6 +13,7 @@ const planet = (name) => PLANETS.find((p) => p.name === name);
 export const LEVELS = [
   { id: 'earth-moon', name: 'Earth & Moon', radius: 5e5 * KM, follow: planet('Earth') },
   { id: 'jupiter', name: 'Jupiter & moons', radius: 2.4e6 * KM, follow: planet('Jupiter') },
+  { id: 'saturn', name: 'Saturn & moons', radius: 1.5e6 * KM, follow: planet('Saturn') },
   { id: 'inner', name: 'Inner solar system', radius: 2 * AU, cx: 0, cy: 0 },
   { id: 'outer', name: 'Outer solar system', radius: 50 * AU, cx: 0, cy: 0 },
   { id: 'stars', name: 'Stellar neighborhood', radius: 20 * LY, cx: 0, cy: 0 },

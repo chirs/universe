@@ -136,7 +136,7 @@ test('planet data is complete and ordered outward', () => {
 
 test('moons orbit well inside their planet\'s neighborhood', () => {
   const withMoons = PLANETS.filter((p) => p.moons);
-  assert.deepEqual(withMoons.map((p) => p.name), ['Earth', 'Jupiter']);
+  assert.deepEqual(withMoons.map((p) => p.name), ['Earth', 'Jupiter', 'Saturn']);
   for (const p of withMoons) {
     let last = 0;
     for (const m of p.moons) {
@@ -149,6 +149,17 @@ test('moons orbit well inside their planet\'s neighborhood', () => {
   const { x, y } = orbitalPosition(moon, 0);
   const r = Math.hypot(x, y);
   assert.ok(r > moon.a * (1 - moon.e) - 1 && r < moon.a * (1 + moon.e) + 1);
+});
+
+test('Saturn\'s rings sit outside the planet and inside the moons', () => {
+  const saturn = PLANETS.find((p) => p.name === 'Saturn');
+  let last = saturn.radius;
+  for (const ring of saturn.rings) {
+    assert.ok(ring.inner >= last && ring.outer > ring.inner, ring.name);
+    assert.ok(ring.alpha > 0 && ring.alpha <= 1, ring.name);
+    last = ring.outer;
+  }
+  assert.ok(last < saturn.moons[0].a);
 });
 
 test('star and galaxy coordinates are in range', () => {
