@@ -4,6 +4,7 @@ import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
 } from '../js/util.js';
+import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -224,4 +225,21 @@ test('signposts have ordered, non-overlapping ranges', () => {
     assert.ok(sp.text.length > 0 && sp.text.length < 160, sp.text);
     last = sp.range[1];
   }
+});
+
+test('overview maps log distance and longitude into the frame', () => {
+  const fr = frame(1000, 800);
+  assert.ok(Math.abs(logY(R_MIN, fr) - fr.bottom) < 1e-9);
+  assert.ok(Math.abs(logY(R_MAX, fr) - fr.top) < 1e-9);
+  assert.ok(logY(1e15, fr) < logY(1e12, fr));
+  let last = Infinity;
+  for (const [r] of TICKS) {
+    const y = logY(r, fr);
+    assert.ok(y < last && y > fr.top && y < fr.bottom, String(r));
+    last = y;
+  }
+  assert.ok(Math.abs(angleX(0, fr) - (fr.left + fr.right) / 2) < 1e-9);
+  assert.ok(Math.abs(angleX(180, fr) - fr.left) < 1e-9);
+  assert.ok(Math.abs(angleX(-180, fr) - fr.left) < 1e-9);
+  assert.ok(angleX(90, fr) > angleX(0, fr) && angleX(270, fr) < angleX(0, fr));
 });

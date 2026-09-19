@@ -53,6 +53,11 @@ html, body {
   font-size: 12px;
 }
 
+#overview {
+  top: 64px;
+  left: 20px;
+}
+
 #levels {
   left: 50%;
   bottom: 20px;

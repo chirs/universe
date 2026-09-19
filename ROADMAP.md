@@ -8,10 +8,6 @@ Open work only; completed items are removed as they land (see git history).
 
 - [ ] Guided tour: a play button that pulls back at a fixed rate through all ten levels with the scale bar ticking, after Powers of Ten
 
-## Views
-
-- [ ] Log-radius overview after Gott and Jurić's Map of the Universe: a second mode with distance from the Sun log-scaled, so every level shows on one screen
-
 ## Deferred
 
 - 3D rendering (Three.js). The 2D top-down view reads better at the galaxy and

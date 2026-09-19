@@ -4,6 +4,7 @@ import {
   levelFromHash, formatDate, skyToPlane, orbitalPosition, placeLabel,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
+import { drawOverview } from './overview.js';
 
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
 const VIRGO = skyToPlane(284, 54e6 * LY);
@@ -49,6 +50,9 @@ const speedsEl = document.getElementById('speeds');
 const dateEl = document.getElementById('date');
 const barEl = document.querySelector('#scalebar .bar');
 const barLabel = document.querySelector('#scalebar .label');
+const scalebarEl = document.getElementById('scalebar');
+const overviewBtn = document.getElementById('overview');
+const captionEl = document.getElementById('caption');
 
 const cam = { cx: 0, cy: 0, mpp: 1, follow: null, followPos: null };
 let anim = null;
@@ -60,6 +64,7 @@ let speed = SPEEDS[2];
 let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
+let overview = false;
 
 function halfMin() {
   return Math.min(w, h) / 2;
@@ -98,7 +103,13 @@ function trackFollow() {
   cam.followPos = p;
 }
 
+function setOverview(on) {
+  overview = on;
+  if (on) history.replaceState(null, '', '#overview');
+}
+
 function goTo(level, instant = false) {
+  setOverview(false);
   setFollow(null);
   const to = { ...levelCenter(level), mpp: mppFor(level) };
   if (instant) {
@@ -130,6 +141,7 @@ function stepAnim(now) {
 }
 
 function zoomAt(sx, sy, factor) {
+  if (overview) return;
   anim = null;
   const minMpp = mppFor(LEVELS[0]) / 4;
   const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
@@ -194,8 +206,11 @@ function updateHud() {
   barLabel.textContent = bar.label;
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
-  for (const b of levelsEl.children) b.classList.toggle('active', b.dataset.id === near.id);
+  for (const b of levelsEl.children) b.classList.toggle('active', !overview && b.dataset.id === near.id);
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
+  overviewBtn.classList.toggle('active', overview);
+  scalebarEl.hidden = overview;
+  captionEl.hidden = overview;
 }
 
 function frame(now) {
@@ -218,9 +233,13 @@ function frame(now) {
     labels: [],
   };
   const days = daysSinceJ2000(simMs);
-  for (const layer of LAYERS) {
-    const alpha = layerAlpha(view.radius, layer.range);
-    if (alpha > 0) layer.draw(ctx, view, alpha, days);
+  if (overview) {
+    drawOverview(ctx, view, days);
+  } else {
+    for (const layer of LAYERS) {
+      const alpha = layerAlpha(view.radius, layer.range);
+      if (alpha > 0) layer.draw(ctx, view, alpha, days);
+    }
   }
   updateHover(view);
   drawLabels(view);
@@ -264,9 +283,14 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
   else if (/^[0-9]$/.test(e.key) && LEVELS[(Number(e.key) + 9) % 10]) goTo(LEVELS[(Number(e.key) + 9) % 10]);
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
+  else if (e.key === 'o') setOverview(!overview);
 });
 
-window.addEventListener('hashchange', () => goTo(levelFromHash(location.hash, ALL_LEVELS)));
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#overview') setOverview(true);
+  else goTo(levelFromHash(location.hash, ALL_LEVELS));
+});
+overviewBtn.addEventListener('click', () => setOverview(!overview));
 window.addEventListener('resize', () => {
   const level = nearestLevel();
   const ratio = cam.mpp / mppFor(level);
@@ -276,5 +300,7 @@ window.addEventListener('resize', () => {
 
 buildHud();
 resize();
+const startOverview = location.hash === '#overview';
 goTo(levelFromHash(location.hash, ALL_LEVELS), true);
+if (startOverview) setOverview(true);
 requestAnimationFrame(frame);

@@ -19,6 +19,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut.
+- `www/js/overview.js` — the log-radius overview mode: pure mapping helpers
+  (`logY`, `angleX`, `frame`) and `drawOverview`, which fills the same
+  `labels` and `hits` arrays as the layers so hover and label placement are
+  shared. Toggled with the Overview button, `o`, or `#overview`.
 - `www/js/main.js` — camera state `{center, metersPerPixel}`, the animation
   loop, level stops, and input (buttons, wheel, keys, hash). A level with
   `follow` keeps the camera pinned to that planet as it moves; following
