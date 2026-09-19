@@ -1,4 +1,5 @@
-// Hand-entered from standard references. Planetary elements: NASA JPL
+// Written by a model from memory of the references named below, not
+// transcribed from them -- see AGENTS.md. Planetary elements: NASA JPL
 // "Approximate Positions of the Planets" (Keplerian elements for 1800-2050);
 // mean longitude L0 at J2000 from the same table. Radii: NASA planetary fact
 // sheets. Nearest stars: RECONS 10 pc list; galactic coordinates rounded to

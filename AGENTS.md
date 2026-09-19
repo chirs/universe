@@ -12,8 +12,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
 
 ## Architecture
 
-- `www/js/data.js` — hand-entered astronomical data and unit constants (`AU`,
-  `LY`, `PC`, all in meters). Sources are cited at the top of the file.
+- `www/js/data.js` — astronomical data and unit constants (`AU`, `LY`, `PC`,
+  all in meters). The values were written by a model from memory of the
+  references cited at the top of the file, not transcribed from them. They
+  spot-check well, but no number here has been checked against its source
+  line by line. Treat any single value as approximate until you have.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
   nice-number scale bar, seeded PRNG, galactic-plane projection.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
