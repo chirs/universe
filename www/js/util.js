@@ -103,6 +103,10 @@ export function formatDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
+export function shouldIgnoreGlobalKeys(tagName, isContentEditable = false) {
+  return isContentEditable || ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(tagName);
+}
+
 // Find a spot for a w x h label beside the point (x, y): to the right, then
 // left, above, below. Returns the rect, or null if every spot collides with a
 // placed rect or leaves the bounds.

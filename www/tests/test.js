@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
-  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel, TOUR, tourLegMs,
+  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
+  shouldIgnoreGlobalKeys, TOUR, tourLegMs,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -68,6 +69,15 @@ test('a circular orbit stays at the semi-major axis', () => {
 test('daysSinceJ2000 is zero at the epoch', () => {
   assert.equal(daysSinceJ2000(J2000_MS), 0);
   assert.equal(daysSinceJ2000(J2000_MS + 86400e3), 1);
+});
+
+test('global shortcuts ignore focused controls and editable content', () => {
+  for (const tag of ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']) {
+    assert.equal(shouldIgnoreGlobalKeys(tag), true, tag);
+  }
+  assert.equal(shouldIgnoreGlobalKeys('DIV', true), true);
+  assert.equal(shouldIgnoreGlobalKeys('BODY'), false);
+  assert.equal(shouldIgnoreGlobalKeys('CANVAS'), false);
 });
 
 test('lerpLog hits endpoints and the geometric midpoint', () => {

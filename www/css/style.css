@@ -60,12 +60,22 @@ html, body {
   gap: 6px;
 }
 
-#levels {
-  left: 50%;
+#bottom {
+  left: 20px;
+  right: 20px;
   bottom: 20px;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: 96vw;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#readouts {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+#levels {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
@@ -81,8 +91,7 @@ html, body {
 #date { margin-top: 6px; color: #8a90a0; font-variant-numeric: tabular-nums; }
 
 #scalebar {
-  left: 20px;
-  bottom: 24px;
+  min-width: 0;
 }
 #scalebar .bar {
   height: 0;
@@ -102,8 +111,6 @@ html, body {
 #scalebar .label { display: block; margin-top: 6px; }
 
 #caption {
-  right: 20px;
-  bottom: 24px;
   color: #6a7080;
   font-size: 12px;
 }
@@ -111,6 +118,5 @@ html, body {
 @media (max-width: 700px) {
   #help { display: none; }
   #caption { display: none; }
-  #levels { bottom: 12px; }
-  #scalebar { bottom: 70px; }
+  #bottom { bottom: 12px; }
 }

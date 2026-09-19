@@ -1,7 +1,8 @@
 import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, formatDate, skyToPlane, orbitalPosition, placeLabel, TOUR, TOUR_HOLD_MS, tourLegMs,
+  levelFromHash, formatDate, shouldIgnoreGlobalKeys, skyToPlane, orbitalPosition, placeLabel,
+  TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
@@ -306,6 +307,7 @@ canvas.addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (e) => {
+  if (shouldIgnoreGlobalKeys(e.target.tagName, e.target.isContentEditable)) return;
   if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
   else if (/^[0-9]$/.test(e.key) && LEVELS[(Number(e.key) + 9) % 10]) { stopTour(); goTo(LEVELS[(Number(e.key) + 9) % 10]); }
