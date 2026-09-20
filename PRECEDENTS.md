@@ -124,6 +124,89 @@ problem for a screen by giving up size.
 ([Voyage](http://voyagesolarsystem.org/voyage-on-the-national-mall/),
 [Sweden Solar System](https://en.wikipedia.org/wiki/Sweden_Solar_System))
 
+## Drawing the cosmic web
+
+The Virgo and Observable-universe levels are the only ones where universe
+paints structure it does not have data for. These are the ways others have
+drawn the web, grouped by whether the picture comes from geometry, dynamics,
+or a survey.
+
+**Voronoi foam** — Vincent Icke and Rien van de Weygaert, 1987 onward. A
+geometric model of the galaxy distribution at 10 to 200 Mpc: pick the centers
+of voids, let matter flow out of each at uniform speed, and walls form
+halfway between neighbors. Cell interiors are voids, faces are sheets, edges
+are filaments, corners are clusters. This is exactly what universe's web
+generator does, and the model is honest about its limit: it is the asymptotic,
+straight-walled end state, with one void size and no curvature. That is why
+the picture reads as a Voronoi at a glance.
+([Icke & van de Weygaert 1991](https://ui.adsabs.harvard.edu/abs/1991QJRAS..32...85I/abstract),
+[van de Weygaert 2007](https://arxiv.org/abs/0707.2877))
+
+**Zel'dovich approximation** — Yakov Zel'dovich, 1970; Hidding, Shandarin and
+van de Weygaert, 2014. First-order structure formation: start with a smooth
+random density field, move each parcel of matter a distance proportional to
+the local gradient of the potential, and the parcels pile up into sheets,
+then filaments, then knots. Hidding et al. point out the optics analogy: it
+is the pattern of light caustics on a pool floor, and it reproduces the
+morphology of the real web remarkably well, with curved walls and a hierarchy
+of void sizes the Voronoi lacks. A few octaves of seeded noise plus one
+displacement step is enough to draw it.
+([Hidding, Shandarin & van de Weygaert 2014](https://arxiv.org/abs/1311.7134))
+
+**Millennium Simulation** — Volker Springel et al., 2005. Ten billion
+particles in a 500 Mpc/h box. The public images are projected density of a
+15 Mpc/h thick slice, brightness on a log scale, with a zoom poster stepping
+in by factors of four from gigaparsecs to 10 kpc. Along with Illustris and
+IllustrisTNG, whose 2D explorer lets you pan a slice in the browser, these
+images are what people mean when they say "cosmic web": glowing filaments of
+varying thickness, bright knots, dark voids of many sizes.
+([Millennium](https://wwwmpa.mpa-garching.mpg.de/galform/virgo/millennium/),
+[TNG explorer](https://www.tng-project.org/explore/2d/))
+
+**The Network Behind the Cosmic Web** — Kim Albrecht, Bruno Coutinho,
+Albert-László Barabási et al., 2016. An interactive WebGL piece: about
+24,000 simulated galaxies as points, with links drawn between them by one of
+three rules (fixed radius, size-scaled radius, nearest neighbours). It treats
+the web literally as a network of nodes and edges, which is one clean way to
+draw filaments from a point set without a density field.
+([site](https://cosmicweb.kimalbrecht.com/),
+[arXiv](https://arxiv.org/abs/1604.03236))
+
+**The Map of the Universe** — Brice Ménard and Nikita Shtarkman, Johns
+Hopkins, 2022. A single scrollable slice of the observable universe with
+200,000 Sloan galaxies and quasars, labelled by lookback time, ending at the
+Planck image of the microwave background. It is the modern Gott map, and it
+makes the point universe's top level currently misses: the outer part of the
+observable universe is not more web, it is younger universe, then no galaxies
+at all, then the CMB.
+([mapoftheuniverse.net](https://mapoftheuniverse.net/),
+[APOD](https://apod.nasa.gov/apod/ap230705.html))
+
+**Cosmicflows and Laniakea** — Brent Tully, Hélène Courtois, Daniel Pomarède
+et al., 2014 onward. Measured galaxy distances and velocities within a few
+hundred million light-years, rendered in SDvision as flow lines, basins of
+attraction and named structures: Laniakea, the Great Attractor, the Local
+Sheet, and in Cosmicflows-3 the Local Void on our doorstep. The Laniakea video
+has millions of views. This is the real map of universe's Virgo level, and the
+source to check any named local structure against.
+([Nature 2014](https://www.nature.com/articles/nature13674),
+[Cosmography and Data Visualization](https://arxiv.org/abs/1702.01941),
+[Local Void video](https://vimeo.com/326346346))
+
+**SpaceEngine map mode** — Vladimir Romanyuk, 2018. Procedural galaxies
+grouped into clusters, filaments and walls, generated in octree blocks around
+the viewer with a cap of about 20,000 on screen. The blog notes that a
+spherical cut-out is almost the only way to see voids and filaments from
+outside, and admits the artifacts: visible cubes of galaxies and brightness
+steps between octree levels. A warning about tiling a procedural web.
+([blog](https://spaceengine.org/news/blog180921/))
+
+Powell's Atlas (above) draws the neighbouring superclusters within 500
+million light-years as Abell's rich clusters plotted as dots, with the
+superclusters, walls and voids named by hand and nothing drawn between the
+dots. That is the honest minimum.
+([superclusters map](http://www.atlasoftheuniverse.com/superc.html))
+
 ## Where universe sits
 
 - **Continuous zoom** from the films (Cosmic Zoom, Powers of Ten), made
@@ -136,5 +219,6 @@ problem for a screen by giving up size.
   3D simulators.
 
 The precedents also mark out directions universe has not taken: zooming inward
-(Boeke, Eames, the Huangs), a log-radius overview (Gott and Jurić), and 3D
-positions (everything in the simulator group).
+(Boeke, Eames, the Huangs), 3D positions (everything in the simulator group),
+a web drawn from dynamics rather than geometry (Zel'dovich), and lookback time
+as the structure of the widest view (Gott, Ménard).
