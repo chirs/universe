@@ -342,10 +342,33 @@ canvas.addEventListener('wheel', (e) => {
   zoomAt(e.offsetX, e.offsetY, Math.exp(e.deltaY * 0.002));
 }, { passive: false });
 
-canvas.addEventListener('mousemove', (e) => { mouse = { x: e.offsetX, y: e.offsetY }; });
+// Drag to pan. A press that barely moves is still a click.
+let drag = null;
+canvas.addEventListener('mousedown', (e) => {
+  if (overview || e.button !== 0) return;
+  drag = { x: e.offsetX, y: e.offsetY, moved: false };
+});
+canvas.addEventListener('mousemove', (e) => {
+  mouse = { x: e.offsetX, y: e.offsetY };
+  if (!drag) return;
+  const dx = e.offsetX - drag.x;
+  const dy = e.offsetY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+  if (!drag.moved) { stopTour(); anim = null; canvas.classList.add('dragging'); drag.moved = true; }
+  cam.cx -= dx * cam.mpp;
+  cam.cy += dy * cam.mpp;
+  drag.x = e.offsetX;
+  drag.y = e.offsetY;
+});
+let dragged = false;
+window.addEventListener('mouseup', () => {
+  dragged = !!(drag && drag.moved);
+  drag = null;
+  canvas.classList.remove('dragging');
+});
 canvas.addEventListener('mouseleave', () => { mouse = null; });
 canvas.addEventListener('click', () => {
-  if (!hover) return;
+  if (!hover || dragged) return;
   const level = ALL_LEVELS.find((lv) => lv.follow && lv.follow.name === hover.name);
   if (level) { stopTour(); goTo(level); }
 });
