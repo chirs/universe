@@ -1,14 +1,5 @@
 # PRECEDENTS.md — Prior Art
 
-The cosmic zoom is an old form. This file lists the works universe descends
-from or sits next to, what each got right, and where universe differs.
-
-universe, for reference: a 2D canvas that starts at the Earth and Moon and
-pulls back through ten levels to the observable universe. Distances are to
-scale at every level; bodies are not, and are drawn as dots instead. Planets
-move on real orbits from J2000. Zooming is continuous, with layers fading in
-and out across their scale ranges rather than cutting between scenes.
-
 At cosmic scales, distance is also lookback time. The widest views therefore
 do not show the universe at one common moment: nearby structures are seen
 relatively recently, while distant structures are seen progressively earlier
