@@ -305,13 +305,14 @@ function frame(now) {
 }
 
 function buildHud() {
-  const groups = [['Planets', (p) => !p.dwarf], ['Dwarf planets', (p) => p.dwarf]];
+  // Farthest at the top, Earth at the bottom, so the menu reads like the sky above the bar.
+  const groups = [['Dwarf planets', (p) => p.dwarf], ['Planets', (p) => !p.dwarf]];
   for (const [title, pick] of groups) {
     const head = document.createElement('div');
     head.className = 'group';
     head.textContent = title;
     moonsMenu.appendChild(head);
-    for (const lv of MOON_LEVELS.filter((lv) => pick(lv.follow))) {
+    for (const lv of MOON_LEVELS.filter((lv) => pick(lv.follow)).reverse()) {
       const b = document.createElement('button');
       b.textContent = lv.name;
       b.dataset.id = lv.id;
