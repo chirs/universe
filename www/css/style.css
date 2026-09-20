@@ -95,6 +95,38 @@ html, body {
   justify-content: center;
 }
 
+#moons { position: relative; }
+#moons-menu {
+  pointer-events: auto;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  min-width: 180px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 14, 22, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+#moons-menu[hidden] { display: none; }
+#moons-menu .group {
+  padding: 8px 8px 3px;
+  color: #6a7080;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#moons-menu button {
+  background: none;
+  border-color: transparent;
+  border-radius: 3px;
+  padding: 4px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+#moons-menu button:hover { background: rgba(255, 255, 255, 0.08); border-color: transparent; }
+
 #time {
   top: 16px;
   right: 20px;

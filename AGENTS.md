@@ -30,8 +30,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   loop, level stops, and input (buttons, wheel, keys, hash). A level with
   `follow` keeps the camera pinned to that planet as it moves; following
   drops automatically once the view is wider than a fraction of an AU.
-  Planets with moons but no button get an `EXTRA_LEVELS` entry, reached by
-  clicking the planet or by `#uranus` and the like. The guided tour walks
+  Every body with moons gets a `MOON_LEVELS` entry (built by `moonLevels`
+  in `util.js`), listed in the Moons menu and reached by clicking the planet
+  or by `#uranus` and the like. The guided tour walks
   the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
   any user input stops it.
 

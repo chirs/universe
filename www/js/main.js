@@ -1,7 +1,7 @@
-import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
+import { AU, LY, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, levelFromShortcut, hashForView, moonSystemRadius, formatDate, shouldIgnoreGlobalKeys,
+  levelFromHash, levelFromShortcut, hashForView, moonLevels, formatDate, shouldIgnoreGlobalKeys,
   skyToPlane, orbitalPosition, placeLabel, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
@@ -10,13 +10,13 @@ import { drawOverview } from './overview.js';
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
 const VIRGO = skyToPlane(284, 54e6 * LY);
 
-const planet = (name) => PLANETS.find((p) => p.name === name);
+// Moon systems: one level per body with moons, listed in the Moons menu and
+// reached by clicking the planet or by hash. Each has `follow`, so the camera
+// stays centered on the planet as it moves.
+export const MOON_LEVELS = moonLevels(PLANETS);
+for (const lv of MOON_LEVELS) lv.shortcut = { 'earth-moon': '1', jupiter: '2', saturn: '3' }[lv.id];
 
-// A level with `follow` is centered on that planet's current position.
 export const LEVELS = [
-  { id: 'earth-moon', name: 'Earth & Moon', shortcut: '1', radius: 5e5 * KM, follow: planet('Earth') },
-  { id: 'jupiter', name: 'Jupiter & moons', shortcut: '2', radius: 2.4e6 * KM, follow: planet('Jupiter') },
-  { id: 'saturn', name: 'Saturn & moons', shortcut: '3', radius: moonSystemRadius(planet('Saturn')), follow: planet('Saturn') },
   { id: 'inner', name: 'Inner solar system', shortcut: '4', radius: 2 * AU, cx: 0, cy: 0 },
   { id: 'outer', name: 'Outer solar system', shortcut: '5', radius: 50 * AU, cx: 0, cy: 0 },
   { id: 'trans-neptunian', name: 'TNOs', shortcut: 'k', radius: 120 * AU, cx: 0, cy: 0,
@@ -31,15 +31,7 @@ export const LEVELS = [
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];
 
-// Moon systems without a button, reached by clicking the planet or by hash.
-export const EXTRA_LEVELS = PLANETS.filter((p) => p.moons && !LEVELS.some((lv) => lv.follow === p))
-  .map((p) => ({
-    id: p.name.toLowerCase(),
-    name: `${p.name} & moons`,
-    radius: moonSystemRadius(p),
-    follow: p,
-  }));
-const ALL_LEVELS = [...LEVELS, ...EXTRA_LEVELS];
+const ALL_LEVELS = [...MOON_LEVELS, ...LEVELS];
 
 const SPEEDS = [
   { label: 'paused', perSec: 0 },
@@ -52,6 +44,9 @@ const SPEEDS = [
 const canvas = document.getElementById('space');
 const ctx = canvas.getContext('2d');
 const levelsEl = document.getElementById('levels');
+const moonsEl = document.getElementById('moons');
+const moonsBtn = document.getElementById('moons-toggle');
+const moonsMenu = document.getElementById('moons-menu');
 const speedsEl = document.getElementById('speeds');
 const dateEl = document.getElementById('date');
 const barEl = document.querySelector('#scalebar .bar');
@@ -76,7 +71,7 @@ let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
 let overview = false;
-let lastLevelId = LEVELS[0].id;
+let lastLevelId = ALL_LEVELS[0].id;
 let tour = null;
 
 function halfMin() {
@@ -122,6 +117,7 @@ function setOverview(on) {
 }
 
 function goTo(level, instant = false, dur = 1400) {
+  moonsMenu.hidden = true;
   setOverview(false);
   setFollow(null);
   const to = { ...levelCenter(level), mpp: mppFor(level) };
@@ -157,7 +153,7 @@ function stepAnim(now) {
 // The guided tour: pull back through TOUR at a fixed rate, holding at each stop.
 function startTour() {
   tour = { index: 0, holdUntil: 0 };
-  goTo(LEVELS.find((lv) => lv.id === TOUR[0]));
+  goTo(ALL_LEVELS.find((lv) => lv.id === TOUR[0]));
 }
 
 function stopTour() {
@@ -170,7 +166,7 @@ function stepTour(now) {
   if (now < tour.holdUntil) return;
   tour.index += 1;
   if (tour.index >= TOUR.length) { stopTour(); return; }
-  const level = LEVELS.find((lv) => lv.id === TOUR[tour.index]);
+  const level = ALL_LEVELS.find((lv) => lv.id === TOUR[tour.index]);
   tour.holdUntil = 0;
   goTo(level, false, tourLegMs(cam.mpp, mppFor(level)));
 }
@@ -178,8 +174,9 @@ function stepTour(now) {
 function zoomAt(sx, sy, factor) {
   if (overview) return;
   stopTour();
+  moonsMenu.hidden = true;
   anim = null;
-  const minMpp = mppFor(LEVELS[0]) / 4;
+  const minMpp = Math.min(...ALL_LEVELS.map(mppFor)) / 4;
   const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
   const next = Math.min(maxMpp, Math.max(minMpp, cam.mpp * factor));
   const wx = cam.cx + (sx - w / 2) * cam.mpp;
@@ -189,7 +186,11 @@ function zoomAt(sx, sy, factor) {
   cam.mpp = next;
 }
 
+// The level to highlight: the followed moon system if there is one, else
+// whichever wide level is closest in scale.
 function nearestLevel() {
+  const body = anim ? anim.level.follow : cam.follow;
+  if (body) return MOON_LEVELS.find((lv) => lv.follow === body);
   let best = LEVELS[0];
   let bestD = Infinity;
   for (const lv of LEVELS) {
@@ -250,7 +251,10 @@ function updateHud() {
   barLabel.textContent = bar.label;
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
-  for (const b of levelsEl.children) b.classList.toggle('active', !overview && b.dataset.id === near.id);
+  for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === near.id);
+  const moon = !overview && MOON_LEVELS.includes(near) ? near : null;
+  moonsBtn.textContent = `${moon ? moon.name : 'Moons'} ▾`;
+  moonsBtn.classList.toggle('active', !!moon);
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
   overviewBtn.classList.toggle('active', overview);
   tourBtn.textContent = tour ? 'Stop tour' : 'Tour';
@@ -301,6 +305,21 @@ function frame(now) {
 }
 
 function buildHud() {
+  const groups = [['Planets', (p) => !p.dwarf], ['Dwarf planets', (p) => p.dwarf]];
+  for (const [title, pick] of groups) {
+    const head = document.createElement('div');
+    head.className = 'group';
+    head.textContent = title;
+    moonsMenu.appendChild(head);
+    for (const lv of MOON_LEVELS.filter((lv) => pick(lv.follow))) {
+      const b = document.createElement('button');
+      b.textContent = lv.name;
+      b.dataset.id = lv.id;
+      if (lv.shortcut) b.title = lv.shortcut;
+      b.addEventListener('click', () => { stopTour(); goTo(lv); });
+      moonsMenu.appendChild(b);
+    }
+  }
   LEVELS.forEach((lv) => {
     const b = document.createElement('button');
     b.textContent = lv.name;
@@ -331,10 +350,14 @@ canvas.addEventListener('click', () => {
   if (level) { stopTour(); goTo(level); }
 });
 
+moonsBtn.addEventListener('click', () => { moonsMenu.hidden = !moonsMenu.hidden; });
+document.addEventListener('click', (e) => { if (!moonsEl.contains(e.target)) moonsMenu.hidden = true; });
+
 window.addEventListener('keydown', (e) => {
   if (shouldIgnoreGlobalKeys(e.target.tagName, e.target.isContentEditable)) return;
-  const level = levelFromShortcut(e.key, LEVELS);
-  if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
+  const level = levelFromShortcut(e.key, ALL_LEVELS);
+  if (e.key === 'Escape') moonsMenu.hidden = true;
+  else if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
   else if (level) { stopTour(); goTo(level); }
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }

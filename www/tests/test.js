@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
-  levelFromShortcut, hashForView, moonSystemRadius, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
+  levelFromShortcut, hashForView, moonSystemRadius, moonLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
   galaxySummary, clusterSummary, landmarkSummary, observableUniverseSummary,
   makeVoronoiWeb,
@@ -194,6 +194,17 @@ test('levelFromHash falls back to the first level', () => {
   assert.equal(levelFromHash('#nope', levels).id, 'inner');
   assert.equal(levelFromHash('', levels).id, 'inner');
   assert.equal(levelFromHash(undefined, levels).id, 'inner');
+});
+
+test('moon levels cover every body with moons', () => {
+  const levels = moonLevels(PLANETS);
+  assert.equal(levels.length, PLANETS.filter((p) => p.moons).length);
+  assert.equal(new Set(levels.map((lv) => lv.id)).size, levels.length);
+  assert.equal(levels[0].id, 'earth-moon');
+  assert.equal(levels[0].name, 'Earth & Moon');
+  assert.equal(levelFromHash('#uranus', levels).name, 'Uranus & moons');
+  assert.equal(levelFromHash('#orcus', levels).name, 'Orcus & Vanth');
+  for (const lv of levels) assert.equal(lv.radius, moonSystemRadius(lv.follow));
 });
 
 test('level shortcuts preserve digits and add named intermediate keys', () => {

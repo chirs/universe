@@ -259,6 +259,16 @@ export function moonSystemRadius(body) {
   return 1.3 * Math.max(...body.moons.map((moon) => moon.a * (1 + (moon.e || 0))));
 }
 
+// One camera stop per body with modeled moons, in distance order.
+export function moonLevels(planets) {
+  return planets.filter((p) => p.moons).map((p) => ({
+    id: p.name === 'Earth' ? 'earth-moon' : p.name.toLowerCase(),
+    name: `${p.name} & ${p.moons.length === 1 ? p.moons[0].name : 'moons'}`,
+    radius: moonSystemRadius(p),
+    follow: p,
+  }));
+}
+
 export function formatDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
