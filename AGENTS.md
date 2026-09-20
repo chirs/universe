@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Static site served from `www/`. Vanilla JS ES modules, 2D canvas, no build
-step, no dependencies. Deployed to universe.edgemon.org by the homelab
+step, no dependencies. Deployed to universe.edgemony.org by the homelab
 playbooks, which clone the repo and serve `www/` as the document root.
 
 ## Development

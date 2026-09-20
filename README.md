@@ -1,4 +1,4 @@
-# [universe](https://universe.edgemon.org)
+# [universe](https://universe.edgemony.org)
 
 Start at the inner solar system and pull back, level by level, to the observable universe.
 Distances are to scale at every level
