@@ -1,11 +1,11 @@
 import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  UNIVERSE, SIGNPOSTS,
+  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS,
 } from './data.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
-  landmarkSummary, observableUniverseSummary, makeZeldovichWeb,
+  landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -391,8 +391,95 @@ const clusters = (() => {
         const r = c.size * 1e6 * LY / 2 / view.mpp;
         glow(ctx, x, y, Math.max(r, 4), 'rgba(200,190,230,0.35)', alpha);
         drawPoints(ctx, view, c.pts, c.x, c.y, '#e8e4f4', 0.6 * alpha);
-        label(view, x, y, c.name, alpha, c.n >= 200 ? 2 : c.n >= 100 ? 1 : 0);
+        // Clusters known only by catalogue number are labelled once they resolve.
+        if (!c.name.startsWith('Abell') || r >= 3) label(view, x, y, c.name, alpha, c.n >= 200 ? 2 : c.n >= 100 ? 1 : 0);
         hit(view, x, y, c.name, alpha, clusterSummary(c));
+      }
+    },
+  };
+})();
+
+// ---------------------------------------------------------------- superclusters and voids
+
+// A strand of jittered points threaded through a set of positions, ordered
+// along their principal axis so the polyline does not double back.
+function makeStrand(rand, points, width) {
+  const n = points.length;
+  const cx = points.reduce((s, p) => s + p.x, 0) / n;
+  const cy = points.reduce((s, p) => s + p.y, 0) / n;
+  let sxx = 0;
+  let sxy = 0;
+  let syy = 0;
+  for (const p of points) {
+    sxx += (p.x - cx) ** 2;
+    sxy += (p.x - cx) * (p.y - cy);
+    syy += (p.y - cy) ** 2;
+  }
+  const angle = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  const ax = Math.cos(angle);
+  const ay = Math.sin(angle);
+  const ordered = [...points].sort((p, q) => (p.x * ax + p.y * ay) - (q.x * ax + q.y * ay));
+  const out = [];
+  for (let i = 0; i + 1 < ordered.length; i++) {
+    const p = ordered[i];
+    const q = ordered[i + 1];
+    const len = Math.hypot(q.x - p.x, q.y - p.y);
+    const count = Math.max(8, Math.round(len / (width / 3)));
+    const nx = -(q.y - p.y) / len;
+    const ny = (q.x - p.x) / len;
+    for (let k = 0; k < count; k++) {
+      const t = (k + rand()) / count;
+      const bow = Math.sin(t * Math.PI) * width * 0.6 * (i % 2 ? 1 : -1);
+      const off = gaussian(rand) * width / 2 + bow;
+      out.push(p.x + (q.x - p.x) * t + nx * off, p.y + (q.y - p.y) * t + ny * off);
+    }
+  }
+  return Float64Array.from(out);
+}
+
+const superclusterWalls = (() => {
+  const rand = mulberry32(77);
+  const byAbell = new Map(CLUSTERS.filter((c) => c.abell).map((c) => [c.abell, c]));
+  const items = SUPERCLUSTERS.map((sc) => {
+    const sizeM = sc.size * 1e6 * LY;
+    const members = sc.members.map((a) => byAbell.get(a)).filter(Boolean)
+      .map((c) => skyToPlane(c.l, c.dist * 1e6 * LY));
+    // Latitude is dropped, so members of a high-latitude supercluster can land
+    // far apart in the plane. Thread a strand only where they hold together.
+    let spread = 0;
+    for (const a of members) for (const b of members) spread = Math.max(spread, Math.hypot(a.x - b.x, a.y - b.y));
+    const strand = members.length >= 2 && spread <= 2 * sizeM ? makeStrand(rand, members, sizeM / 6) : null;
+    return { ...sc, ...skyToPlane(sc.l, sc.dist * 1e6 * LY), sizeM, strand };
+  });
+  const voids = VOIDS.map((v) => ({ ...v, ...skyToPlane(v.l, v.dist * 1e6 * LY), sizeM: v.size * 1e6 * LY }));
+  return {
+    name: 'superclusters',
+    range: [40e6 * LY, 1.5e9 * LY],
+    draw(ctx, view, alpha) {
+      for (const sc of items) {
+        const x = view.sx(sc.x);
+        const y = view.sy(sc.y);
+        const r = sc.sizeM / 2 / view.mpp;
+        if (r < 4 || !onScreen(view, x, y, r + 50)) continue;
+        glow(ctx, x, y, r, 'rgba(150,140,200,0.22)', alpha);
+        if (sc.strand) drawPoints(ctx, view, sc.strand, 0, 0, '#b4b0d4', 0.55 * alpha);
+        label(view, x, y, sc.name, alpha, 1);
+        hit(view, x, y, sc.name, alpha, superclusterSummary(sc));
+      }
+      for (const v of voids) {
+        const x = view.sx(v.x);
+        const y = view.sy(v.y);
+        const r = v.sizeM / 2 / view.mpp;
+        if (r < 6) continue;
+        ctx.strokeStyle = `rgba(120,160,255,${0.3 * alpha})`;
+        ctx.setLineDash([3, 7]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, TAU);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        label(view, x, y, v.name, alpha, 1);
+        ringHit(view, x, y, r, v.name, alpha, voidSummary(v));
       }
     },
   };
@@ -427,7 +514,7 @@ function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0) {
   };
 }
 
-const superclusters = webLayer('superclusters', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 14000,
+const superclusters = webLayer('supercluster web', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 14000,
   [250e6 * LY, 4e9 * LY], 500e6 * LY);
 const cosmicWeb = webLayer('cosmic web', UNIVERSE.webSeed, UNIVERSE.radius, UNIVERSE.voids,
   UNIVERSE.webPoints, [2e9 * LY, INF]);
@@ -508,7 +595,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, clusters, localGroup, milkyWay, fieldStars,
+  cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, fieldStars,
   oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];

@@ -69,8 +69,20 @@ export function galaxySummary(galaxy) {
 
 export function clusterSummary(cluster) {
   const kind = cluster.name.includes('Group') ? 'Galaxy group' : 'Galaxy cluster';
-  const distance = cluster.dist ? `${formatDistance(cluster.dist * 1e6 * LY)} from the Milky Way` : 'centered on the Milky Way';
-  return `${kind} · ${distance} · approximate diameter ${formatDistance(cluster.size * 1e6 * LY)}`;
+  const parts = [kind];
+  if (cluster.abell && !cluster.name.includes('Abell')) parts.push(`Abell ${cluster.abell}`);
+  parts.push(cluster.dist ? `${formatDistance(cluster.dist * 1e6 * LY)} from the Milky Way` : 'centered on the Milky Way');
+  parts.push(`approximate diameter ${formatDistance(cluster.size * 1e6 * LY)}`);
+  if (cluster.sc) parts.push(`${cluster.sc} supercluster`);
+  return parts.join(' · ');
+}
+
+export function superclusterSummary(sc) {
+  return `Supercluster · ${formatDistance(sc.dist * 1e6 * LY)} from the Milky Way · about ${formatDistance(sc.size * 1e6 * LY)} across · Abell ${sc.members.join(', ')}`;
+}
+
+export function voidSummary(v) {
+  return `Void · centre ${formatDistance(v.dist * 1e6 * LY)} from the Milky Way · about ${formatDistance(v.size * 1e6 * LY)} across · ${v.note}`;
 }
 
 export function landmarkSummary(landmark) {

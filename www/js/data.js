@@ -16,7 +16,9 @@
 // The star, Local Group and galaxy-group positions were cross-checked against
 // Richard Powell's Atlas of the Universe (atlasoftheuniverse.com); group
 // directions use his centroids, distances stay with newer values.
-// Everything is close enough to look right, not to navigate by.
+// Exceptions, transcribed rather than recalled: the Abell clusters,
+// SUPERCLUSTERS (both from Powell's tables) and VOIDS (Tully et al. 2019).
+// Everything else is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
 export const LY = 9.4607304725808e15;
@@ -252,6 +254,16 @@ export const LOCAL_GROUP = [
 // Nearby galaxy groups and clusters. Distance in millions of light-years,
 // galactic longitude in degrees, size a rough diameter in Mly, n the number
 // of points drawn (a stand-in for richness).
+// Galaxy groups and clusters. dist in Mly, size in Mly (diameter), n the
+// number of dots drawn. The groups within 35 Mly and the Ursa Major, Fornax,
+// Eridanus and Antlia clusters are from memory as described above. Every
+// entry with an `abell` number, plus the Virgo Cluster, is transcribed from
+// Richard Powell's "The Nearest Superclusters" table (Abell, Corwin & Olowin
+// 1989; redshifts from Struble & Rood 1999; distances for H0 = 70 in the
+// CMB frame). Powell lists supergalactic coordinates; l and b here are the
+// same directions converted to galactic (SG pole at l = 47.37, b = +6.32;
+// SGL = 0 at l = 137.37). size and n follow Abell richness class (0/1/2).
+// `sc` is Powell's supercluster membership.
 export const CLUSTERS = [
   { name: 'Local Group', dist: 0, l: 0, size: 6, n: 40 },
   { name: 'Sculptor Group', dist: 9, l: 343, size: 4, n: 40 },
@@ -262,17 +274,95 @@ export const CLUSTERS = [
   { name: 'M101 Group', dist: 21, l: 102, size: 4, n: 30 },
   { name: 'NGC 1023 Group', dist: 33, l: 144, size: 4, n: 30 },
   { name: 'Leo I Group', dist: 35, l: 236, size: 5, n: 40 },
-  { name: 'Virgo Cluster', dist: 54, l: 284, size: 15, n: 400 },
+  { name: 'Virgo Cluster', dist: 52, l: 283.3, b: 73.9, size: 15, n: 400, sc: 'Virgo' },
   { name: 'Ursa Major Cluster', dist: 60, l: 145, size: 12, n: 120 },
   { name: 'Fornax Cluster', dist: 62, l: 237, size: 8, n: 120 },
   { name: 'Eridanus Cluster', dist: 75, l: 213, size: 8, n: 80 },
   { name: 'Antlia Cluster', dist: 130, l: 273, size: 8, n: 100 },
-  { name: 'Hydra Cluster', dist: 160, l: 270, size: 10, n: 150 },
-  { name: 'Centaurus Cluster', dist: 170, l: 302, size: 12, n: 200 },
-  { name: 'Norma Cluster', dist: 220, l: 325, size: 12, n: 250 },
-  { name: 'Perseus Cluster', dist: 240, l: 150, size: 15, n: 300 },
-  { name: 'Leo Cluster', dist: 300, l: 235, size: 12, n: 150 },
-  { name: 'Coma Cluster', dist: 320, l: 58, size: 20, n: 400 },
+  { name: 'Centaurus Cluster', abell: 3526, dist: 142, l: 302.4, b: 21.6, size: 8, n: 90, sc: 'Centaurus' },
+  { name: 'Abell 3565', abell: 3565, dist: 154, l: 313.5, b: 28.0, size: 11, n: 150, sc: 'Centaurus' },
+  { name: 'Hydra Cluster', abell: 1060, dist: 158, l: 269.7, b: 26.5, size: 11, n: 150, sc: 'Hydra' },
+  { name: 'Norma Cluster', abell: 3627, dist: 201, l: 325.4, b: -7.2, size: 11, n: 150 },
+  { name: 'Abell 3574', abell: 3574, dist: 205, l: 317.4, b: 31.0, size: 8, n: 90, sc: 'Centaurus' },
+  { name: 'Abell 262', abell: 262, dist: 209, l: 136.6, b: -25.1, size: 8, n: 90, sc: 'Perseus-Pisces' },
+  { name: 'Abell 3742', abell: 3742, dist: 211, l: 352.5, b: -42.2, size: 8, n: 90, sc: 'Pavo-Indus' },
+  { name: 'Perseus Cluster', abell: 426, dist: 231, l: 150.4, b: -13.4, size: 14, n: 250, sc: 'Perseus-Pisces' },
+  { name: 'Abell 194', abell: 194, dist: 233, l: 142.2, b: -63.1, size: 8, n: 90 },
+  { name: 'Abell 347', abell: 347, dist: 238, l: 141.2, b: -17.6, size: 8, n: 90, sc: 'Perseus-Pisces' },
+  { name: 'Abell 3656', abell: 3656, dist: 246, l: 1.9, b: -29.4, size: 8, n: 90, sc: 'Pavo-Indus' },
+  { name: 'Abell 3698', abell: 3698, dist: 260, l: 19.2, b: -33.3, size: 11, n: 150, sc: 'Pavo-Indus' },
+  { name: 'Abell 569', abell: 569, dist: 262, l: 168.6, b: 22.9, size: 8, n: 90 },
+  { name: 'Leo Cluster', abell: 1367, dist: 288, l: 234.8, b: 73.0, size: 14, n: 250, sc: 'Coma' },
+  { name: 'Abell 779', abell: 779, dist: 300, l: 191.1, b: 44.4, size: 8, n: 90 },
+  { name: 'Abell 3581', abell: 3581, dist: 301, l: 323.2, b: 32.9, size: 8, n: 90, sc: 'Centaurus' },
+  { name: 'Coma Cluster', abell: 1656, dist: 303, l: 59.3, b: 88.1, size: 14, n: 250, sc: 'Coma' },
+  { name: 'Abell 2870', abell: 2870, dist: 311, l: 294.9, b: -70.0, size: 8, n: 90, sc: 'Phoenix' },
+  { name: 'Abell 400', abell: 400, dist: 320, l: 170.3, b: -44.9, size: 11, n: 150 },
+  { name: 'Abell 2877', abell: 2877, dist: 324, l: 293.0, b: -70.9, size: 8, n: 90, sc: 'Phoenix' },
+  { name: 'Abell 634', abell: 634, dist: 349, l: 159.4, b: 33.7, size: 8, n: 90 },
+  { name: 'Abell 3389', abell: 3389, dist: 352, l: 274.7, b: -27.5, size: 8, n: 90 },
+  { name: 'Abell 2666', abell: 2666, dist: 358, l: 106.7, b: -33.8, size: 8, n: 90 },
+  { name: 'Abell 2806', abell: 2806, dist: 365, l: 306.1, b: -60.9, size: 8, n: 90, sc: 'Phoenix' },
+  { name: 'Abell 539', abell: 539, dist: 375, l: 195.7, b: -17.7, size: 11, n: 150 },
+  { name: 'Abell 2199', abell: 2199, dist: 395, l: 62.9, b: 43.7, size: 14, n: 250, sc: 'Hercules' },
+  { name: 'Abell 2836', abell: 2836, dist: 397, l: 301.9, b: -69.5, size: 8, n: 90, sc: 'Phoenix' },
+  { name: 'Abell 4038', abell: 4038, dist: 397, l: 25.3, b: -75.9, size: 14, n: 250 },
+  { name: 'Abell 2197', abell: 2197, dist: 407, l: 64.9, b: 43.8, size: 11, n: 150, sc: 'Hercules' },
+  { name: 'Abell 3747', abell: 3747, dist: 410, l: 357.6, b: -42.7, size: 8, n: 90 },
+  { name: 'Abell 2634', abell: 2634, dist: 410, l: 103.4, b: -33.1, size: 11, n: 150 },
+  { name: 'Abell 2731', abell: 2731, dist: 413, l: 313.9, b: -59.3, size: 8, n: 90, sc: 'Phoenix' },
+  { name: 'Abell 1177', abell: 1177, dist: 418, l: 220.5, b: 66.2, size: 8, n: 90, sc: 'Leo' },
+  { name: 'Abell 2896', abell: 2896, dist: 421, l: 274.8, b: -78.5, size: 8, n: 90, sc: 'Phoenix' },
+  { name: 'Abell 3537', abell: 3537, dist: 424, l: 305.3, b: 30.4, size: 8, n: 90 },
+  { name: 'Abell 1016', abell: 1016, dist: 426, l: 231.3, b: 52.5, size: 8, n: 90, sc: 'Leo' },
+  { name: 'Abell 2162', abell: 2162, dist: 426, l: 48.4, b: 46.0, size: 8, n: 90, sc: 'Hercules' },
+  { name: 'Abell 999', abell: 999, dist: 428, l: 227.9, b: 52.6, size: 8, n: 90, sc: 'Leo' },
+  { name: 'Abell 1185', abell: 1185, dist: 430, l: 203.1, b: 67.8, size: 11, n: 150, sc: 'Leo' },
+  { name: 'Abell 397', abell: 397, dist: 433, l: 161.9, b: -37.3, size: 8, n: 90 },
+  { name: 'Abell 189', abell: 189, dist: 434, l: 139.4, b: -60.2, size: 11, n: 150 },
+  { name: 'Abell 496', abell: 496, dist: 436, l: 209.5, b: -36.5, size: 11, n: 150 },
+  { name: 'Abell 1267', abell: 1267, dist: 436, l: 208.9, b: 71.4, size: 8, n: 90, sc: 'Leo' },
+  { name: 'Abell 3390', abell: 3390, dist: 441, l: 245.1, b: -21.0, size: 11, n: 150, sc: 'Columba' },
+  { name: 'Abell 1314', abell: 1314, dist: 444, l: 151.9, b: 63.6, size: 8, n: 90 },
+  { name: 'Abell 1257', abell: 1257, dist: 456, l: 183.5, b: 70.1, size: 8, n: 90, sc: 'Leo' },
+  { name: 'Abell 1142', abell: 1142, dist: 463, l: 240.1, b: 59.2, size: 8, n: 90, sc: 'Leo' },
+  { name: 'Abell 2052', abell: 2052, dist: 464, l: 9.4, b: 50.1, size: 8, n: 90, sc: 'Hercules-b' },
+  { name: 'Abell 2147', abell: 2147, dist: 464, l: 28.8, b: 44.5, size: 11, n: 150, sc: 'Hercules-b' },
+  { name: 'Abell 1228', abell: 1228, dist: 467, l: 186.9, b: 69.5, size: 11, n: 150, sc: 'Leo' },
+  { name: 'Abell 2063', abell: 2063, dist: 468, l: 12.8, b: 49.7, size: 11, n: 150, sc: 'Hercules-b' },
+  { name: 'Abell 3193', abell: 3193, dist: 474, l: 262.0, b: -47.2, size: 8, n: 90 },
+  { name: 'Abell 3381', abell: 3381, dist: 476, l: 240.3, b: -22.7, size: 11, n: 150, sc: 'Columba' },
+  { name: 'Abell 260', abell: 260, dist: 482, l: 137.3, b: -28.0, size: 11, n: 150 },
+  { name: 'Abell 1836', abell: 1836, dist: 482, l: 329.0, b: 47.7, size: 8, n: 90 },
+  { name: 'Hercules Cluster', abell: 2151, dist: 486, l: 31.6, b: 44.5, size: 14, n: 250, sc: 'Hercules-b' },
+  { name: 'Abell 3570', abell: 3570, dist: 486, l: 314.8, b: 23.7, size: 8, n: 90, sc: 'Shapley' },
+  { name: 'Abell 3664', abell: 3664, dist: 490, l: 313.0, b: -30.0, size: 11, n: 150 },
+  { name: 'Abell 2995', abell: 2995, dist: 494, l: 210.6, b: -71.1, size: 11, n: 150 },
+  { name: 'Abell 3575', abell: 3575, dist: 501, l: 317.5, b: 28.3, size: 8, n: 90, sc: 'Shapley' },
+];
+
+// Superclusters within about 500 Mly, from Powell's "A List of the Nearest
+// Superclusters" (same conversion). size is his characteristic extent in
+// Mly; members are Abell numbers, drawn where they appear in CLUSTERS.
+export const SUPERCLUSTERS = [
+  { name: 'Centaurus', dist: 194, l: 305.4, b: 30.6, size: 150, members: [1060, 3526, 3565, 3574, 3581] },
+  { name: 'Perseus-Pisces', dist: 222, l: 143.6, b: -19.6, size: 100, members: [262, 347, 426] },
+  { name: 'Pavo-Indus', dist: 235, l: 5.0, b: -36.0, size: 100, members: [3656, 3698, 3742] },
+  { name: 'Coma', dist: 290, l: 235.2, b: 82.6, size: 100, members: [1367, 1656] },
+  { name: 'Phoenix', dist: 372, l: 303.2, b: -68.7, size: 150, members: [2731, 2806, 2836, 2870, 2877, 2896] },
+  { name: 'Hercules', dist: 413, l: 59.2, b: 45.0, size: 100, members: [2162, 2197, 2199] },
+  { name: 'Leo', dist: 440, l: 216.0, b: 65.2, size: 150, members: [999, 1016, 1142, 1177, 1185, 1228, 1257, 1267] },
+  { name: 'Shapley', dist: 507, l: 317.3, b: 29.1, size: 100, members: [3570, 3571, 3575, 3578] },
+];
+
+// The Local Void, from Tully et al. 2019 (Cosmicflows-3, arXiv 1905.08329):
+// deepest density minimum at supergalactic [+22, -9, +22] Mpc, extent about
+// 69 x 51 x 60 Mpc at the -0.7 isodensity contour, beginning 1 Mpc from the
+// Local Group and bounded by the Perseus-Pisces and Norma-Pavo-Indus
+// filaments. dist and size in Mly.
+export const VOIDS = [
+  { name: 'Local Void', dist: 106, l: 91.3, b: -11.6, size: 200,
+    note: 'begins at the edge of the Local Group; bounded by the Perseus-Pisces and Norma-Pavo-Indus filaments' },
 ];
 
 // Notes shown while the view radius is inside an otherwise empty stretch,

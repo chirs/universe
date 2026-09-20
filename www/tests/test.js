@@ -5,11 +5,11 @@ import {
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
   levelFromShortcut, hashForView, moonSystemRadius, moonLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
-  galaxySummary, clusterSummary, landmarkSummary, observableUniverseSummary,
+  galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
-import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -99,6 +99,9 @@ test('hover summaries describe each kind of named object', () => {
   assert.match(galaxySummary(LOCAL_GROUP[1]), /^Spiral galaxy /);
   assert.match(clusterSummary(CLUSTERS[0]), /^Galaxy group · centered on the Milky Way/);
   assert.match(clusterSummary(CLUSTERS.find((c) => c.name === 'Virgo Cluster')), /^Galaxy cluster /);
+  assert.match(clusterSummary(CLUSTERS.find((c) => c.abell === 426)), /^Galaxy cluster · Abell 426 · .* · Perseus-Pisces supercluster$/);
+  assert.match(superclusterSummary(SUPERCLUSTERS[0]), /^Supercluster · .* · Abell 1060, 3526/);
+  assert.match(voidSummary(VOIDS[0]), /^Void · centre /);
   assert.match(landmarkSummary({ dist: 54e6 * LY, size: 55e6 * LY }), /^Large-scale structure /);
   assert.equal(
     observableUniverseSummary(46.5e9 * LY),
@@ -317,6 +320,18 @@ test('clusters are ordered outward with sane sizes', () => {
     assert.ok(c.size > 0 && c.size < c.dist + 10 && c.n > 0, c.name);
     last = c.dist;
   }
+});
+
+test('superclusters resolve to listed clusters and the Local Void matches its source vector', () => {
+  const abell = new Set(CLUSTERS.filter((c) => c.abell).map((c) => c.abell));
+  assert.equal(abell.size, CLUSTERS.filter((c) => c.abell).length);
+  for (const sc of SUPERCLUSTERS) {
+    assert.ok(sc.members.filter((a) => abell.has(a)).length >= 2, sc.name);
+    assert.ok(sc.l >= 0 && sc.l < 360 && sc.dist > 0 && sc.size > 0, sc.name);
+  }
+  const mpcToMly = 3.2616;
+  const localVoid = VOIDS.find((v) => v.name === 'Local Void');
+  assert.ok(Math.abs(localVoid.dist - Math.hypot(22, 9, 22) * mpcToMly) / localVoid.dist < 0.01);
 });
 
 test('star and galaxy coordinates are in range', () => {
