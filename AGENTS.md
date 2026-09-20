@@ -13,12 +13,19 @@ playbooks, which clone the repo and serve `www/` as the document root.
 ## Architecture
 
 - `www/js/data.js` — astronomical data and unit constants (`AU`, `LY`, `PC`,
-  all in meters). The values were written by a model from memory of the
+  all in meters). Most values were written by a model from memory of the
   references cited at the top of the file, not transcribed from them. They
   spot-check well, but no number here has been checked against its source
-  line by line. Treat any single value as approximate until you have.
+  line by line. Treat any single value as approximate until you have. The
+  exceptions are the Abell clusters, `SUPERCLUSTERS` and `VOIDS`, which are
+  transcribed from Powell's Atlas tables (H0 = 70, CMB frame) and Tully et
+  al. 2019, with supergalactic coordinates converted to galactic.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
-  nice-number scale bar, seeded PRNG, galactic-plane projection.
+  nice-number scale bar, seeded PRNG, galactic-plane projection, and the
+  cosmic web generator `makeZeldovichWeb` (a lattice of particles pushed
+  along the gradient of a noise potential, so filaments curve and voids
+  come in a range of sizes). The supercluster web leaves a hole over the
+  500 Mly the real cluster data covers.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut.
@@ -46,4 +53,7 @@ playbooks, which clone the repo and serve `www/` as the document root.
   distance to make something fit.
 - Procedural content (belts, spiral arms, cosmic web) comes from a fixed-seed
   PRNG so the picture is stable across reloads.
+- Dropping galactic latitude scatters structures near the galactic poles:
+  the Coma, Leo and Phoenix superclusters have members that land far apart
+  in the plane, so they get a glow and label but no strand.
 - Do not add a Co-Authored-By line to commit messages.
