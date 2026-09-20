@@ -286,7 +286,7 @@ export const SIGNPOSTS = [
 export const UNIVERSE = {
   radius: 46.5e9 * LY,        // comoving radius of the observable universe
   webSeed: 5,
-  webPoints: 9000,
+  webPoints: 20000,
   voids: 140,
   landmarks: [
     { name: 'Virgo Supercluster', dist: 54e6 * LY, l: 284, b: 74, size: 55e6 * LY },

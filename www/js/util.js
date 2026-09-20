@@ -167,70 +167,88 @@ export function mulberry32(seed) {
   };
 }
 
-// A procedural cosmic web: random cells with points projected onto the
-// boundaries between their nearest centers. kind 1 marks filaments and kind 2
-// their denser junctions; kind 0 is the sparse field between them.
-export function makeVoronoiWeb(seed, radius, nCells, nPoints) {
+// A procedural cosmic web by the Zel'dovich approximation: particles on a
+// lattice are pushed along the gradient of a smooth random potential and pile
+// up into curved sheets, filaments and knots. kind 2 marks the densest knots,
+// kind 1 filaments, kind 0 the sparse field between. Particles whose starting
+// point lies within `hole` of the origin are left out, with a soft edge.
+export function makeZeldovichWeb(seed, radius, nCells, nPoints, hole = 0) {
   const rand = mulberry32(seed);
-  const cells = new Float64Array(nCells * 2);
-  for (let i = 0; i < nCells; i++) {
-    const r = radius * Math.sqrt(rand());
-    const t = Math.PI * 2 * rand();
-    cells[2 * i] = r * Math.cos(t);
-    cells[2 * i + 1] = r * Math.sin(t);
+  const L = 2 * radius / Math.sqrt(nCells);
+
+  // Potential: three octaves of value noise on lattices of spacing L, L/2, L/4.
+  const octaves = [1, 0.4, 0.15].map((amp, k) => {
+    const spacing = L / 2 ** k;
+    const n = Math.ceil(2 * radius / spacing) + 3;
+    const grid = new Float64Array(n * n);
+    for (let i = 0; i < grid.length; i++) grid[i] = rand() - 0.5;
+    return { amp, spacing, n, grid };
+  });
+  const smooth = (t) => t * t * (3 - 2 * t);
+  const phi = (x, y) => {
+    let v = 0;
+    for (const { amp, spacing, n, grid } of octaves) {
+      const gx = (x + radius) / spacing + 1;
+      const gy = (y + radius) / spacing + 1;
+      const ix = Math.floor(gx);
+      const iy = Math.floor(gy);
+      const fx = smooth(gx - ix);
+      const fy = smooth(gy - iy);
+      const top = grid[iy * n + ix] * (1 - fx) + grid[iy * n + ix + 1] * fx;
+      const bottom = grid[(iy + 1) * n + ix] * (1 - fx) + grid[(iy + 1) * n + ix + 1] * fx;
+      v += amp * (top * (1 - fy) + bottom * fy);
+    }
+    return v;
+  };
+
+  // Particles on a jittered lattice inside the disc, outside the hole.
+  const side = Math.ceil(Math.sqrt(nPoints * 4 / Math.PI));
+  const step = 2 * radius / side;
+  const q = [];
+  for (let j = 0; j < side; j++) {
+    for (let i = 0; i < side; i++) {
+      const x = -radius + (i + rand()) * step;
+      const y = -radius + (j + rand()) * step;
+      const r = Math.hypot(x, y);
+      if (r > radius) continue;
+      if (hole && r < hole && rand() > (r - 0.85 * hole) / (0.15 * hole)) continue;
+      q.push(x, y);
+    }
   }
 
-  const pts = new Float64Array(nPoints * 2);
-  const kind = new Uint8Array(nPoints);
-  const width = radius / Math.sqrt(nCells) * 0.18;
-  for (let i = 0; i < nPoints; i++) {
-    const r = radius * Math.sqrt(rand());
-    const t = Math.PI * 2 * rand();
-    let x = r * Math.cos(t);
-    let y = r * Math.sin(t);
-    let first = Infinity;
-    let second = Infinity;
-    let third = Infinity;
-    let firstIndex = -1;
-    let secondIndex = -1;
-    for (let j = 0; j < nCells; j++) {
-      const dx = x - cells[2 * j];
-      const dy = y - cells[2 * j + 1];
-      const d = dx * dx + dy * dy;
-      if (d < first) {
-        third = second;
-        second = first;
-        secondIndex = firstIndex;
-        first = d;
-        firstIndex = j;
-      } else if (d < second) {
-        third = second;
-        second = d;
-        secondIndex = j;
-      } else if (d < third) {
-        third = d;
-      }
-    }
-
-    if (Math.sqrt(second) - Math.sqrt(first) < width) {
-      const ax = cells[2 * firstIndex];
-      const ay = cells[2 * firstIndex + 1];
-      const nx = cells[2 * secondIndex] - ax;
-      const ny = cells[2 * secondIndex + 1] - ay;
-      const mx = ax + nx / 2;
-      const my = ay + ny / 2;
-      const offset = ((x - mx) * nx + (y - my) * ny) / (nx * nx + ny * ny);
-      const px = x - offset * nx;
-      const py = y - offset * ny;
-      if (Math.hypot(px, py) <= radius) {
-        x = px;
-        y = py;
-      }
-      kind[i] = Math.sqrt(third) - Math.sqrt(first) < width * 1.4 ? 2 : 1;
-    }
-    pts[2 * i] = x;
-    pts[2 * i + 1] = y;
+  // Displace along -grad(phi), scaled so the rms push is a fraction of a cell.
+  const h = L / 16;
+  const psi = new Float64Array(q.length);
+  let sum = 0;
+  for (let i = 0; i < q.length; i += 2) {
+    const x = q[i];
+    const y = q[i + 1];
+    psi[i] = -(phi(x + h, y) - phi(x - h, y)) / (2 * h);
+    psi[i + 1] = -(phi(x, y + h) - phi(x, y - h)) / (2 * h);
+    sum += psi[i] * psi[i] + psi[i + 1] * psi[i + 1];
   }
+  const D = 0.2 * L / Math.sqrt(sum / (q.length / 2));
+  const moved = [];
+  for (let i = 0; i < q.length; i += 2) {
+    const x = q[i] + D * psi[i];
+    const y = q[i + 1] + D * psi[i + 1];
+    if (Math.hypot(x, y) <= radius) moved.push(x, y);
+  }
+  const pts = Float64Array.from(moved);
+
+  // Classify by local crowding: bin the final positions and rank by count.
+  const bin = L / 10;
+  const m = Math.ceil(2 * radius / bin) + 1;
+  const counts = new Uint16Array(m * m);
+  const cell = (i) => Math.floor((pts[i + 1] + radius) / bin) * m + Math.floor((pts[i] + radius) / bin);
+  for (let i = 0; i < pts.length; i += 2) counts[cell(i)]++;
+  const per = new Uint16Array(pts.length / 2);
+  for (let i = 0; i < pts.length; i += 2) per[i / 2] = counts[cell(i)];
+  const sorted = Uint16Array.from(per).sort();
+  const t1 = sorted[Math.floor(sorted.length * 0.5)];
+  const t2 = sorted[Math.floor(sorted.length * 0.9)];
+  const kind = new Uint8Array(per.length);
+  for (let i = 0; i < per.length; i++) kind[i] = per[i] >= t2 ? 2 : per[i] >= t1 ? 1 : 0;
   return { pts, kind };
 }
 

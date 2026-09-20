@@ -5,7 +5,7 @@ import {
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
-  landmarkSummary, observableUniverseSummary, makeVoronoiWeb,
+  landmarkSummary, observableUniverseSummary, makeZeldovichWeb,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -400,8 +400,8 @@ const clusters = (() => {
 
 // ---------------------------------------------------------------- cosmic web
 
-function webLayer(name, seed, radius, nCells, nPoints, range) {
-  const { pts, kind } = makeVoronoiWeb(seed, radius, nCells, nPoints);
+function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0) {
+  const { pts, kind } = makeZeldovichWeb(seed, radius, nCells, nPoints, hole);
   const filaments = new Float64Array(kind.reduce((n, k) => n + (k === 1), 0) * 2);
   const nodes = new Float64Array(kind.reduce((n, k) => n + (k === 2), 0) * 2);
   const field = new Float64Array(kind.reduce((n, k) => n + (k === 0), 0) * 2);
@@ -417,15 +417,18 @@ function webLayer(name, seed, radius, nCells, nPoints, range) {
     name,
     range,
     draw(ctx, view, alpha) {
+      ctx.globalCompositeOperation = 'lighter';
       drawPoints(ctx, view, field, 0, 0, '#78809f', 0.18 * alpha);
-      drawPoints(ctx, view, filaments, 0, 0, '#c8d0f0', 0.7 * alpha, 1.25);
-      drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.9 * alpha, 2);
+      drawPoints(ctx, view, filaments, 0, 0, '#c8d0f0', 0.45 * alpha, 1);
+      drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.1 * alpha, 3);
+      drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.7 * alpha, 1.5);
+      ctx.globalCompositeOperation = 'source-over';
     },
   };
 }
 
-const superclusters = webLayer('superclusters', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 7000,
-  [150e6 * LY, 4e9 * LY]);
+const superclusters = webLayer('superclusters', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 14000,
+  [250e6 * LY, 4e9 * LY], 500e6 * LY);
 const cosmicWeb = webLayer('cosmic web', UNIVERSE.webSeed, UNIVERSE.radius, UNIVERSE.voids,
   UNIVERSE.webPoints, [2e9 * LY, INF]);
 

@@ -6,7 +6,7 @@ import {
   levelFromShortcut, hashForView, moonSystemRadius, moonLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
   galaxySummary, clusterSummary, landmarkSummary, observableUniverseSummary,
-  makeVoronoiWeb,
+  makeZeldovichWeb,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
@@ -106,18 +106,25 @@ test('hover summaries describe each kind of named object', () => {
   );
 });
 
-test('procedural cosmic web is deterministic with filaments and junctions', () => {
-  const a = makeVoronoiWeb(5, 1000, 20, 1000);
-  const b = makeVoronoiWeb(5, 1000, 20, 1000);
+test('zeldovich web is deterministic, bounded, tiered, and honours the hole', () => {
+  const a = makeZeldovichWeb(5, 1000, 20, 2000);
+  const b = makeZeldovichWeb(5, 1000, 20, 2000);
   assert.deepEqual(a, b);
-  assert.equal(a.pts.length, 2000);
-  assert.equal(a.kind.length, 1000);
+  assert.equal(a.pts.length, a.kind.length * 2);
+  assert.ok(a.kind.length > 1000);
   assert.ok(a.kind.includes(0));
   assert.ok(a.kind.includes(1));
   assert.ok(a.kind.includes(2));
   for (let i = 0; i < a.kind.length; i++) {
     assert.ok(Math.hypot(a.pts[2 * i], a.pts[2 * i + 1]) <= 1000);
   }
+  const holed = makeZeldovichWeb(5, 1000, 20, 2000, 400);
+  let inner = 0;
+  for (let i = 0; i < holed.kind.length; i++) {
+    if (Math.hypot(holed.pts[2 * i], holed.pts[2 * i + 1]) < 250) inner++;
+  }
+  assert.ok(inner < holed.kind.length * 0.01);
+  assert.ok(holed.kind.length < a.kind.length);
 });
 
 test('global shortcuts ignore focused controls and editable content', () => {
