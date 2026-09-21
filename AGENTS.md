@@ -1,16 +1,29 @@
 # AGENTS.md
 
-Static site served from `www/`. Vanilla JS ES modules, 2D canvas, no build
-step, no dependencies. Deployed to universe.edgemony.org by the homelab
+Static site served from `www/`. The original explorer uses vanilla JS ES
+modules and 2D canvas, with no build step or dependencies. The separate 3D
+draft at `/v2/` uses a vendored Three.js distribution. Deployed to
+universe.edgemony.org by the homelab
 playbooks, which clone the repo and serve `www/` as the document root.
 
 ## Development
 
 - Run locally: `python3 -m http.server -d www`
-- Tests: `npm test` (Node's built-in runner, `www/tests/test.js`). Covers the
-  math in `util.js`, level lookup, and data sanity. Rendering is not tested.
+- Tests: `npm test` (Node's built-in runner, `www/tests/*.js`). Covers the
+  original math and data, plus v2 coordinate transforms, cosmology, camera
+  math, view URLs, and deterministic illustrations.
+- V2 browser checks: `node scripts/check-v2.mjs [URL] [debugging port]`.
+  Requires a separate Chrome with remote debugging enabled; see README.md.
 
 ## Architecture
+
+- `www/v2/` — separate 3D atlas. `model.js` holds pure math (Mly units,
+  solar origin, supergalactic Cartesian axes); `catalog.js` adapts the
+  existing data without inventing missing latitude; `render.js` uses
+  orthographic WebGL rendering; `main.js` owns camera state and input.
+  Third-party code in `vendor/` is pinned at Three.js 0.180.0 with its license.
+  The conventions below describe v1; v2 retains all three spatial dimensions.
+  Read `V2-DESIGN.md` for the intended scope and first-draft limitations.
 
 - `www/js/data.js` — astronomical data and unit constants (`AU`, `LY`, `PC`,
   all in meters). Most values were written by a model from memory of the

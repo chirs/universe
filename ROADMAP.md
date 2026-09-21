@@ -18,9 +18,18 @@ Open work only; completed items are removed as they land (see git history).
       the cost is a rotation between the Milky Way levels and the cluster
       levels.
 
+## 3D explorer
+
+- [ ] Expand `/v2/` with sourced 3D positions for nearby groups and individual
+      Virgo members. The first draft only adapts existing entries with latitude.
+- [ ] Improve the cosmic cutaway and add an interactive distance/lookback-time
+      ruler; the first draft's era surfaces are schematic.
+- [ ] Evaluate a wider redshift survey, with explicit coverage and distance
+      uncertainty, before replacing the illustrative 3D web.
+
 ## Deferred
 
-- 3D rendering (Three.js). The 2D top-down view reads better at the galaxy and
-  universe levels, and it keeps the site dependency-free.
+- Converting the original explorer to 3D. It retains its 2D view and no
+  dependencies; the separate `/v2/` atlas explores 3D instead.
 - Zooming inward past the Earth to cells and atoms, as Boeke and the Eameses
   did. A different site; this one is about the universe.

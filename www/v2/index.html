@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="A 3D atlas from the observable universe to the Milky Way. Rotate, explore, and find our place in space.">
+  <title>universe / a 3D atlas</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='14' fill='none' stroke='%23e1b984' stroke-width='2'/%3E%3Ccircle cx='20' cy='20' r='3' fill='%23e1b984'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <a class="wordmark" href="./">universe <span>A 3D ATLAS</span></a>
+    <div class="top-actions">
+      <button id="search-toggle" aria-expanded="false" aria-controls="search-panel">Find an object <span class="key">/</span></button>
+      <button id="about-toggle">About this map</button>
+      <a href="../" class="original">2D version ↗</a>
+    </div>
+  </header>
+  <main id="stage">
+    <canvas id="space" tabindex="0" aria-label="Interactive 3D universe. Drag to rotate, scroll to zoom, Shift-drag to pan. Arrow keys rotate; plus and minus zoom. Use Find an object for an accessible object list."></canvas>
+    <canvas id="labels" aria-hidden="true"></canvas>
+    <section id="intro" aria-live="polite">
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="scene-title"></h1>
+      <p id="scene-description"></p>
+      <button id="find-home" class="primary">Find our galaxy <span>↘</span></button>
+    </section>
+    <div id="search-panel" class="panel" hidden>
+      <label for="search">Find a galaxy or cluster</label>
+      <input id="search" type="search" placeholder="Try Andromeda or Virgo…" autocomplete="off">
+      <div id="search-results"></div>
+    </div>
+    <aside id="selection" class="panel" hidden aria-label="Selected object">
+      <button class="close" id="close-selection" aria-label="Close object details">×</button>
+      <div class="eyebrow" id="object-type"></div>
+      <h2 id="object-name"></h2>
+      <dl><dt>Distance from the Sun</dt><dd id="object-distance"></dd><dt>Region</dt><dd id="object-group"></dd></dl>
+      <p id="object-note"></p>
+      <div class="panel-actions"><button id="focus-object" class="primary">Explore here ↘</button><a id="object-source" target="_blank" rel="noopener">Source ↗</a></div>
+    </aside>
+    <div id="era-key">
+      <div class="eyebrow">DISTANCE IS ALSO HISTORY</div>
+      <div><i class="swatch near"></i> Nearby universe</div>
+      <div><i class="swatch early"></i> Earlier galaxies</div>
+      <div><i class="swatch dark"></i> Before the first stars</div>
+      <div><i class="swatch cmb"></i> Oldest light · CMB</div>
+    </div>
+    <div id="view-controls" aria-label="View controls">
+      <button id="zoom-in" aria-label="Zoom in">+</button>
+      <button id="zoom-out" aria-label="Zoom out">−</button>
+      <button id="reset-view" title="Reset the viewing angle and framing">Reset view</button>
+      <button id="cutaway" aria-pressed="true">Cutaway <span>on</span></button>
+    </div>
+    <div id="loading" role="status">Mapping the neighborhood…</div>
+    <div id="fallback" class="panel" hidden><h2>The 3D view couldn’t start.</h2><p>This explorer needs WebGL 2. You can still explore the universe in the original version.</p><a href="../">Open the 2D explorer ↗</a></div>
+    <noscript><p class="panel">Enable JavaScript to explore the 3D map, or <a href="../">visit the original explorer</a>.</p></noscript>
+    <div id="gesture-hint">Drag to rotate <span>·</span> Scroll to zoom <span>·</span> Click to discover</div>
+  </main>
+  <footer>
+    <nav id="stops" aria-label="Scale bookmarks"></nav>
+    <div class="readouts"><span id="scale"></span><span id="data-key"></span><span class="draft">EXPERIMENTAL / V2</span></div>
+  </footer>
+  <dialog id="about">
+    <button class="close" id="close-about" aria-label="Close map information">×</button>
+    <div class="eyebrow">A FIRST DRAFT</div><h2>A map of space.<br>And a view into time.</h2>
+    <p>Start with our observable universe, then explore inward to the Milky Way. All objects live in one 3D coordinate system. Rotating the map reveals depth; the distances are not flattened.</p>
+    <h3>What is measured?</h3><p>Named Local Group galaxies and cluster centers use the existing atlas’s approximate catalog distances and directions. The sample is incomplete. Cluster clouds, spiral arms, and the wider cosmic web are illustrations, not a galaxy survey.</p>
+    <h3>What does time mean here?</h3><p>Faraway regions are seen earlier in cosmic history. The observer stays at our location even as you move the camera. The outer bands are schematic eras, not physical shells. The CMB marks the oldest light we see, just inside the observable horizon.</p>
+    <p>Distance is expressed in comoving coordinates at large scales, using a flat ΛCDM model (H₀ = 67.4 km/s/Mpc, Ωm = 0.315). Nearby distances are the approximate measured values. Screen separations are projections of the full 3D distances.</p>
+    <h3>Explore</h3><p>Drag to rotate; scroll to zoom; Shift-drag to pan. On touchscreens, use one finger to rotate and two to zoom and pan. With the map focused, use arrow keys, + / −, and R to reset. Find an object, then choose “Explore here” to make it your focus.</p>
+    <p class="sources"><a href="https://mapoftheuniverse.net/" target="_blank" rel="noopener">Map of the Universe ↗</a><a href="https://lambda.gsfc.nasa.gov/education/graphic_history/univ_evol.html" target="_blank" rel="noopener">Cosmic history · NASA ↗</a><a href="https://www.atlasoftheuniverse.com/" target="_blank" rel="noopener">Atlas of the Universe ↗</a></p>
+  </dialog>
+  <script type="module">
+    import('./main.js').catch(error => {
+      console.error(error);
+      document.getElementById('loading').hidden = true;
+      document.getElementById('fallback').hidden = false;
+    });
+  </script>
+</body>
+</html>

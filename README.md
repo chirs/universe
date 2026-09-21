@@ -28,7 +28,26 @@ The widest level is not a present-day snapshot. Looking farther out also means
 looking farther back in time, so it is presented as a schematic 2D comoving
 slice. Its cosmic web is procedural rather than a survey reconstruction.
 
-No build step, no dependencies. 2D canvas.
+The original explorer uses 2D canvas, with no build step or dependencies.
+
+### 3D draft
+
+[Open the 3D atlas](https://universe.edgemony.org/v2/). It begins at the
+observable universe and zooms inward to the Local Group and Milky Way's
+satellite neighborhood. Drag to rotate, scroll to zoom, Shift-drag to pan,
+and click an object for details. Touch supports rotation, pinch zoom, and
+two-finger pan. Scale bookmarks and object search provide direct navigation.
+The URL preserves the current view, including the focused object.
+
+The draft uses full 3D positions for the existing Local Group galaxies and
+clusters with known latitude. The nearby catalog is incomplete; cluster
+clouds, galaxy shapes, and the wider web are explicitly illustrative. It
+uses an orthographic camera and a schematic cosmic cutaway, with comoving
+distance and lookback time derived from a flat LCDM model. No automatic tour.
+
+`www/v2/` is independent of the original renderer. Three.js 0.180.0 is
+vendored from the npm distribution via jsDelivr in `www/v2/vendor/`, with its
+MIT license. No CDN requests or build step are needed at runtime.
 
 ### Development
 
@@ -40,4 +59,14 @@ Run tests (Node's built-in runner):
 
     npm test
 
+Optional browser checks use a separate Chrome session with
+`--remote-debugging-port=9331` and a local server on port 8766:
+
+    node scripts/check-v2.mjs http://127.0.0.1:8766/v2/
+
+The script checks desktop and emulated mobile interaction and saves
+screenshots under `/private/tmp/universe-v2-*.png`. It has no npm dependencies.
+
 See [ROADMAP.md](ROADMAP.md) for planned work.
+
+The [v2 design](V2-DESIGN.md) describes the direction beyond this first draft.
