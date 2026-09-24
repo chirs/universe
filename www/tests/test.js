@@ -16,7 +16,7 @@ import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE,
+  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { cosmologyAt } from '../v2/model.js';
@@ -740,4 +740,16 @@ test('slerpSky follows the great circle between two points', () => {
   assert.ok(Math.abs(mid.l - 45) < 1e-9 && Math.abs(mid.b) < 1e-9);
   const pole = slerpSky([0, 60], [180, 60], 0.5);
   assert.ok(Math.abs(pole.b - 90) < 1e-6);
+});
+
+test('the Psyche spacecraft closes on 16 Psyche by the end of its Horizons track', () => {
+  const asteroid = ASTEROIDS.find((a) => a.name === '16 Psyche');
+  const gap = (date) => {
+    const days = daysSinceJ2000(date);
+    const rock = orbitalPosition(asteroid, days);
+    const craft = sampledPosition(TRACKS.Psyche, days);
+    return Math.hypot(rock.x - craft.x, rock.y - craft.y) / AU;
+  };
+  assert.ok(gap(Date.UTC(2028, 0, 1)) > 0.1);
+  assert.ok(gap(Date.UTC(2029, 0, 15)) < 0.02);
 });

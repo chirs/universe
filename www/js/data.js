@@ -168,6 +168,13 @@ export const COMETS = [
     radius: 30 * KM, color: '#cfe8ff', note: 'the great comet of 1997, visible to the eye for 18 months; back in about 4380' },
 ];
 
+// Named asteroids beyond the belt scatter, from the same database (epoch
+// 2026) and laid flat the same way. Radius is half the mean diameter.
+export const ASTEROIDS = [
+  { name: '16 Psyche', a: 2.925720466462538 * AU, e: 0.1349324738201893, period: 1827.87996016922, varpi: 20.008, L0: 358.132,
+    radius: 111 * KM, color: '#c8c0b0', note: 'about 280 by 240 by 170 km, dense and metal-rich, perhaps the exposed core of a shattered protoplanet; NASA\u2019s Psyche arrives in 2029' },
+];
+
 // Spacecraft whose paths come from JPL Horizons: scripts/fetch-spacecraft.mjs
 // reads this list and writes the sampled tracks to spacecraft.js. `horizons`
 // is the Horizons id, `step` the sample spacing in days, `center` the body

@@ -1,7 +1,7 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
-  SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
+  SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
   GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
@@ -12,7 +12,7 @@ import {
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
-  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, trojanPoints,
+  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, asteroidSummary, trojanPoints,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
 } from './util.js';
 
@@ -236,13 +236,15 @@ const trojans = (() => {
   };
 })();
 
-const comets = {
-  name: 'comets',
+// Comets and named asteroids on their flattened orbits.
+const smallBodies = {
+  name: 'small bodies',
   range: [0, 1500 * AU],
   draw(ctx, view, alpha, days) {
     ctx.lineWidth = 1;
-    for (const c of COMETS) {
-      orbitEllipse(ctx, view, c, `rgba(190,220,255,${0.16 * alpha})`);
+    for (const c of [...COMETS, ...ASTEROIDS]) {
+      const comet = COMETS.includes(c);
+      orbitEllipse(ctx, view, c, comet ? `rgba(190,220,255,${0.16 * alpha})` : `rgba(255,255,255,${0.1 * alpha})`);
       const pos = orbitalPosition(c, days);
       const x = view.sx(pos.x);
       const y = view.sy(pos.y);
@@ -250,7 +252,7 @@ const comets = {
       dot(ctx, x, y, 2, c.color, alpha);
       const far = Math.hypot(x - view.sx(0), y - view.sy(0)) > 14;
       label(view, x, y, c.name, far ? alpha : 0, 0);
-      hit(view, x, y, c.name, far ? alpha : 0, cometSummary(c));
+      hit(view, x, y, c.name, far ? alpha : 0, comet ? cometSummary(c) : asteroidSummary(c));
     }
   },
 };
@@ -1321,7 +1323,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, comets, spacecraft, moons, earthOrbiters, sunDot,
+  nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

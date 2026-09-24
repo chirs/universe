@@ -335,6 +335,10 @@ export function spacecraftSummary(sc, distance, center = 'the Sun') {
   return `Spacecraft · ${formatDistance(distance)} from ${center} · ${sc.note}`;
 }
 
+export function asteroidSummary(asteroid) {
+  return `Asteroid · radius ${formatDistance(asteroid.radius)} · orbit ${formatDistance(asteroid.a)} · period ${formatPeriod(asteroid.period)} · ${asteroid.note}`;
+}
+
 export function cometSummary(comet) {
   const q = comet.a * (1 - comet.e);
   const Q = comet.a * (1 + comet.e);
