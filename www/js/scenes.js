@@ -6,6 +6,7 @@ import {
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import { GLOBULAR_CLUSTERS } from './globulars.js';
+import { HII_REGIONS } from './hii.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, ringSummary, starSummary, galaxySummary, clusterSummary,
@@ -15,7 +16,7 @@ import {
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, rankineNose, rankineRadius, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
-  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary,
+  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary, hiiSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -817,8 +818,8 @@ const milkyWay = (() => {
     });
     return { ...arm, ...made, bright: Float64Array.from(bright), close: Float64Array.from([...close.fitted, ...close.extra]), dust };
   });
-  // Star-forming knots beaded along the arms, denser where the fit is; some
-  // glow pink like the nebulae around young clusters.
+  // Knots of young stars beaded along the arms, denser where the fit is.
+  // The pink ones they once included are now the real HII regions.
   const knots = (() => {
     const rand = mulberry32(mw.seed + 20);
     const out = [];
@@ -833,7 +834,7 @@ const milkyWay = (() => {
       walk(arm.fittedSpine, 0.35);
       for (const s of arm.extraSpines) walk(s, 0.2);
     }
-    return out;
+    return out.filter((k) => !k.pink);
   })();
   return {
     name: 'milky way',
@@ -901,7 +902,7 @@ const milkyWay = (() => {
           const x = view.sx(k.x);
           const y = view.sy(k.y);
           if (!onScreen(view, x, y)) continue;
-          glow(ctx, x, y, Math.max(2.5, 1.4 * px(k.size)), k.pink ? 'rgba(255,150,185,0.8)' : 'rgba(205,225,255,0.8)', knotAlpha);
+          glow(ctx, x, y, Math.max(2.5, 1.4 * px(k.size)), 'rgba(205,225,255,0.8)', knotAlpha);
         }
       }
       // The bar: an elliptical glow along its axis, plus its points.
@@ -960,6 +961,49 @@ const dust = (() => {
       const size = 2 * HALF / view.mpp;
       ctx.globalAlpha = 0.85 * alpha;
       ctx.drawImage(img, view.sx(-HALF), view.sy(HALF), size, size);
+      ctx.globalAlpha = 1;
+    },
+  };
+})();
+
+// HII regions from the WISE catalog: hydrogen lit pink by young massive
+// stars, at their catalog distances and sizes, with a floor so the smallest
+// still show as a glow.
+const hiiRegions = (() => {
+  const ARCSEC = Math.PI / 180 / 3600;
+  const items = HII_REGIONS.map(([name, l, b, dist, rad, parallax]) => {
+    const d = dist * 1000 * PC;
+    const r = rad * ARCSEC * d;
+    // The biggest complexes are the brightest.
+    return { name, l, b, dist: d, radius: r, parallax, ...skyToPlane(l, d), strength: 0.3 + 0.35 * Math.min(1, r / (30 * PC)) };
+  });
+  let sprite = null;
+  const makeSprite = () => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const t = c.getContext('2d');
+    const g = t.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,170,200,1)');
+    g.addColorStop(0.3, 'rgba(255,120,165,0.55)');
+    g.addColorStop(1, 'rgba(255,90,140,0)');
+    t.fillStyle = g;
+    t.fillRect(0, 0, 64, 64);
+    return c;
+  };
+  return {
+    name: 'hii regions',
+    range: [300 * LY, 500e3 * LY],
+    draw(ctx, view, alpha) {
+      sprite ??= makeSprite();
+      for (const h of items) {
+        const x = view.sx(h.x);
+        const y = view.sy(h.y);
+        const r = Math.max(3, 1.5 * h.radius / view.mpp);
+        if (!onScreen(view, x, y, r)) continue;
+        ctx.globalAlpha = h.strength * alpha;
+        ctx.drawImage(sprite, x - r, y - r, 2 * r, 2 * r);
+        hit(view, x, y, h.name || 'HII region', alpha, hiiSummary(h));
+      }
       ctx.globalAlpha = 1;
     },
   };
@@ -1711,7 +1755,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, globularClusters, nuclearCluster,
+  cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
   nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];

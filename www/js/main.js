@@ -34,7 +34,7 @@ export const LEVELS = [
   { id: 'local-bubble', name: 'Local Bubble', shortcut: 'u', radius: 700 * LY, cx: 0, cy: 0,
     caption: 'A cavity about 1,000 ly across, swept out by supernovae over the last 14 million years. The star-forming clouds lie on its shell; the outline between them is schematic. Brown is dust, mapped in 3D from Gaia (Lallement et al. 2022); stars are Gaia\u2019s most luminous within 1,500 ly.' },
   { id: 'local-arm', name: 'Local arm', shortcut: 'l', radius: 8000 * LY, cx: 0, cy: 0,
-    caption: 'The Sun sits in the Local arm, between the Sagittarius–Carina arm toward the center and the Perseus arm away from it. Arm positions are from maser parallaxes; faint stretches are extrapolated. The dust map streaks along sight lines past about 2 kly.' },
+    caption: 'The Sun sits in the Local arm, between the Sagittarius–Carina arm toward the center and the Perseus arm away from it. Arm positions are from maser parallaxes; faint stretches are extrapolated.' },
   { id: 'milky-way', name: 'Milky Way', shortcut: '7', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
     caption: 'Arms fitted to maser parallaxes (Reid et al. 2019), faint where extrapolated. Disk, bulge and bar are schematic.' },
   { id: 'galactic-center', name: 'Galactic center', shortcut: 'g', radius: 4000 * AU, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,

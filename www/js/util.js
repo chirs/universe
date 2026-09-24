@@ -64,6 +64,12 @@ export function ringSummary(ring, planetName) {
   return `Ring of ${planetName} · ${where}`;
 }
 
+export function hiiSummary(region) {
+  const how = region.parallax ? 'by maser parallax' : 'kinematic distance, uncertain';
+  return `HII region · hydrogen lit by young massive stars · radius ${formatDistance(region.radius)} · `
+    + `${formatDistance(region.dist)} from the Sun, ${how} · WISE catalog, Anderson et al. 2014`;
+}
+
 export function starSummary(star) {
   const parts = ['Star'];
   if (star.radius) parts.push(`radius ${formatDistance(star.radius)}`);

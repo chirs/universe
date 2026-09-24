@@ -21,6 +21,7 @@ import {
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
+import { HII_REGIONS } from '../js/hii.js';
 import { cosmologyAt, HORIZON } from '../v2/model.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -359,6 +360,15 @@ test('the Gaia star file holds stars within 1500 ly with valid classes', () => {
     const c = buf[4 * n + i];
     assert.ok(c >> 2 < 6 && (c & 3) < 3);
   }
+});
+
+test('HII regions sit in the disk at catalog distances', () => {
+  assert.ok(HII_REGIONS.length > 900);
+  for (const [name, l, b, dist, rad, parallax] of HII_REGIONS) {
+    assert.ok(l >= 0 && l < 360 && Math.abs(b) < 20, name);
+    assert.ok(dist > 0 && dist < 25 && rad > 0 && (parallax === 0 || parallax === 1), name);
+  }
+  assert.ok(HII_REGIONS.some(([name]) => name === 'Orion A'));
 });
 
 test('clusters are ordered outward with sane sizes', () => {
