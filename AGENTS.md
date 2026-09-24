@@ -80,9 +80,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `UNIVERSE` takes its radius, era distances and lookback rings from the
   same cosmology: the cosmic web fades toward the first galaxies (z = 20),
   then the `eras` layer draws the dark ages, the microwave background and
-  the opaque plasma out to the horizon. Past the horizon the `beyond` layer tiles a
-  gray patch of the same web generator, illustration rather than data,
-  with the farthest we will ever see (`visibilityLimit`, the horizon plus
+  the opaque plasma out to the horizon. Past the horizon the `beyond` layer draws
+  the farthest we will ever see (`visibilityLimit`, the horizon plus
   `eventHorizon` in `www/v2/model.js`) as a dashed ring; zoomed far out,
   other galaxies' horizons are scattered around ours. A craft with
   `center: 399` (JWST and Euclid at L2; SOHO, DSCOVR and IMAP at L1) is
@@ -186,13 +185,14 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `follow` keeps the camera pinned to that planet as it moves; following
   drops automatically once the view is wider than a fraction of an AU.
   Every planet and dwarf planet gets a `PLANET_LEVELS` entry (built by
-  `planetLevels` in `util.js`), listed in the Planets menu and reached by
+  `planetLevels` in `util.js`), listed in the Planets or Dwarf planets menu and reached by
   clicking the planet or by `#uranus` and the like, named for the planet
   alone; the stop is sized to
   the moon system, or to a couple of dozen radii for a moonless body. The
   level bar is laid out by `BAR`: plain
-  levels and drop-up menus (Planets, Solar system, Milky Way), each menu
-  listing its stops widest first and showing the active stop's name. A level with `clickName` is reached by
+  levels and drop-up menus (Planets, Dwarf planets, Solar system, Milky
+  Way, Local Group, Superclusters, Universe), each menu listing its stops widest first (the Milky Way menu puts
+  the galaxy last, next to the button) and showing the active stop's name. A level with `clickName` is reached by
   clicking that label (or any of `clickNames`), which is how the galactic
   center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the
   Local Group stops (built from `LOCAL_GROUP_STOPS`) work. The stops

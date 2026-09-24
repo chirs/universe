@@ -1,12 +1,16 @@
 // The camera stops: the wide levels, one per planet, the close-ups that
 // follow a planet, and Earth's companions. Pure data, kept apart from the
 // input and drawing in main.js so tests can check what names them.
-import { AU, LY, KM, PLANETS, STARS, SYSTEM_STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS, WR_140 } from './data.js';
+import { AU, LY, KM, PLANETS, STARS, SYSTEM_STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS, WR_140, CLUSTERS, UNIVERSE } from './data.js';
 import { skyToPlane, orbitalPosition, planetLevels, systemLevels, galaxyLevels } from './util.js';
 import { GALACTIC_CENTER, M87_POSITION } from './scenes.js';
 
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
 const VIRGO = skyToPlane(284, 54e6 * LY);
+const VIRGO_CLUSTER = CLUSTERS.find((c) => c.name === 'Virgo Cluster');
+const VIRGO_CLUSTER_POS = skyToPlane(VIRGO_CLUSTER.l, VIRGO_CLUSTER.dist * 1e6 * LY);
+const LANIAKEA = UNIVERSE.landmarks.find((m) => m.name === 'Laniakea');
+const LANIAKEA_POS = skyToPlane(LANIAKEA.l, LANIAKEA.dist);
 
 // Planets: one level per planet and dwarf planet, listed in the Planets menu and
 // reached by clicking the planet or by hash. Each has `follow`, so the camera
@@ -45,11 +49,17 @@ export const LEVELS = [
     caption: 'Horizon, shadow and innermost stable orbit to scale. The glow is schematic, ringing the shadow as in the Event Horizon Telescope image.' },
   { id: 'm87', name: 'M87*', radius: 2500 * AU, cx: M87_POSITION.x, cy: M87_POSITION.y, clickNames: ['M87', 'M87*'],
     caption: 'The black hole the Event Horizon Telescope imaged in 2019, 6.5 billion solar masses: its shadow alone is wider than Pluto’s orbit, 1,500 times Sgr A*’s. Horizon, shadow and innermost stable orbit to scale.' },
-  { id: 'milky-way-halo', name: 'MW halo', shortcut: 'h', radius: 500e3 * LY, cx: 0, cy: 0,
+  { id: 'milky-way-halo', name: 'Milky Way halo', shortcut: 'h', radius: 500e3 * LY, cx: 0, cy: 0,
     caption: 'Schematic top-down projection. Radial distances are to scale; galactic latitude is omitted and galaxy sizes are approximate.' },
   { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
   ...GALAXY_LEVELS,
+  { id: 'virgo-cluster', name: 'Virgo Cluster', radius: 10e6 * LY, cx: VIRGO_CLUSTER_POS.x, cy: VIRGO_CLUSTER_POS.y, clickName: 'Virgo Cluster' },
   { id: 'virgo', name: 'Virgo Supercluster', shortcut: '9', radius: 60e6 * LY, cx: VIRGO.x / 2, cy: VIRGO.y / 2 },
+  { id: 'laniakea', name: 'Laniakea', radius: 300e6 * LY, cx: LANIAKEA_POS.x, cy: LANIAKEA_POS.y, clickName: 'Laniakea',
+    caption: 'Our home supercluster, 520 million light-years across, defined by where galaxies flow; the Milky Way is near its edge, the Great Attractor near its heart.' },
+  { id: 'superclusters', name: 'Nearby superclusters', radius: 650e6 * LY, cx: 0, cy: 0 },
+  { id: 'cosmic-web', name: 'Cosmic web', radius: 5e9 * LY, cx: 0, cy: 0,
+    caption: 'The web is procedural, not a present-day map; the walls and distant objects are real.' },
   { id: 'universe', name: 'Observable universe', shortcut: '0', radius: 58e9 * LY, cx: 0, cy: 0,
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];

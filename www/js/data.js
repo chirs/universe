@@ -1034,7 +1034,8 @@ export const UNIVERSE = {
   webCell: 0.35e9 * LY,
   webPoints: 1200000,
   landmarks: [
-    { name: 'Virgo Supercluster', dist: 54e6 * LY, l: 284, b: 74, size: 55e6 * LY },
-    { name: 'Laniakea', dist: 250e6 * LY, l: 307, b: 9, size: 260e6 * LY },
+    // size is the diameter; the Milky Way lies near the edge of both.
+    { name: 'Virgo Supercluster', dist: 54e6 * LY, l: 284, b: 74, size: 110e6 * LY },
+    { name: 'Laniakea', dist: 250e6 * LY, l: 307, b: 9, size: 520e6 * LY },
   ],
 };

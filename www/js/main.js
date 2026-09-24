@@ -11,13 +11,13 @@ import { drawOverview } from './overview.js';
 import { createAmbient } from './audio.js';
 
 // The level bar: a plain level id, or a menu of levels in sections, listed
-// widest at the top so a menu reads like the sky above the bar.
+// widest at the top so a menu reads like the sky above the bar. The Milky
+// Way menu turns that over: the galaxy itself sits next to the button, below
+// a rule, with the places inside it grouped above, narrowest first.
 const byId = (id) => LEVELS.find((lv) => lv.id === id);
 const BAR = [
-  { label: 'Planets', sections: [
-    { title: 'Dwarf planets', levels: PLANET_LEVELS.filter((lv) => lv.follow.dwarf).reverse() },
-    { title: 'Planets', levels: PLANET_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
-  ] },
+  { label: 'Planets', sections: [{ levels: PLANET_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() }] },
+  { label: 'Dwarf planets', sections: [{ levels: PLANET_LEVELS.filter((lv) => lv.follow.dwarf).reverse() }] },
   { label: 'Solar system', sections: [
     { levels: ['heliosphere', 'trans-neptunian', 'outer', 'inner'].map(byId) },
     { title: 'Earth\u2019s companions', levels: COMPANION_LEVELS },
@@ -26,9 +26,15 @@ const BAR = [
     { levels: [byId('stars')] },
     { title: 'Star systems, farthest first', levels: [...SYSTEM_LEVELS].reverse() },
   ] },
-  { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'wr-140', 'local-bubble', 'galactic-center', 'sgr-a'].map(byId) }] },
+  { label: 'Milky Way', sections: [
+    { title: 'Galactic center', levels: ['sgr-a', 'galactic-center'].map(byId) },
+    { title: 'Around the Sun', levels: ['local-bubble', 'local-arm'].map(byId) },
+    { title: 'Stars', levels: [byId('wr-140')] },
+    { rule: true, levels: ['milky-way-halo', 'milky-way'].map(byId) },
+  ] },
   { label: 'Local Group', sections: [{ levels: ['local-group', 'andromeda', 'magellanic-clouds', 'triangulum'].map(byId) }] },
-  'virgo', 'universe',
+  { label: 'Superclusters', sections: [{ levels: ['superclusters', 'laniakea', 'virgo', 'virgo-cluster', 'm87'].map(byId) }] },
+  { label: 'Universe', sections: [{ levels: ['universe', 'cosmic-web'].map(byId) }] },
 ];
 
 const SPEEDS = [
@@ -476,6 +482,11 @@ function buildMenu(spec) {
   list.className = 'menu-list';
   list.hidden = true;
   for (const section of spec.sections) {
+    if (section.rule) {
+      const rule = document.createElement('div');
+      rule.className = 'rule';
+      list.appendChild(rule);
+    }
     if (section.title) {
       const head = document.createElement('div');
       head.className = 'group';
