@@ -8,12 +8,12 @@ import {
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
-  starStyle, starSystemSummary, cloudSummary, makeExpDisk,
+  starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
-  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE,
+  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, ALPHA_CENTAURI,
 } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -588,4 +588,18 @@ test('makeExpDisk follows an exponential surface density', () => {
   assert.ok(Math.abs(sum / 20000 - 2) < 0.06, 'mean radius is twice the scale length');
   // Fraction inside one scale length is 1 - 2/e for a Gamma(2) law.
   assert.ok(Math.abs(inside / 20000 - (1 - 2 / Math.E)) < 0.02);
+});
+
+test('Alpha Centauri orbits obey Kepler with the transcribed masses', () => {
+  const ac = ALPHA_CENTAURI;
+  const kepler = (aAU, periodYears, mass) => (aAU ** 3) / (periodYears ** 2) / mass;
+  assert.ok(Math.abs(kepler(ac.orbit.a / AU, ac.orbit.period / YEAR_D, ac.A.mass + ac.B.mass) - 1) < 0.01, 'A-B');
+  for (const p of ac.proxima.planets) {
+    assert.ok(Math.abs(kepler(p.a / AU, p.period / YEAR_D, ac.proxima.mass) - 1) < 0.02, p.name);
+  }
+  const rs = skyOrbitPath(ac.orbit, 64).map((p) => Math.hypot(p.east, p.north, p.depth) / AU);
+  assert.ok(Math.abs(Math.min(...rs) - 23.299 * (1 - 0.51947)) < 0.05);
+  assert.ok(Math.abs(Math.max(...rs) - 23.299 * (1 + 0.51947)) < 0.05);
+  assert.match(componentSummary(ac.A, 'Alpha Centauri B', ac.orbit.period), /^Star · G2V · 1.08 solar masses · radius [\d.,]+ .* · orbits Alpha Centauri B every 79.8 years$/);
+  assert.match(exoplanetSummary(ac.proxima.planets[1], 'Proxima Centauri'), /^Planet of Proxima Centauri · 1.05 Earth masses · orbit 7.25 million km · period 11.2 days$/);
 });

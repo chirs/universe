@@ -90,6 +90,14 @@ export function starSystemSummary(system) {
   return parts.join(' · ');
 }
 
+export function componentSummary(star, partner, period) {
+  return `Star · ${star.type} · ${compactNumber(star.mass)} solar masses · radius ${formatDistance(star.radius)} · orbits ${partner} every ${formatPeriod(period)}`;
+}
+
+export function exoplanetSummary(planet, hostName) {
+  return `Planet of ${hostName} · ${compactNumber(planet.massEarth)} Earth masses · orbit ${formatDistance(planet.a)} · period ${formatPeriod(planet.period)}`;
+}
+
 export function cloudSummary(cloud) {
   return `Molecular cloud · ${formatDistance(cloud.dist * LY)} from the Sun · star-forming, on the shell of the Local Bubble`;
 }

@@ -1,4 +1,4 @@
-import { AU, LY, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
+import { AU, LY, SCALE_UNITS, DAY_S, PLANETS, STARS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
   levelFromHash, levelFromShortcut, hashForView, moonLevels, formatDate, shouldIgnoreGlobalKeys,
@@ -16,6 +16,13 @@ const VIRGO = skyToPlane(284, 54e6 * LY);
 export const MOON_LEVELS = moonLevels(PLANETS);
 for (const lv of MOON_LEVELS) lv.shortcut = { 'earth-moon': '1', jupiter: '2', saturn: '3' }[lv.id];
 
+const starPos = (name) => {
+  const s = STARS.find((st) => st.name === name);
+  return skyToPlane(s.l, s.dist * LY);
+};
+const ALPHA_CEN = starPos('Alpha Centauri');
+const PROXIMA = starPos('Proxima Centauri');
+
 export const LEVELS = [
   { id: 'inner', name: 'Inner solar system', shortcut: '4', radius: 2 * AU, cx: 0, cy: 0 },
   { id: 'outer', name: 'Outer solar system', shortcut: '5', radius: 50 * AU, cx: 0, cy: 0 },
@@ -23,6 +30,10 @@ export const LEVELS = [
     caption: 'Official dwarf planets: Pluto, Haumea, Makemake, Eris. Other labeled TNOs are candidates.' },
   { id: 'stars', name: 'Stellar neighborhood', shortcut: '6', radius: 20 * LY, cx: 0, cy: 0,
     caption: 'Every known system within 16 light-years. Most are red dwarfs too faint for the eye; two of the nearest are brown dwarfs. Rings mark systems with known planets.' },
+  { id: 'alpha-centauri', name: 'Alpha Centauri', radius: 40 * AU, cx: ALPHA_CEN.x, cy: ALPHA_CEN.y, clickName: 'Alpha Centauri',
+    caption: 'A and B circle each other every 80 years on an orbit tilted 79° to the sky, projected here onto the galactic plane. Proxima lies 13,000 AU away.' },
+  { id: 'proxima-centauri', name: 'Proxima Centauri', radius: 0.07 * AU, cx: PROXIMA.x, cy: PROXIMA.y, clickName: 'Proxima Centauri',
+    caption: 'Proxima b and d on their measured orbit sizes and periods, drawn face-on; their tilts are unknown.' },
   { id: 'local-bubble', name: 'Local Bubble', shortcut: 'u', radius: 700 * LY, cx: 0, cy: 0,
     caption: 'A cavity about 1,000 ly across, swept out by supernovae over the last 14 million years. The star-forming clouds lie on its shell; the outline between them is schematic.' },
   { id: 'local-arm', name: 'Local arm', shortcut: 'l', radius: 8000 * LY, cx: 0, cy: 0,
@@ -54,7 +65,7 @@ const BAR = [
     { title: 'Planets', levels: MOON_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
   ] },
   { label: 'Solar system', sections: [{ levels: ['trans-neptunian', 'outer', 'inner'].map(byId) }] },
-  'stars',
+  { label: 'Stellar neighborhood', sections: [{ levels: ['stars', 'alpha-centauri', 'proxima-centauri'].map(byId) }] },
   { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'local-bubble', 'galactic-center', 'sgr-a'].map(byId) }] },
   'local-group', 'virgo', 'universe',
 ];

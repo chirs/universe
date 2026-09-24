@@ -39,6 +39,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   computed from J2000 equatorial positions. `STARS` is transcribed from the
   Wikipedia list of nearest stars, with spectral types per component and
   confirmed-planet counts; `LOCAL_BUBBLE` cloud distances are from memory.
+  `ALPHA_CENTAURI` is transcribed: the A-B orbit from the Wikipedia orbit
+  table, Proxima's planets from the NASA Exoplanet Archive.
   `SGR_A_STAR` carries the GRAVITY 2022 mass and distance, and the Sun's
   distance to the galactic center is taken from it.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
@@ -79,8 +81,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   or by `#uranus` and the like. The level bar is laid out by `BAR`: plain
   levels and drop-up menus (Moons, Solar system, Milky Way), each menu
   listing its stops widest first and showing the active stop's name. A level with `clickName` is reached by
-  clicking that label, which is how the galactic center and Sgr A* stops
-  work. The guided tour walks
+  clicking that label, which is how the galactic center, Sgr A* and Alpha
+  Centauri stops work. The guided tour walks
   the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
   any user input stops it.
 

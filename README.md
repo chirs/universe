@@ -8,7 +8,10 @@ Planets move on approximate fixed ellipses with their real periods, initialized
 from J2000 elements.
 The `k` key jumps to the trans-Neptunian view; `h` jumps to the Milky Way halo.
 The stellar neighborhood shows every known system within 16 light-years,
-drawn by spectral type, with rings on systems that have known planets. `u`
+drawn by spectral type, with rings on systems that have known planets.
+Clicking Alpha Centauri zooms to A and B on their 80-year orbit, projected
+onto the galactic plane; clicking Proxima Centauri shows its two planets,
+drawn face-on with their measured periods. `u`
 jumps to the Local Bubble, the supernova-blown cavity the Sun sits in, with
 the star-forming clouds that lie on its shell.
 `l` jumps to the Local arm, with nearby nebulae, clusters and black holes at

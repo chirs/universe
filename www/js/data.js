@@ -218,6 +218,29 @@ export const STARS = [
   { name: 'Altair', dist: 16.73, l: 47.7, b: -8.9, types: ['A7IV-V'] },
 ];
 
+// Alpha Centauri. The A-B orbit is in the visual-binary convention used for
+// S_STARS, transcribed from the Wikipedia article's orbit table (Akeson et
+// al. 2021); Proxima's planets are from the NASA Exoplanet Archive
+// (pscomppars), drawn face-on with an arbitrary display phase because their
+// tilts are unknown. Masses in solar masses; planet masses in Earth masses.
+export const ALPHA_CENTAURI = {
+  ra: 219.90206,
+  dec: -60.83399,
+  A: { name: 'Alpha Centauri A', mass: 1.0788, radius: 1.223 * SUN.radius, type: 'G2V' },
+  B: { name: 'Alpha Centauri B', mass: 0.9092, radius: 0.864 * SUN.radius, type: 'K1V' },
+  orbit: { a: 23.299 * AU, e: 0.51947, i: 79.243, Omega: 205.073, omega: 231.519, tP: (1875.66 - 2000) * YEAR_D, period: 79.762 * YEAR_D },
+  proxima: {
+    name: 'Proxima Centauri',
+    mass: 0.1221,
+    radius: 0.141 * SUN.radius,
+    type: 'M5.5V',
+    planets: [
+      { name: 'Proxima d', a: 0.02881 * AU, period: 5.12338, L0: 40, massEarth: 0.26, color: '#c9b8a8' },
+      { name: 'Proxima b', a: 0.04848 * AU, period: 11.18465, L0: 200, massEarth: 1.055, color: '#8fb0d8' },
+    ],
+  },
+};
+
 // The Local Bubble: the cavity of hot thin gas the Sun sits in, swept out
 // by supernovae over the last 14 million years (Zucker et al. 2022). The
 // nearby star-forming clouds lie on its shell; the shell between them is

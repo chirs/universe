@@ -1,6 +1,6 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE,
+  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, ALPHA_CENTAURI,
 } from './data.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
@@ -8,6 +8,7 @@ import {
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
+  componentSummary, exoplanetSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -255,6 +256,72 @@ const nearestStars = {
     }
   },
 };
+
+// Alpha Centauri up close: A and B about their barycenter on the real orbit
+// projected onto the galactic plane, and Proxima with its planets face-on.
+const alphaCentauri = (() => {
+  const ac = ALPHA_CENTAURI;
+  const center = starPositions.find((s) => s.name === 'Alpha Centauri');
+  const prox = starPositions.find((s) => s.name === 'Proxima Centauri');
+  const planePA = galacticPlanePositionAngle(ac.ra, ac.dec);
+  const toPlane = (p) => skyOffsetToPlane(p, planePA);
+  const path = skyOrbitPath(ac.orbit).map(toPlane);
+  const total = ac.A.mass + ac.B.mass;
+  const pair = [[ac.A, -ac.B.mass / total, 'B'], [ac.B, ac.A.mass / total, 'A']];
+  const star = (ctx, view, x, y, s, alpha) => {
+    const { color } = starStyle(s.type);
+    const r = Math.max(s.radius / view.mpp, 3);
+    glow(ctx, x, y, r * 4, color, 0.35 * alpha);
+    dot(ctx, x, y, r, color, alpha);
+  };
+  return {
+    name: 'alpha centauri',
+    range: [0, 0.05 * LY],
+    draw(ctx, view, alpha, days) {
+      const cx = view.sx(center.x);
+      const cy = view.sy(center.y);
+      if (onScreen(view, cx, cy, 5000)) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+        const rel = toPlane(skyOrbitPosition(ac.orbit, days));
+        for (const [s, f, partner] of pair) {
+          ctx.beginPath();
+          path.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(center.x + f * p.x), view.sy(center.y + f * p.y)));
+          ctx.closePath();
+          ctx.stroke();
+          const x = view.sx(center.x + f * rel.x);
+          const y = view.sy(center.y + f * rel.y);
+          star(ctx, view, x, y, s, alpha);
+          label(view, x, y, s.name, alpha, 1);
+          hit(view, x, y, s.name, alpha, componentSummary(s, `Alpha Centauri ${partner}`, ac.orbit.period));
+        }
+      }
+      const px = view.sx(prox.x);
+      const py = view.sy(prox.y);
+      if (onScreen(view, px, py, 5000)) {
+        for (const p of ac.proxima.planets) {
+          ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+          ctx.beginPath();
+          ctx.arc(px, py, p.a / view.mpp, 0, TAU);
+          ctx.stroke();
+        }
+        star(ctx, view, px, py, ac.proxima, alpha);
+        label(view, px, py, ac.proxima.name, alpha, 1);
+        hit(view, px, py, ac.proxima.name, alpha, starSystemSummary(prox));
+        for (const p of ac.proxima.planets) {
+          const pos = orbitalPosition(p, days);
+          const x = view.sx(prox.x + pos.x);
+          const y = view.sy(prox.y + pos.y);
+          if (!onScreen(view, x, y)) continue;
+          dot(ctx, x, y, 2.5, p.color, alpha);
+          const far = Math.hypot(x - px, y - py) > 14;
+          label(view, x, y, p.name, far ? alpha : 0, 0);
+          hit(view, x, y, p.name, far ? alpha : 0, exoplanetSummary(p, ac.proxima.name));
+        }
+      }
+    },
+  };
+})();
 
 // The Local Bubble: a soft cavity whose shell passes through the nearby
 // star-forming clouds, at a schematic radius between them.
@@ -861,7 +928,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, alphaCentauri, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 
