@@ -36,6 +36,15 @@ Open work only; completed items are removed as they land (see git history).
 - [ ] Evaluate a wider redshift survey, with explicit coverage and distance
       uncertainty, before replacing the illustrative 3D web.
 
+## v3: time as a dimension
+
+- [ ] Let the clock's rate follow the zoom: years per second among the
+      planets, centuries at the S-stars, millions of years at the galaxy, so
+      S2 whips round Sgr A* and the Sun circles the galaxy on screen. The
+      spiral arms are density waves, not rigid bodies, so they should not
+      simply rotate; decide what moves (stars, the Sun, clusters) and what
+      holds still before building it.
+
 ## Deferred
 
 - Converting the original explorer to 3D. It retains its 2D view and no
