@@ -13,7 +13,7 @@ import {
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
-  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
+  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, rankineNose, rankineRadius, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
 } from './util.js';
@@ -368,29 +368,67 @@ const earthOrbiters = {
   },
 };
 
-// The termination shock and heliopause, at the Voyagers' mean crossings.
-const heliosphere = {
-  name: 'heliosphere',
-  range: [20 * AU, 3000 * AU],
-  draw(ctx, view, alpha) {
-    const x = view.sx(0);
-    const y = view.sy(0);
-    for (const b of [HELIOSPHERE.terminationShock, HELIOSPHERE.heliopause]) {
-      const radius = b.crossings.reduce((sum, c) => sum + c[2], 0) / b.crossings.length;
-      const r = radius / view.mpp;
-      if (r < 8) continue;
-      ctx.strokeStyle = `rgba(150,190,255,${(b === HELIOSPHERE.heliopause ? 0.35 : 0.2) * alpha})`;
-      ctx.setLineDash([3, 6]);
-      ctx.lineWidth = 1;
+// The termination shock at the Voyagers' mean crossing, and the heliopause
+// through theirs, blunt toward the interstellar wind and trailing away.
+const heliosphere = (() => {
+  const ts = HELIOSPHERE.terminationShock;
+  const hp = HELIOSPHERE.heliopause;
+  const tsR = ts.crossings.reduce((sum, c) => sum + c[2], 0) / ts.crossings.length;
+  const nose = HELIOSPHERE.nose * Math.PI / 180;
+  const off = (lon) => Math.abs(((lon - HELIOSPHERE.nose + 540) % 360) - 180);
+  const hpNose = rankineNose(hp.crossings.map((c) => [c[2], off(c[3])]));
+  // Out to 150 degrees from the nose, about five times the nose distance.
+  const PSI_MAX = 150 * Math.PI / 180;
+  const outline = [];
+  for (let k = -60; k <= 60; k++) {
+    const psi = PSI_MAX * k / 60;
+    const r = rankineRadius(hpNose, Math.abs(psi));
+    outline.push({ x: r * Math.cos(nose + psi), y: r * Math.sin(nose + psi) });
+  }
+  const tail = rankineRadius(hpNose, PSI_MAX) * Math.cos(PSI_MAX);
+  return {
+    name: 'heliosphere',
+    range: [20 * AU, 3000 * AU],
+    draw(ctx, view, alpha) {
+      const x = view.sx(0);
+      const y = view.sy(0);
+      const r = tsR / view.mpp;
+      if (r >= 8) {
+        ctx.strokeStyle = `rgba(150,190,255,${0.2 * alpha})`;
+        ctx.setLineDash([3, 6]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, TAU);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        label(view, x, y - r, ts.name, alpha, 1);
+        ringHit(view, x, y, r, ts.name, alpha, heliosphereSummary(ts));
+      }
+      if (hpNose / view.mpp < 8) return;
+      // Brightest at the nose, gone by the end of the drawn tail.
+      const g = ctx.createLinearGradient(view.sx(hpNose * Math.cos(nose)), view.sy(hpNose * Math.sin(nose)),
+        view.sx(tail * Math.cos(nose)), view.sy(tail * Math.sin(nose)));
+      g.addColorStop(0, 'rgba(150,190,255,1)');
+      g.addColorStop(0.35, 'rgba(150,190,255,0.5)');
+      g.addColorStop(1, 'rgba(150,190,255,0)');
       ctx.beginPath();
-      ctx.arc(x, y, r, 0, TAU);
+      outline.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
+      ctx.fillStyle = g;
+      ctx.globalAlpha = 0.05 * alpha;
+      ctx.fill();
+      ctx.strokeStyle = g;
+      ctx.globalAlpha = 0.4 * alpha;
+      ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.setLineDash([]);
-      label(view, x, y - r, b.name, alpha, 1);
-      ringHit(view, x, y, r, b.name, alpha, heliosphereSummary(b));
-    }
-  },
-};
+      ctx.globalAlpha = 1;
+      const nx = view.sx(hpNose * Math.cos(nose));
+      const ny = view.sy(hpNose * Math.sin(nose));
+      label(view, nx, ny, hp.name, alpha, 1);
+      hit(view, nx, ny, hp.name, alpha, heliosphereSummary(hp));
+      for (const p of outline.filter((_, k) => k % 10 === 0)) hit(view, view.sx(p.x), view.sy(p.y), hp.name, alpha, heliosphereSummary(hp));
+    },
+  };
+})();
 
 // The Sun as a bare dot once the planets are sub-pixel.
 const sunDot = {

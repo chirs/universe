@@ -264,12 +264,16 @@ export const ISS = { name: 'ISS', a: 6798 * KM, period: 92.9 / 1440, radius: 0.0
   note: 'about 420 km up, once around every 93 minutes; crewed continuously since November 2000' };
 
 // Where the Voyagers crossed the heliosphere's boundaries (NASA mission
-// reports, from memory). The real surface is blunt toward the Sun's motion
-// through the local cloud and stretched into a tail of unknown length
-// behind; the map draws each boundary as a circle at the mean crossing.
+// reports, from memory). The termination shock is drawn as a circle at the
+// mean crossing. The heliopause is blunt toward the Sun's motion through
+// the local cloud and stretched into a tail of unknown length behind; it is
+// drawn as the textbook Rankine half-body (a flow past a source) through
+// the crossings, its nose at the ecliptic longitude the interstellar wind
+// blows from (IBEX, McComas et al. 2015), fading down the tail.
 export const HELIOSPHERE = {
+  nose: 255.7,
   terminationShock: { name: 'Termination shock', crossings: [['Voyager 1', 2004, 94 * AU], ['Voyager 2', 2007, 84 * AU]] },
-  heliopause: { name: 'Heliopause', crossings: [['Voyager 1', 2012, 121.6 * AU], ['Voyager 2', 2018, 119 * AU]] },
+  heliopause: { name: 'Heliopause', crossings: [['Voyager 1', 2012, 121.6 * AU, 259.6], ['Voyager 2', 2018, 119 * AU, 292.8]] },
 };
 
 // Star systems within about 16.7 light-years, transcribed from the

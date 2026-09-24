@@ -9,14 +9,14 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE,
+  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
@@ -329,6 +329,15 @@ test('ring systems sit outside their planet, in order and without overlap', () =
   // The Encke gap, where Pan orbits, falls between two pieces of the A ring.
   const a = PLANETS.find((p) => p.name === 'Saturn').rings.filter((r) => r.name === 'A ring');
   assert.ok(a[0].outer < 133584 * 1000 && a[1].inner > 133584 * 1000);
+});
+
+test('the heliopause half-body passes near both Voyager crossings', () => {
+  const off = (lon) => Math.abs(((lon - HELIOSPHERE.nose + 540) % 360) - 180);
+  const crossings = HELIOSPHERE.heliopause.crossings.map((c) => [c[2], off(c[3])]);
+  const nose = rankineNose(crossings);
+  for (const [r, deg] of crossings) assert.ok(Math.abs(rankineRadius(nose, deg * Math.PI / 180) - r) < 0.1 * r);
+  // Twice as wide as the nose distance abeam of the Sun, pi/2 times.
+  assert.ok(Math.abs(rankineRadius(nose, Math.PI / 2) / nose - Math.PI / 2) < 1e-12);
 });
 
 test('clusters are ordered outward with sane sizes', () => {

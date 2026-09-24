@@ -397,7 +397,23 @@ export function issSummary(iss) {
 
 export function heliosphereSummary(boundary) {
   const crossings = boundary.crossings.map(([craft, year, r]) => `${craft} at ${formatDistance(r)} in ${year}`).join(', ');
-  return `${boundary.name} · crossed by ${crossings} · drawn as a circle; the real surface is blunt ahead and trails behind`;
+  const shape = boundary.crossings[0][3] === undefined
+    ? 'drawn as a circle; the real surface is blunt ahead and trails behind'
+    : 'blunt toward the interstellar wind, trailing a tail of unknown length; the shape is schematic';
+  return `${boundary.name} · crossed by ${crossings} · ${shape}`;
+}
+
+// A Rankine half-body: the boundary between a uniform flow and a point
+// source, at distance nose * psi / sin(psi) from the source, psi measured
+// from the upstream direction. The nose distance is fitted to crossings
+// given as [distance, angle from upstream in degrees].
+export function rankineNose(crossings) {
+  const f = (deg) => (deg === 0 ? 1 : (deg * Math.PI / 180) / Math.sin(deg * Math.PI / 180));
+  return crossings.reduce((sum, [r, deg]) => sum + r / f(deg), 0) / crossings.length;
+}
+
+export function rankineRadius(nose, psi) {
+  return psi === 0 ? nose : nose * psi / Math.sin(psi);
 }
 
 export function daysSinceJ2000(ms) {
