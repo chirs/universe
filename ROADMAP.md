@@ -41,11 +41,6 @@ Open work only; completed items are removed as they land (see git history).
 The agreed direction: the map is about where; the best moments are about
 when. Build the atlas of moments first, with provenance underneath.
 
-- [ ] An atlas of moments: a curated timeline of dated events, each a level
-      plus a clock time (the `#level?t=` links), from Voyager's heliopause
-      crossing and Apophis in 2029 through S2's periapsis in 2034 and Halley
-      in 2061 to Andromeda's arrival. The space tour did not prove useful;
-      a walk through time may.
 - [ ] Let the clock's rate follow the zoom: years per second among the
       planets, centuries at the S-stars, millions of years at the galaxy, so
       S2 whips round Sgr A* and the Sun circles the galaxy on screen. The

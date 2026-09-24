@@ -14,7 +14,7 @@ const VIRGO = skyToPlane(284, 54e6 * LY);
 export const PLANET_LEVELS = planetLevels(PLANETS);
 for (const lv of PLANET_LEVELS) lv.shortcut = { earth: '1', jupiter: '2', saturn: '3' }[lv.id];
 
-const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, [...STARS, ...SYSTEM_STARS]);
+export const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, [...STARS, ...SYSTEM_STARS]);
 const WR140 = skyToPlane(WR_140.l, WR_140.dist);
 const GALAXY_LEVELS = galaxyLevels(LOCAL_GROUP_STOPS, LOCAL_GROUP);
 

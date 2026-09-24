@@ -191,6 +191,9 @@ html, body {
 }
 #hud .menu-list button:hover { background: rgba(255, 255, 255, 0.08); border-color: transparent; }
 #hud .menu-list button.active { background: rgba(255, 255, 255, 0.16); color: #fff; border-color: transparent; }
+#moments button .date { display: inline-block; min-width: 11ch; margin-right: 6px; color: #6a7080; font-variant-numeric: tabular-nums; }
+#moments button:disabled { color: #6a7080; cursor: default; }
+#moments button:disabled:hover { background: none; }
 
 #time {
   top: 16px;

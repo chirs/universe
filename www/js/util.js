@@ -661,8 +661,20 @@ export function levelFromShortcut(key, levels) {
   return levels.find((lv) => lv.shortcut === key.toLowerCase()) || null;
 }
 
-export function hashForView(overview, levelId) {
-  return overview ? '#overview' : `#${levelId}`;
+// With a time (ms), the hash carries it to the minute, the form
+// timeFromHash reads back.
+export function hashForView(overview, levelId, t) {
+  if (overview) return '#overview';
+  return t === undefined ? `#${levelId}` : `#${levelId}?t=${new Date(t).toISOString().slice(0, 16)}`;
+}
+
+// The next reachable moment after `ms` (dir > 0) or the last before it
+// (dir < 0), for stepping through the atlas from wherever the clock is.
+// Moments are in date order; `far` ones have no time.
+export function momentAround(moments, ms, dir) {
+  const reachable = moments.filter((m) => !m.far);
+  if (dir > 0) return reachable.find((m) => m.t > ms) ?? null;
+  return reachable.slice().reverse().find((m) => m.t < ms) ?? null;
 }
 
 export function moonSystemRadius(body) {

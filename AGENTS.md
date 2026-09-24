@@ -119,6 +119,15 @@ playbooks, which clone the repo and serve `www/` as the document root.
   is the 1974 pulse toward M13, moving at light speed with the clock along
   the direction of M13's longitude, so it passes through M13's map position.
   Earendel sits in `DISTANT_OBJECTS` at its comoving distance like the rest.
+- `www/js/moments.js` — the atlas of moments: dated events, each a stop id
+  and a clock time, with caption and source. Where the drawing carries the
+  instant (an orbit's periapsis, the swap epoch, a broadcast date) the time
+  is derived from that data, so it cannot drift from what is drawn; the
+  rest are literals. `tests/moments.js` checks each against the model:
+  comets at perihelion, S2 nearest Sgr A*, Apophis nearest Earth, the
+  Voyagers at the heliopause, tracks covering their dates. `far` entries
+  (deep time) are listed but unreachable: the clock is a JS Date, good to
+  about 270,000 years. The `#level?t=` hash carries a moment's time.
 - `www/js/summaries.js` — the hover text for everything on the map, one
   pure function per kind of object, kept apart from the math in util.js.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
@@ -183,7 +192,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   clicking that label (or any of `clickNames`), which is how the galactic
   center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the
   Local Group stops (built from `LOCAL_GROUP_STOPS`) work. The stops
-  themselves live in `levels.js`, pure data that tests can import.
+  themselves live in `levels.js`, pure data that tests can import. The
+  Moments menu and the `[` and `]` keys (`momentAround` in util.js) go to a
+  moment: its stop, the clock set and paused, the caption line showing its
+  text until the clock runs or the view goes elsewhere.
   Layers queue labels and `drawLabels` draws them
   last, highest priority first: each sits to the right of its point, or on
   the first free side of left, above and below (`placeLabel` in util.js),

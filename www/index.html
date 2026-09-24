@@ -13,6 +13,10 @@
     <div id="top">
       <div id="title">universe<span>you are here</span></div>
       <div id="modes">
+        <div class="menu">
+          <button id="moments-toggle" title="[ ]">Moments ▾</button>
+          <div id="moments" class="menu-list down" hidden></div>
+        </div>
         <button id="overview" title="o">Overview</button>
         <button id="sound" title="m">Sound</button>
         <input id="volume" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume" hidden>
@@ -28,6 +32,7 @@
                 <dt>hover</dt><dd>details</dd>
                 <dt>click</dt><dd>visit a planet, star system or galaxy</dd>
                 <dt>space</dt><dd>pause / resume time</dd>
+                <dt>[ ]</dt><dd>previous / next moment</dd>
                 <dt>o</dt><dd>overview</dd>
                 <dt>m</dt><dd>sound</dd>
                 <dt>?</dt><dd>this help</dd>

@@ -2,10 +2,11 @@ import { AU, SCALE_UNITS, DAY_S } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
   levelFromHash, levelFromShortcut, hashForView, timeFromHash, formatDate, shouldIgnoreGlobalKeys,
-  orbitalPosition, placeLabel, pickLevel, coorbitalState,
+  orbitalPosition, placeLabel, pickLevel, coorbitalState, momentAround,
 } from './util.js';
+import { MOMENTS } from './moments.js';
 import { LAYERS } from './scenes.js';
-import { LEVELS, PLANET_LEVELS, CLOSE_UPS, COMPANION_LEVELS, ALL_LEVELS, SATURN, EARTH } from './levels.js';
+import { LEVELS, PLANET_LEVELS, SYSTEM_LEVELS, CLOSE_UPS, COMPANION_LEVELS, ALL_LEVELS, SATURN, EARTH } from './levels.js';
 import { drawOverview } from './overview.js';
 import { createAmbient } from './audio.js';
 
@@ -51,6 +52,8 @@ const barEl = document.querySelector('#scalebar .bar');
 const barLabel = document.querySelector('#scalebar .label');
 const scalebarEl = document.getElementById('scalebar');
 const overviewBtn = document.getElementById('overview');
+const momentsToggle = document.getElementById('moments-toggle');
+const momentsEl = document.getElementById('moments');
 const soundBtn = document.getElementById('sound');
 const volumeEl = document.getElementById('volume');
 const captionEl = document.getElementById('caption');
@@ -71,6 +74,7 @@ let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
 let overview = false;
+let moment = null;
 let lastLevelId = ALL_LEVELS[0].id;
 let shownLabels = [];
 let labelSides = new Map();
@@ -159,6 +163,7 @@ function setOverview(on) {
 
 function goTo(level, instant = false, dur = 1400) {
   closeMenus();
+  moment = null;
   setOverview(false);
   setFollow(null);
   setSpin(null);
@@ -173,6 +178,18 @@ function goTo(level, instant = false, dur = 1400) {
   }
   lastLevelId = level.id;
   history.replaceState(null, '', hashForView(false, lastLevelId));
+}
+
+// A moment is a stop and a paused clock time; the hash carries both, so
+// it can be linked. The moment stays until the clock runs or the view
+// goes elsewhere.
+function goToMoment(m) {
+  const level = ALL_LEVELS.find((lv) => lv.id === m.level);
+  goTo(level);
+  simMs = m.t;
+  setSpeed(SPEEDS[0]);
+  moment = m;
+  history.replaceState(null, '', hashForView(false, level.id, m.t));
 }
 
 function stepAnim(now) {
@@ -323,7 +340,9 @@ function updateHud() {
   volumeEl.hidden = !soundOn;
   scalebarEl.hidden = overview;
   captionEl.hidden = overview;
-  captionEl.textContent = near.caption || DEFAULT_CAPTION;
+  captionEl.textContent = moment ? `${moment.title}. ${moment.caption}` : near.caption || DEFAULT_CAPTION;
+  momentsToggle.classList.toggle('active', !!moment);
+  for (const b of momentsEl.querySelectorAll('button[data-t]')) b.classList.toggle('active', !!moment && b.dataset.t === String(moment.t));
   hoverInfoEl.hidden = !hover;
   if (hover) {
     hoverNameEl.textContent = hover.name;
@@ -417,9 +436,13 @@ function closeMenus() {
   for (const list of document.querySelectorAll('#hud .menu-list')) list.hidden = true;
 }
 
+// Once the clock runs, a linked time no longer holds, so it leaves the hash.
 function setSpeed(s) {
   speed = s;
-  if (s.perSec) runSpeed = s;
+  if (!s.perSec) return;
+  runSpeed = s;
+  moment = null;
+  if (location.hash.includes('?')) history.replaceState(null, '', hashForView(overview, lastLevelId));
 }
 
 function wireMenu(toggle, list) {
@@ -475,6 +498,22 @@ function buildHud() {
     speedsEl.appendChild(b);
   }
   wireMenu(speedToggle, speedsEl);
+  for (const m of MOMENTS) {
+    const b = document.createElement('button');
+    const when = document.createElement('span');
+    when.className = 'date';
+    when.textContent = m.far ? m.when : formatDate(m.t);
+    b.append(when, m.title);
+    if (m.far) {
+      b.disabled = true;
+      b.title = 'Beyond the clock\u2019s reach';
+    } else {
+      b.dataset.t = m.t;
+      b.addEventListener('click', () => goToMoment(m));
+    }
+    momentsEl.appendChild(b);
+  }
+  wireMenu(momentsToggle, momentsEl);
   wireMenu(document.getElementById('help-toggle'), helpEl);
   const jumps = document.getElementById('help-jumps');
   for (const lv of ALL_LEVELS.filter((lv) => lv.shortcut).sort((a, b) => a.radius - b.radius)) {
@@ -538,6 +577,10 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === ' ') { e.preventDefault(); setSpeed(speed.perSec ? SPEEDS[0] : runSpeed); }
   else if (e.key === '?') { const wasOpen = !helpEl.hidden; closeMenus(); helpEl.hidden = wasOpen; }
   else if (e.key === 'o') setOverview(!overview);
+  else if (e.key === '[' || e.key === ']') {
+    const m = momentAround(MOMENTS, simMs, e.key === ']' ? 1 : -1);
+    if (m) goToMoment(m);
+  }
   else if (e.key === 'm') setSound(!soundOn);
 });
 window.addEventListener('keydown', resumeSound, { once: true });
@@ -551,6 +594,8 @@ function applyHashTime(hash) {
   if (t === null) return;
   simMs = t;
   setSpeed(SPEEDS[0]);
+  moment = MOMENTS.find((m) => !m.far && m.t === t && m.level === lastLevelId) ?? null;
+  history.replaceState(null, '', hashForView(false, lastLevelId, t));
 }
 
 window.addEventListener('hashchange', () => {

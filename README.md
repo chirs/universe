@@ -56,9 +56,15 @@ planet zooms to it, with its satellite system where it has one. For remote satel
 without a published J2000 phase, the displayed phase is illustrative while
 the modeled orbit size, period, and eccentricity remain measured values.
 
-The Overview button (or `o`) switches to a log-radius map after Gott and
-Jurić: direction across, distance from the Sun up on a log scale, everything
-on one screen.
+The Moments menu is an atlas of dated events: each is a stop and a clock
+time, from the Arecibo message and Halley's 1986 return through the Voyagers'
+heliopause crossings, S2's periapsis at Sgr A* and Apophis in 2029 to Halley's
+next return. Picking one goes there with the clock paused at that instant;
+`[` and `]` step to the previous and next moment from wherever the clock
+is, and the link in the address bar carries the time
+(`#earth?t=2029-04-13T21:45`). The Overview button (or `o`) switches to a
+log-radius map after Gott and Jurić: direction across, distance from the Sun
+up on a log scale, everything on one screen.
 
 The widest level is not a present-day snapshot. Looking farther out also means
 looking farther back in time, so it is presented as a schematic 2D comoving
