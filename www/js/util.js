@@ -200,7 +200,8 @@ export function slerpSky(a, b, t) {
 }
 
 export function wallSummary(wall) {
-  return `Great wall · about ${formatDistance(wall.waypoints[1][2] * 1e6 * LY)} away · ${wall.note} · high galactic latitude, so dropping latitude stretches it into an arc here`;
+  const shape = wall.honest ? '' : ' · high galactic latitude, so dropping latitude stretches it into an arc here';
+  return `Great wall · about ${formatDistance(wall.waypoints[1][2] * 1e6 * LY)} away · ${wall.note}${shape}`;
 }
 
 export function distantSummary(o) {

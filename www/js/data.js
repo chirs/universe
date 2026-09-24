@@ -718,12 +718,21 @@ export const VOIDS = [
 // wall follows Geller & Huchra's 1989 slice (Dec 26.5 to 32.5, RA 9h to
 // 16.5h, through Coma, at about Coma's distance); the Sloan wall follows
 // Gott et al. 2005 (RA 9.8h to 14.5h near the celestial equator, z 0.07 to
-// 0.08). Waypoints are from memory of those papers and approximate.
+// 0.08). Waypoints are from memory of those papers and approximate; the
+// South Pole Wall's are read from its paper's description.
 export const GREAT_WALLS = [
   { name: 'CfA2 Great Wall', width: 12, length: 500, waypoints: [[195.8, 39.5, 300], [58.1, 88.0, 300], [49.3, 42.3, 300]],
     note: 'the first great wall found, in 1989: a sheet of galaxies 500 million ly long, passing through the Coma Cluster' },
   { name: 'Sloan Great Wall', width: 25, length: 1370, waypoints: [[238.8, 37.1, 1000], [288.5, 57.0, 1030], [346.7, 52.1, 1060]],
     note: 'a chain of superclusters 1.37 billion ly long, found in the Sloan Digital Sky Survey in 2003' },
+  // Pomarède et al. 2020 (Cosmicflows-3, arXiv 2007.04414, section 3): near
+  // galactic latitude -20, from Apus to Lepus over about 98 degrees of
+  // longitude at 12,000 km/s, peaking at the celestial south pole in
+  // Chamaeleon, then bending in to 7,000 km/s over 85 degrees to the Funnel
+  // in Cetus; distances for their H0 = 75. It lies near the galactic plane,
+  // so dropping latitude barely changes it.
+  { name: 'South Pole Wall', width: 30, length: 1370, waypoints: [[320, -20, 522], [302.9, -27.1, 522], [222, -20, 522], [137, -20, 304]],
+    note: 'found in 2020 from galaxy motions, 1.4 billion ly end to end, densest behind the celestial south pole where Milky Way dust hides it', honest: true },
 ];
 
 // Distant landmarks, placed at their present (comoving) distance for the
