@@ -48,7 +48,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   from JPL Horizons for the craft listed in `SPACECRAFT` (data.js): sampled
   ecliptic longitude and true distance, interpolated by `sampledPosition` in
   `util.js`. Don't edit it by hand; rerun the script to refresh predictions.
-  `HELIOSPHERE` holds the Voyagers' boundary crossings.
+  `HELIOSPHERE` holds the Voyagers' boundary crossings. A craft with
+  `center: 399` (JWST) is tracked relative to Earth and drawn in a frame
+  turning with Earth, so its halo orbit stays beyond L2. The ISS and JWST
+  stops (`EARTH_LEVELS` in main.js) follow Earth and are reached by clicking.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
   nice-number scale bar, seeded PRNG, galactic-plane projection, and the
   cosmic web generator `makeZeldovichWeb` (a lattice of particles pushed

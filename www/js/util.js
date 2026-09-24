@@ -276,6 +276,10 @@ export function spacecraftSummary(sc, distance, center = 'the Sun') {
   return `Spacecraft · ${formatDistance(distance)} from ${center} · ${sc.note}`;
 }
 
+export function issSummary(iss) {
+  return `Space station · ${iss.note} · position along the orbit is illustrative`;
+}
+
 export function heliosphereSummary(boundary) {
   const crossings = boundary.crossings.map(([craft, year, r]) => `${craft} at ${formatDistance(r)} in ${year}`).join(', ');
   return `${boundary.name} · crossed by ${crossings} · drawn as a circle; the real surface is blunt ahead and trails behind`;

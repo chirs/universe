@@ -52,8 +52,15 @@ export const LEVELS = [
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];
 
+// Close-ups around Earth, reached by clicking the craft.
+const EARTH_LEVELS = [
+  { id: 'iss', name: 'ISS', radius: 20000e3, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'ISS' },
+  { id: 'jwst', name: 'JWST', radius: 2.2e9, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'JWST',
+    caption: 'JWST loops around the Sun\u2013Earth L2 point, 1.5 million km beyond Earth, keeping the Sun, Earth and Moon behind its shield.' },
+];
+
 // LEVELS first so the inner solar system is the default view.
-const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS];
+const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS, ...EARTH_LEVELS];
 
 // The level bar: a plain level id, or a menu of levels in sections, listed
 // widest at the top so a menu reads like the sky above the bar.
@@ -253,7 +260,11 @@ function zoomAt(sx, sy, factor) {
 // whichever wide level is closest in scale.
 function nearestLevel() {
   const body = anim ? anim.level.follow : cam.follow;
-  if (body) return PLANET_LEVELS.find((lv) => lv.follow === body);
+  if (body) {
+    const mpp = anim ? mppFor(anim.level) : cam.mpp;
+    const stops = [...PLANET_LEVELS, ...EARTH_LEVELS].filter((lv) => lv.follow === body);
+    return stops.reduce((best, lv) => (Math.abs(Math.log(mppFor(lv) / mpp)) < Math.abs(Math.log(mppFor(best) / mpp)) ? lv : best));
+  }
   return pickLevel(LEVELS, cam.cx, cam.cy, cam.mpp * halfMin());
 }
 
@@ -488,7 +499,7 @@ window.addEventListener('mouseup', () => {
 canvas.addEventListener('mouseleave', () => { mouse = null; });
 canvas.addEventListener('click', () => {
   if (!hover || dragged) return;
-  const level = ALL_LEVELS.find((lv) => (lv.follow ? [lv.follow.name] : lv.clickNames || [lv.clickName]).includes(hover.name));
+  const level = ALL_LEVELS.find((lv) => (lv.clickNames || [lv.clickName || lv.follow?.name]).includes(hover.name));
   if (level) { stopTour(); goTo(level); }
 });
 

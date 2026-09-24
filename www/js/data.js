@@ -192,6 +192,12 @@ export const SPACECRAFT = [
     note: 'infrared telescope in a halo orbit around the Sun\u2013Earth L2 point' },
 ];
 
+// The ISS, drawn face-on around Earth like the moons. Altitude and period
+// are round values; the position along the orbit is illustrative, since a
+// real one needs a fresh orbit solution every few days.
+export const ISS = { name: 'ISS', a: 6798 * KM, period: 92.9 / 1440, radius: 0.05 * KM, L0: 0, color: '#e8f0ff',
+  note: 'about 420 km up, once around every 93 minutes; crewed continuously since November 2000' };
+
 // Where the Voyagers crossed the heliosphere's boundaries (NASA mission
 // reports, from memory). The real surface is blunt toward the Sun's motion
 // through the local cloud and stretched into a tail of unknown length

@@ -1,7 +1,7 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
-  SPACECRAFT, HELIOSPHERE,
+  SPACECRAFT, HELIOSPHERE, ISS,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import {
@@ -11,7 +11,7 @@ import {
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
-  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary,
+  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -240,6 +240,64 @@ const spacecraft = {
       const far = Math.hypot(x - view.sx(0), y - view.sy(0)) > 14;
       label(view, x, y, sc.name, far ? alpha : 0, 0);
       hit(view, x, y, sc.name, far ? alpha : 0, spacecraftSummary(sc, Math.hypot(pos.x, pos.y)));
+    }
+  },
+};
+
+// Around Earth: the ISS on a face-on circle, and craft whose Horizons track
+// is relative to Earth (JWST's halo orbit around L2).
+const EARTH = PLANETS.find((p) => p.name === 'Earth');
+const earthOrbiters = {
+  name: 'earth orbiters',
+  range: [0, 0.08 * AU],
+  draw(ctx, view, alpha, days) {
+    const e = orbitalPosition(EARTH, days);
+    const ex = view.sx(e.x);
+    const ey = view.sy(e.y);
+    if (!onScreen(view, ex, ey, 2000)) return;
+    const a = ISS.a / view.mpp;
+    const issFar = a > 14;
+    if (issFar) {
+      ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ex, ey, a, 0, TAU);
+      ctx.stroke();
+      const p = orbitalPosition(ISS, days);
+      const x = view.sx(e.x + p.x);
+      const y = view.sy(e.y + p.y);
+      dot(ctx, x, y, 2, ISS.color, alpha);
+      label(view, x, y, ISS.name, alpha, 0);
+      hit(view, x, y, ISS.name, alpha, issSummary(ISS));
+    }
+    for (const sc of SPACECRAFT) {
+      if (sc.center !== 399) continue;
+      const track = TRACKS[sc.name];
+      const pos = sampledPosition(track, days);
+      if (!pos) continue;
+      // Past positions turned by Earth's motion since, so the trail keeps
+      // its place relative to the Sun-Earth line.
+      const eAngle = Math.atan2(e.y, e.x);
+      ctx.strokeStyle = `rgba(127,224,192,${0.3 * alpha})`;
+      ctx.beginPath();
+      for (let d = days - sc.trail; d <= days; d += sc.step) {
+        const p = sampledPosition(track, d);
+        if (!p) continue;
+        const then = orbitalPosition(EARTH, d);
+        const turn = eAngle - Math.atan2(then.y, then.x);
+        const c = Math.cos(turn);
+        const sn = Math.sin(turn);
+        ctx.lineTo(view.sx(e.x + p.x * c - p.y * sn), view.sy(e.y + p.x * sn + p.y * c));
+      }
+      ctx.lineTo(view.sx(e.x + pos.x), view.sy(e.y + pos.y));
+      ctx.stroke();
+      const x = view.sx(e.x + pos.x);
+      const y = view.sy(e.y + pos.y);
+      if (!onScreen(view, x, y)) continue;
+      dot(ctx, x, y, 2, SPACECRAFT_COLOR, alpha);
+      const far = Math.hypot(x - ex, y - ey) > 14;
+      label(view, x, y, sc.name, far ? alpha : 0, 0);
+      hit(view, x, y, sc.name, far ? alpha : 0, spacecraftSummary(sc, Math.hypot(pos.x, pos.y), 'Earth'));
     }
   },
 };
@@ -1067,7 +1125,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, solarSystem, spacecraft, moons, sunDot,
+  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, solarSystem, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 
