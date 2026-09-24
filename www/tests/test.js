@@ -9,14 +9,14 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT,
+  SPACECRAFT, COMETS,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 
@@ -689,4 +689,29 @@ test('spacecraft tracks cover every listed craft and put Voyager 1 near 170 AU i
   const v1 = sampledPosition(TRACKS['Voyager 1'], days, true);
   const r = Math.hypot(v1.x, v1.y) / AU;
   assert.ok(r > 165 && r < 175, `Voyager 1 at ${r} AU`);
+});
+
+test('comets reach their SBDB perihelion and aphelion, Halley at perihelion in February 1986', () => {
+  const halley = COMETS.find((c) => c.name === 'Halley');
+  const at1986 = orbitalPosition(halley, daysSinceJ2000(Date.UTC(1986, 1, 9)));
+  assert.ok(Math.abs(Math.hypot(at1986.x, at1986.y) / AU - 0.575) < 0.01);
+  const aphelion = orbitalPosition(halley, daysSinceJ2000(Date.UTC(1986, 1, 9)) + halley.period / 2);
+  assert.ok(Math.abs(Math.hypot(aphelion.x, aphelion.y) / AU - 35.28) < 0.05);
+  const hb = COMETS.find((c) => c.name.startsWith('Hale'));
+  const at1997 = orbitalPosition(hb, daysSinceJ2000(Date.UTC(1997, 3, 1)));
+  assert.ok(Math.abs(Math.hypot(at1997.x, at1997.y) / AU - 0.8905) < 0.01);
+});
+
+test('solveKepler converges for high eccentricity on either side of apocenter', () => {
+  for (const M of [-3.1417, -3.1, -2, -6, 3.1417, 6]) {
+    const E = solveKepler(M, 0.968);
+    assert.ok(Math.abs(E - 0.968 * Math.sin(E) - M) < 1e-9, `M=${M}`);
+  }
+});
+
+test('Trojan points sit 60 degrees either side of the body on its circle', () => {
+  const { l4, l5 } = trojanPoints({ x: 5 * AU, y: 0 });
+  assert.ok(Math.abs(Math.atan2(l4.y, l4.x) - Math.PI / 3) < 1e-12);
+  assert.ok(Math.abs(Math.atan2(l5.y, l5.x) + Math.PI / 3) < 1e-12);
+  assert.ok(Math.abs(Math.hypot(l4.x, l4.y) - 5 * AU) < 1);
 });

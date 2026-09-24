@@ -276,6 +276,21 @@ export function spacecraftSummary(sc, distance, center = 'the Sun') {
   return `Spacecraft · ${formatDistance(distance)} from ${center} · ${sc.note}`;
 }
 
+export function cometSummary(comet) {
+  const q = comet.a * (1 - comet.e);
+  const Q = comet.a * (1 + comet.e);
+  return `Comet · perihelion ${formatDistance(q)} · aphelion ${formatDistance(Q)} · period ${formatPeriod(comet.period)} · ${comet.note}`;
+}
+
+// The Lagrange points leading (L4) and trailing (L5) a body at `pos` by 60
+// degrees on a circle through it.
+export function trojanPoints(pos) {
+  const r = Math.hypot(pos.x, pos.y);
+  const t = Math.atan2(pos.y, pos.x);
+  const at = (d) => ({ x: r * Math.cos(t + d), y: r * Math.sin(t + d) });
+  return { l4: at(TAU / 6), l5: at(-TAU / 6) };
+}
+
 export function issSummary(iss) {
   return `Space station · ${iss.note} · position along the orbit is illustrative`;
 }
@@ -296,14 +311,18 @@ export function meanLongitude(body, days) {
 }
 
 // Eccentric anomaly from mean anomaly (radians) by Newton's method.
+// Solved on M wrapped to (-pi, pi], starting a high-eccentricity orbit at
+// the apocenter on M's side so Newton's method converges.
 export function solveKepler(M, e) {
-  let E = e < 0.8 ? M : Math.PI;
+  const wrap = Math.round(M / TAU) * TAU;
+  const m = M - wrap;
+  let E = e < 0.8 ? m : Math.sign(m) * Math.PI;
   for (let i = 0; i < 30; i++) {
-    const d = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    const d = (E - e * Math.sin(E) - m) / (1 - e * Math.cos(E));
     E -= d;
     if (Math.abs(d) < 1e-12) break;
   }
-  return E;
+  return E + wrap;
 }
 
 // Position in meters, Sun at the focus, counterclockwise from +x.

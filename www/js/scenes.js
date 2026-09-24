@@ -1,7 +1,7 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
-  SPACECRAFT, HELIOSPHERE, ISS,
+  SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import {
@@ -11,7 +11,7 @@ import {
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
-  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary,
+  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, trojanPoints,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -106,6 +106,20 @@ function onScreen(view, x, y, pad = 20) {
 
 // ---------------------------------------------------------------- solar system
 
+function orbitEllipse(ctx, view, body, style) {
+  const a = body.a / view.mpp;
+  if (a > 30000) return;
+  const e = body.e || 0;
+  const varpi = (body.varpi || 0) * Math.PI / 180;
+  // The Sun sits at a focus, a*e from the ellipse center toward perihelion.
+  const cx = view.sx(0) - a * e * Math.cos(varpi);
+  const cy = view.sy(0) + a * e * Math.sin(varpi);
+  ctx.strokeStyle = style;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, a, a * Math.sqrt(1 - e * e), -varpi, 0, TAU);
+  ctx.stroke();
+}
+
 const solarSystem = {
   name: 'solar system',
   range: [0, 1500 * AU],
@@ -113,19 +127,7 @@ const solarSystem = {
     const sx = view.sx(0);
     const sy = view.sy(0);
     ctx.lineWidth = 1;
-    for (const p of PLANETS) {
-      const a = p.a / view.mpp;
-      if (a > 30000) continue;
-      const e = p.e || 0;
-      const varpi = (p.varpi || 0) * Math.PI / 180;
-      // The Sun sits at a focus, a*e from the ellipse center toward perihelion.
-      const cx = sx - a * e * Math.cos(varpi);
-      const cy = sy + a * e * Math.sin(varpi);
-      ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, a, a * Math.sqrt(1 - e * e), -varpi, 0, TAU);
-      ctx.stroke();
-    }
+    for (const p of PLANETS) orbitEllipse(ctx, view, p, `rgba(255,255,255,${0.14 * alpha})`);
     const sunR = Math.max(SUN.radius / view.mpp, 4);
     glow(ctx, sx, sy, sunR * 4, SUN.color, 0.35 * alpha);
     dot(ctx, sx, sy, sunR, SUN.color, alpha);
@@ -202,6 +204,55 @@ function belt(name, cfg, range, color, log = false) {
 
 const asteroidBelt = belt('asteroid belt', BELTS.asteroid, [0, 60 * AU], '#8f8a80');
 const kuiperBelt = belt('kuiper belt', BELTS.kuiper, [4 * AU, 1500 * AU], '#8fa0b8');
+// Jupiter's Trojans ride 60 degrees ahead of and behind the planet.
+const trojans = (() => {
+  const jupiter = PLANETS.find((p) => p.name === 'Jupiter');
+  const swarm = (cfg) => makeBlob(cfg.seed, TROJANS.sigmaLon * Math.PI / 180, TROJANS.sigmaR, cfg.count);
+  const swarms = [['Trojans (L4)', swarm(TROJANS.l4), TAU / 6], ['Trojans (L5)', swarm(TROJANS.l5), -TAU / 6]];
+  const pts = new Float64Array(Math.max(TROJANS.l4.count, TROJANS.l5.count) * 2);
+  return {
+    name: 'trojans',
+    range: [0, 60 * AU],
+    draw(ctx, view, alpha, days) {
+      const pos = orbitalPosition(jupiter, days);
+      const r = Math.hypot(pos.x, pos.y);
+      const t = Math.atan2(pos.y, pos.x);
+      const centers = trojanPoints(pos);
+      for (const [name, s, offset] of swarms) {
+        const n = s.length / 2;
+        for (let i = 0; i < n; i++) {
+          const lon = t + offset + s[2 * i];
+          const rr = r + s[2 * i + 1];
+          pts[2 * i] = rr * Math.cos(lon);
+          pts[2 * i + 1] = rr * Math.sin(lon);
+        }
+        drawPoints(ctx, view, pts.subarray(0, 2 * n), 0, 0, '#b8a888', 0.55 * alpha);
+        const c = offset > 0 ? centers.l4 : centers.l5;
+        label(view, view.sx(c.x), view.sy(c.y), name, 0.8 * alpha, 0);
+      }
+    },
+  };
+})();
+
+const comets = {
+  name: 'comets',
+  range: [0, 1500 * AU],
+  draw(ctx, view, alpha, days) {
+    ctx.lineWidth = 1;
+    for (const c of COMETS) {
+      orbitEllipse(ctx, view, c, `rgba(190,220,255,${0.16 * alpha})`);
+      const pos = orbitalPosition(c, days);
+      const x = view.sx(pos.x);
+      const y = view.sy(pos.y);
+      if (!onScreen(view, x, y)) continue;
+      dot(ctx, x, y, 2, c.color, alpha);
+      const far = Math.hypot(x - view.sx(0), y - view.sy(0)) > 14;
+      label(view, x, y, c.name, far ? alpha : 0, 0);
+      hit(view, x, y, c.name, far ? alpha : 0, cometSummary(c));
+    }
+  },
+};
+
 // Inferred, never observed, and presumably not unique to the Sun, so it fades
 // out before other stars come on screen rather than mark us out.
 const oortCloud = (() => {
@@ -1125,7 +1176,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, solarSystem, spacecraft, moons, earthOrbiters, sunDot,
+  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, comets, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

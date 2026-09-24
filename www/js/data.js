@@ -152,6 +152,22 @@ export const BELTS = {
   oort: { inner: 2000 * AU, outer: 1.6 * LY, count: 4000, seed: 3 },
 };
 
+// Jupiter's Trojans: swarms leading (L4) and trailing (L5) Jupiter by 60
+// degrees. Scatter is illustrative: sigma in longitude and in distance, with
+// L4 the more populous swarm as observed.
+export const TROJANS = { l4: { count: 900, seed: 11 }, l5: { count: 600, seed: 12 }, sigmaLon: 9, sigmaR: 0.25 * AU };
+
+// Comets, from JPL's Small-Body Database (full-precision elements; Halley
+// epoch 1968, Hale-Bopp 2022). Laid flat in the ecliptic like the planets:
+// varpi is om + w, or om - w for the retrograde Halley; L0 is the mean
+// longitude at J2000 from the time of perihelion tp.
+export const COMETS = [
+  { name: 'Halley', a: 17.92863504856923 * AU, e: 0.9679359956953211, period: 27728.04608790421, varpi: 306.858, L0: 240.967,
+    retrograde: true, radius: 5.5 * KM, color: '#cfe8ff', note: 'last at perihelion in February 1986, next in July 2061' },
+  { name: 'Hale\u2013Bopp', a: 177.4333839117583 * AU, e: 0.9949810027633206, period: 863279.5034870314, varpi: 53.148, L0: 53.568,
+    radius: 30 * KM, color: '#cfe8ff', note: 'the great comet of 1997, visible to the eye for 18 months; back in about 4380' },
+];
+
 // Spacecraft whose paths come from JPL Horizons: scripts/fetch-spacecraft.mjs
 // reads this list and writes the sampled tracks to spacecraft.js. `horizons`
 // is the Horizons id, `step` the sample spacing in days, `center` the body
