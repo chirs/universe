@@ -11,7 +11,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
 - Run locally: `python3 -m http.server -d www`
 - Tests: `npm test` (Node's built-in runner, `www/tests/*.js`). Covers the
   original math and data, plus v2 coordinate transforms, cosmology, camera
-  math, view URLs, and deterministic illustrations.
+  math, view URLs, and deterministic illustrations. `tests/layers.js` calls
+  every scene layer's draw against a stub canvas at a spread of scales and
+  centers, so a missing import in a layer fails there rather than leaving
+  a blank layer in the browser.
 - V2 browser checks: `node scripts/check-v2.mjs [URL] [debugging port]`.
   Requires a separate Chrome with remote debugging enabled; see README.md.
 
@@ -106,6 +109,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   is the 1974 pulse toward M13, moving at light speed with the clock along
   the direction of M13's longitude, so it passes through M13's map position.
   Earendel sits in `DISTANT_OBJECTS` at its comoving distance like the rest.
+- `www/js/summaries.js` — the hover text for everything on the map, one
+  pure function per kind of object, kept apart from the math in util.js.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
   nice-number scale bar, seeded PRNG, galactic-plane projection, and the
   cosmic web generator `makeZeldovichWeb` (a lattice of particles pushed
@@ -129,7 +134,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   dust lane on the inner edge; the strokes fade out as they widen past a
   few dozen pixels, and a denser star set fades in, so up close the stars
   carry the arm.
-- `www/js/scenes.js` — one draw function per layer. Each layer has a
+- `www/js/scenes.js` — assembles `LAYERS` from `scenes/solar.js`,
+  `scenes/stars.js`, `scenes/galaxy.js` and `scenes/cosmos.js`, one draw
+  function per layer, with the shared dot, glow, label, hit and point
+  helpers and the signal teal in `draw.js`. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut. Planets and
   moons trail the last eighth of their orbit in their own color
