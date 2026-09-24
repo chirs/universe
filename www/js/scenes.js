@@ -1,11 +1,13 @@
 import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS,
+  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS,
 } from './data.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
+  schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
+  galacticPlanePositionAngle, skyOffsetToPlane,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -313,9 +315,104 @@ const milkyWay = (() => {
       drawPoints(ctx, view, bar, GC.x, GC.y, '#ffe2b0', 0.6 * alpha);
       drawPoints(ctx, view, bulge, GC.x, GC.y, '#fff0cc', 0.7 * alpha);
       glow(ctx, gx, gy, mw.bulgeRadius / view.mpp, 'rgba(255,230,180,0.6)', alpha);
-      label(view, gx, gy, 'Galactic center', alpha, 2);
-      hit(view, gx, gy, 'Galactic center', alpha,
-        `Milky Way center · ${formatDistance(MILKY_WAY.sunDistance)} from the Sun`);
+    },
+  };
+})();
+
+// ------------------------------------------------------------ galactic center
+
+// Sgr A* and the S-stars. The orbits are the real three-dimensional ones,
+// projected onto the galactic plane like everything else on the map. Below
+// the dot threshold the black hole is a dot; resolved, it shows the horizon,
+// the shadow an observer would see and the innermost stable circular orbit,
+// all to scale, under a schematic accretion glow.
+const nucleus = (() => {
+  const bh = SGR_A_STAR;
+  const rs = schwarzschildRadius(bh.mass);
+  const shadowR = Math.sqrt(27) / 2 * rs;
+  const iscoR = 3 * rs;
+  const planePA = galacticPlanePositionAngle(bh.ra, bh.dec);
+  const toPlane = (p) => skyOffsetToPlane(p, planePA);
+  const stars = S_STARS.map((s) => ({ ...s, path: skyOrbitPath(s).map(toPlane) }));
+  const ring = (ctx, x, y, r, style, width, dash) => {
+    ctx.strokeStyle = style;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+  return {
+    name: 'galactic nucleus',
+    range: [0, 1 * LY],
+    draw(ctx, view, alpha, days) {
+      const gx = view.sx(GC.x);
+      const gy = view.sy(GC.y);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+      for (const s of stars) {
+        ctx.beginPath();
+        s.path.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(GC.x + p.x), view.sy(GC.y + p.y)));
+        ctx.closePath();
+        ctx.stroke();
+      }
+      const shadowPx = shadowR / view.mpp;
+      if (shadowPx < 3) {
+        glow(ctx, gx, gy, 10, 'rgba(255,170,90,0.5)', alpha);
+        dot(ctx, gx, gy, 3, '#ffc890', alpha);
+      } else {
+        glow(ctx, gx, gy, 3.5 * shadowPx, 'rgba(255,150,70,0.6)', alpha);
+        dot(ctx, gx, gy, shadowPx, '#000000', alpha);
+        ring(ctx, gx, gy, shadowPx, `rgba(255,225,190,${0.9 * alpha})`, 1.5, []);
+        ring(ctx, gx, gy, rs / view.mpp, `rgba(140,140,160,${0.7 * alpha})`, 1, [4, 4]);
+        ring(ctx, gx, gy, iscoR / view.mpp, `rgba(255,255,255,${0.25 * alpha})`, 1, [2, 6]);
+        if (shadowPx > 30) {
+          const d = Math.SQRT1_2 * iscoR / view.mpp;
+          label(view, gx - rs / view.mpp, gy, 'Event horizon', alpha, 0);
+          label(view, gx + shadowPx, gy, 'Shadow', alpha, 0);
+          label(view, gx + d, gy + d, 'Innermost stable orbit', alpha, 0);
+        }
+        ringHit(view, gx, gy, rs / view.mpp, 'Event horizon', alpha,
+          `Schwarzschild radius ${formatDistance(rs)} · nothing inside can be seen`);
+        ringHit(view, gx, gy, shadowPx, 'Shadow', alpha,
+          `Apparent dark disc, radius ${formatDistance(shadowR)} (2.6 Schwarzschild radii) · light rays at its edge circle the hole`);
+        ringHit(view, gx, gy, iscoR / view.mpp, 'Innermost stable orbit', alpha,
+          `Radius ${formatDistance(iscoR)} (3 Schwarzschild radii) · matter closer in spirals through the horizon`);
+      }
+      label(view, gx, gy, bh.name, alpha, 2);
+      hit(view, gx, gy, bh.name, alpha, blackHoleSummary(bh));
+      for (const s of stars) {
+        const p = toPlane(skyOrbitPosition(s, days));
+        const x = view.sx(GC.x + p.x);
+        const y = view.sy(GC.y + p.y);
+        if (!onScreen(view, x, y)) continue;
+        dot(ctx, x, y, 2.5, '#cfe0ff', alpha);
+        const far = Math.hypot(x - gx, y - gy) > 14;
+        label(view, x, y, s.name, far ? alpha : 0, 1);
+        hit(view, x, y, s.name, far ? alpha : 0, sStarSummary(s));
+      }
+    },
+  };
+})();
+
+// The nuclear star cluster around Sgr A*, a few tens of light-years across.
+// It also owns the galactic-center label, which hands over to Sgr A* as the
+// nucleus layer fades in.
+const nuclearCluster = (() => {
+  const pts = annulus(41, 4000, 0.01 * LY, 40 * LY, true);
+  return {
+    name: 'nuclear star cluster',
+    range: [0, 500e3 * LY],
+    draw(ctx, view, alpha) {
+      const gx = view.sx(GC.x);
+      const gy = view.sy(GC.y);
+      const spread = Math.min(1, 40 * LY / view.mpp / 200);
+      drawPoints(ctx, view, pts, GC.x, GC.y, '#fff0cc', 0.5 * alpha * spread);
+      const own = alpha * (1 - layerAlpha(view.radius, nucleus.range));
+      label(view, gx, gy, 'Galactic center', own, 2);
+      hit(view, gx, gy, 'Galactic center', own,
+        `Milky Way center · nuclear star cluster around Sgr A* · ${formatDistance(MILKY_WAY.sunDistance)} from the Sun · click to zoom in`);
     },
   };
 })();
@@ -595,8 +692,8 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, fieldStars,
-  oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
+  nucleus, fieldStars, oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

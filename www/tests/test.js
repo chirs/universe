@@ -6,10 +6,14 @@ import {
   levelFromShortcut, hashForView, moonSystemRadius, moonLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
-  makeZeldovichWeb,
+  makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
+  galacticPlanePositionAngle, skyOffsetToPlane, pickLevel,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
-import { PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS } from '../js/data.js';
+import {
+  PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
+  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS,
+} from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -409,4 +413,77 @@ test('tour legs take longer over more decades and never go to zero', () => {
   assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));
   assert.ok(TOUR.indexOf('milky-way') < TOUR.indexOf('milky-way-halo'));
   assert.ok(TOUR.indexOf('milky-way-halo') < TOUR.indexOf('local-group'));
+});
+
+test('Sgr A* has the right Schwarzschild radius and sits at the galactic center', () => {
+  const rs = schwarzschildRadius(SGR_A_STAR.mass);
+  assert.ok(Math.abs(rs / 1.27e10 - 1) < 0.01, String(rs));
+  assert.ok(Math.abs(rs / AU - 0.085) < 0.002);
+  assert.equal(MILKY_WAY.sunDistance, SGR_A_STAR.distance);
+  assert.ok(Math.abs(SGR_A_STAR.distance / LY - 27000) < 100);
+  assert.match(blackHoleSummary(SGR_A_STAR), /^Supermassive black hole · 4.3 million solar masses · Schwarzschild radius 12.7 million km · 27 kly from the Sun$/);
+});
+
+test('S2 orbit matches Kepler and the published pericenter', () => {
+  const s2 = S_STARS.find((s) => s.name === 'S2');
+  const periYears = (s2.period / YEAR_D) ** 2 * (SGR_A_STAR.mass / SOLAR_MASS);
+  assert.ok(Math.abs((s2.a / AU) ** 3 / periYears - 1) < 0.03, 'a^3 = M P^2');
+  assert.ok(Math.abs(s2.a * (1 - s2.e) / AU - 120) < 3, 'periapsis about 120 AU');
+  const atPeri = skyOrbitPosition(s2, s2.tP);
+  const rPeri = Math.hypot(atPeri.east, atPeri.north, atPeri.depth);
+  assert.ok(Math.abs(rPeri - s2.a * (1 - s2.e)) < 1e-3 * s2.a);
+  assert.ok(atPeri.north < 0, 'S2 passes pericenter south of Sgr A*');
+  const atApo = skyOrbitPosition(s2, s2.tP + s2.period / 2);
+  assert.ok(Math.abs(Math.hypot(atApo.east, atApo.north, atApo.depth) - s2.a * (1 + s2.e)) < 1e-3 * s2.a);
+  assert.ok(atApo.north > 0);
+  // S2 was still receding at pericenter in 2018 and approaching a few months later.
+  const dt = 2;
+  const before = skyOrbitPosition(s2, s2.tP + s2.period - dt);
+  const after = skyOrbitPosition(s2, s2.tP + s2.period + dt);
+  assert.ok(after.depth > before.depth, 'receding through pericenter');
+  const later = skyOrbitPosition(s2, s2.tP + s2.period + 120);
+  const laterStill = skyOrbitPosition(s2, s2.tP + s2.period + 122);
+  assert.ok(laterStill.depth < later.depth, 'approaching by late 2018');
+  assert.match(sStarSummary(s2), /^Star orbiting Sgr A\* · periapsis 1\d\d AU · apoapsis 1,9\d\d AU · period 16 years$/);
+});
+
+test('orbit paths close on the true ellipse', () => {
+  for (const s of S_STARS) {
+    const path = skyOrbitPath(s, 64);
+    assert.equal(path.length, 64);
+    const rs = path.map((p) => Math.hypot(p.east, p.north, p.depth));
+    assert.ok(Math.abs(Math.min(...rs) - s.a * (1 - s.e)) < 1e-6 * s.a, s.name);
+    assert.ok(Math.abs(Math.max(...rs) - s.a * (1 + s.e)) < 1e-6 * s.a, s.name);
+  }
+});
+
+test('the galactic plane runs at position angle 31.4 degrees through Sgr A*', () => {
+  const pa = galacticPlanePositionAngle(SGR_A_STAR.ra, SGR_A_STAR.dec);
+  assert.ok(Math.abs(pa - 31.4) < 0.2, String(pa));
+  // At the north galactic pole's meridian, far from the pole, the plane runs east-west.
+  assert.ok(Math.abs(galacticPlanePositionAngle(192.86, -62.87) - 90) < 0.5);
+});
+
+test('sky offsets drop galactic latitude and keep depth along +x', () => {
+  const pa = 30;
+  assert.deepEqual(skyOffsetToPlane({ east: 0, north: 0, depth: 5 }, pa), { x: 5, y: 0 });
+  const alongL = skyOffsetToPlane({ east: Math.sin(pa * Math.PI / 180), north: Math.cos(pa * Math.PI / 180), depth: 0 }, pa);
+  assert.ok(Math.abs(alongL.y - 1) < 1e-12 && alongL.x === 0);
+  const towardB = skyOffsetToPlane({ east: -Math.cos(pa * Math.PI / 180), north: Math.sin(pa * Math.PI / 180), depth: 0 }, pa);
+  assert.ok(Math.abs(towardB.y) < 1e-12);
+});
+
+test('pickLevel prefers a stop near the camera and falls back to scale alone', () => {
+  const gc = skyToPlane(0, MILKY_WAY.sunDistance);
+  const levels = [
+    { id: 'inner', radius: 2 * AU, cx: 0, cy: 0 },
+    { id: 'stars', radius: 20 * LY, cx: 0, cy: 0 },
+    { id: 'sgr-a', radius: 1 * AU, cx: gc.x, cy: gc.y },
+    { id: 'galactic-center', radius: 4000 * AU, cx: gc.x, cy: gc.y },
+    { id: 'universe', radius: 58e9 * LY, cx: 0, cy: 0 },
+  ];
+  assert.equal(pickLevel(levels, 0, 0, 1 * AU).id, 'inner');
+  assert.equal(pickLevel(levels, gc.x, gc.y, 1 * AU).id, 'sgr-a');
+  assert.equal(pickLevel(levels, gc.x, gc.y, 2000 * AU).id, 'galactic-center');
+  assert.equal(pickLevel(levels, gc.x / 2, 0, 20 * LY).id, 'stars');
 });

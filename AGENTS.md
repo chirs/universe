@@ -32,16 +32,27 @@ playbooks, which clone the repo and serve `www/` as the document root.
   line by line. Treat any single value as approximate until you have. The
   exceptions are the Abell clusters, `SUPERCLUSTERS` and `VOIDS`, which are
   transcribed from Powell's Atlas tables (H0 = 70, CMB frame) and Tully et
-  al. 2019, with supergalactic coordinates converted to galactic.
+  al. 2019, with supergalactic coordinates converted to galactic, and the
+  `S_STARS` orbital elements, transcribed from Gillessen et al. 2017.
+  `SGR_A_STAR` carries the GRAVITY 2022 mass and distance, and the Sun's
+  distance to the galactic center is taken from it.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
   nice-number scale bar, seeded PRNG, galactic-plane projection, and the
   cosmic web generator `makeZeldovichWeb` (a lattice of particles pushed
   along the gradient of a noise potential, so filaments curve and voids
   come in a range of sizes). The supercluster web leaves a hole over the
-  500 Mly the real cluster data covers.
+  500 Mly the real cluster data covers. `skyOrbitPosition` places a star on
+  an orbit given in the visual-binary convention (sky east, north, depth),
+  and `skyOffsetToPlane` drops that into the map's galactic plane using the
+  plane's position angle at Sgr A*; `pickLevel` chooses the level to
+  highlight by scale among stops near the camera.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
-  zooming between levels is continuous rather than a scene cut.
+  zooming between levels is continuous rather than a scene cut. The galactic
+  center has two layers: the nuclear star cluster, which owns the
+  "Galactic center" label from the Milky Way level inward, and the nucleus,
+  which draws the S-star orbits and Sgr A* (a dot until its shadow resolves,
+  then horizon, shadow and innermost stable orbit to scale).
 - `www/js/overview.js` — the log-radius overview mode: pure mapping helpers
   (`logY`, `angleX`, `frame`) and `drawOverview`, which fills the same
   `labels` and `hits` arrays as the layers so hover and label placement are
@@ -52,7 +63,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   drops automatically once the view is wider than a fraction of an AU.
   Every body with moons gets a `MOON_LEVELS` entry (built by `moonLevels`
   in `util.js`), listed in the Moons menu and reached by clicking the planet
-  or by `#uranus` and the like. The guided tour walks
+  or by `#uranus` and the like. A level with `clickName` is reached by
+  clicking that label, which is how the galactic center and Sgr A* stops
+  work. The guided tour walks
   the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
   any user input stops it.
 

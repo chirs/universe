@@ -2,7 +2,7 @@ import { AU, LY, SCALE_UNITS, DAY_S, PLANETS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
   levelFromHash, levelFromShortcut, hashForView, moonLevels, formatDate, shouldIgnoreGlobalKeys,
-  skyToPlane, orbitalPosition, placeLabel, TOUR, TOUR_HOLD_MS, tourLegMs,
+  skyToPlane, orbitalPosition, placeLabel, pickLevel, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
@@ -23,6 +23,12 @@ export const LEVELS = [
     caption: 'Official dwarf planets: Pluto, Haumea, Makemake, Eris. Other labeled TNOs are candidates.' },
   { id: 'stars', name: 'Stellar neighborhood', shortcut: '6', radius: 20 * LY, cx: 0, cy: 0 },
   { id: 'milky-way', name: 'Milky Way', shortcut: '7', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y },
+  { id: 'galactic-center', name: 'Galactic center', shortcut: 'g', radius: 4000 * AU, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
+    clickName: 'Galactic center',
+    caption: 'Stars orbiting Sgr A*, on their measured orbits projected onto the galactic plane, moving with their real periods.' },
+  { id: 'sgr-a', name: 'Sgr A*', shortcut: 'b', radius: 1 * AU, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
+    clickName: 'Sgr A*',
+    caption: 'Horizon, shadow and innermost stable orbit to scale. The glow stands in for the accretion flow.' },
   { id: 'milky-way-halo', name: 'MW halo', shortcut: 'h', radius: 500e3 * LY, cx: 0, cy: 0,
     caption: 'Schematic top-down projection. Radial distances are to scale; galactic latitude is omitted and galaxy sizes are approximate.' },
   { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
@@ -191,13 +197,7 @@ function zoomAt(sx, sy, factor) {
 function nearestLevel() {
   const body = anim ? anim.level.follow : cam.follow;
   if (body) return MOON_LEVELS.find((lv) => lv.follow === body);
-  let best = LEVELS[0];
-  let bestD = Infinity;
-  for (const lv of LEVELS) {
-    const d = Math.abs(Math.log(mppFor(lv)) - Math.log(cam.mpp));
-    if (d < bestD) { bestD = d; best = lv; }
-  }
-  return best;
+  return pickLevel(LEVELS, cam.cx, cam.cy, cam.mpp * halfMin());
 }
 
 function drawLabels(view) {
@@ -370,7 +370,7 @@ window.addEventListener('mouseup', () => {
 canvas.addEventListener('mouseleave', () => { mouse = null; });
 canvas.addEventListener('click', () => {
   if (!hover || dragged) return;
-  const level = ALL_LEVELS.find((lv) => lv.follow && lv.follow.name === hover.name);
+  const level = ALL_LEVELS.find((lv) => (lv.follow ? lv.follow.name : lv.clickName) === hover.name);
   if (level) { stopTour(); goTo(level); }
 });
 

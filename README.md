@@ -7,6 +7,12 @@ Distances are to scale at every level
 Planets move on approximate fixed ellipses with their real periods, initialized
 from J2000 elements.
 The `k` key jumps to the trans-Neptunian view; `h` jumps to the Milky Way halo.
+`g` jumps to the galactic center, where the S-stars run their measured orbits
+around Sgr A* (Gillessen et al. 2017), projected onto the galactic plane and
+moving with their real periods. `b` jumps to the black hole itself, with its
+event horizon, shadow and innermost stable orbit to scale under a schematic
+accretion glow. Clicking the galactic center at the Milky Way level zooms in
+the same way.
 
 The moon systems include the major satellites plus selected smaller bodies
 such as Phobos, Amalthea, Hyperion, Puck, Nereid, and Pluto's four small moons.

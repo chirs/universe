@@ -17,7 +17,9 @@
 // Richard Powell's Atlas of the Universe (atlasoftheuniverse.com); group
 // directions use his centroids, distances stay with newer values.
 // Exceptions, transcribed rather than recalled: the Abell clusters,
-// SUPERCLUSTERS (both from Powell's tables) and VOIDS (Tully et al. 2019).
+// SUPERCLUSTERS (both from Powell's tables), VOIDS (Tully et al. 2019) and
+// the S_STARS orbital elements (Gillessen et al. 2017, Table 3). SGR_A_STAR
+// uses the GRAVITY collaboration's 2022 mass and distance.
 // Everything else is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
@@ -25,6 +27,10 @@ export const LY = 9.4607304725808e15;
 export const PC = 3.0856775814913673e16;
 export const KM = 1000;
 export const DAY_S = 86400;
+export const YEAR_D = 365.25;
+export const G_SI = 6.6743e-11;         // m^3 kg^-1 s^-2
+export const C_SI = 299792458;          // m/s
+export const SOLAR_MASS = 1.98892e30;   // kg
 export const J2000_MS = Date.UTC(2000, 0, 1, 12);
 
 export const SCALE_UNITS = [
@@ -219,8 +225,35 @@ export const BRIGHT_STARS = [
   { name: 'Rigel', dist: 860, l: 209.2, mag: 0.13, hue: 'b' },
 ];
 
+// The black hole at the galactic center. Equatorial position in degrees
+// (J2000) fixes how the sky at the center maps onto the galactic plane.
+export const SGR_A_STAR = {
+  name: 'Sgr A*',
+  mass: 4.297e6 * SOLAR_MASS,
+  distance: 8277 * PC,
+  ra: 266.41683,
+  dec: -29.00781,
+};
+
+// Stars orbiting Sgr A*, in the visual-binary convention: a in meters (from
+// arcseconds at the distance above), i inclination, Omega longitude of the
+// ascending node from north through east, omega argument of periapsis, all
+// in degrees; tP periapsis passage in days after J2000; period in days.
+function sStar(name, aArcsec, e, i, Omega, omega, tPYears, periodYears) {
+  const a = aArcsec * (SGR_A_STAR.distance / PC) * AU;
+  return { name, a, e, i, Omega, omega, tP: (tPYears - 2000) * YEAR_D, period: periodYears * YEAR_D };
+}
+export const S_STARS = [
+  sStar('S2', 0.1255, 0.8839, 134.18, 226.94, 65.51, 2002.33, 16.00),
+  sStar('S38', 0.1416, 0.8201, 171.1, 101.06, 17.99, 2003.19, 19.2),
+  sStar('S55', 0.1078, 0.7209, 150.1, 325.5, 331.5, 2009.34, 12.80),
+  sStar('S9', 0.2724, 0.644, 82.41, 156.60, 150.6, 1976.71, 51.3),
+  sStar('S13', 0.2641, 0.4250, 24.70, 74.5, 245.2, 2004.86, 49.00),
+  sStar('S1', 0.595, 0.556, 119.14, 342.04, 122.3, 2001.80, 166.0),
+];
+
 export const MILKY_WAY = {
-  sunDistance: 26000 * LY,   // Sun to galactic center
+  sunDistance: SGR_A_STAR.distance,   // Sun to galactic center
   diskRadius: 50000 * LY,
   bulgeRadius: 6000 * LY,
   arms: 4,

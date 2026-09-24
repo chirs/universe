@@ -1,4 +1,7 @@
-import { J2000_MS, DAY_S, AU, LY } from './data.js';
+import { J2000_MS, DAY_S, AU, LY, G_SI, C_SI, SOLAR_MASS } from './data.js';
+
+const TAU = Math.PI * 2;
+const D2R = Math.PI / 180;
 
 const OFFICIAL_DWARF_PLANETS = new Set(['Ceres', 'Pluto', 'Haumea', 'Makemake', 'Eris']);
 
@@ -85,6 +88,18 @@ export function voidSummary(v) {
   return `Void · centre ${formatDistance(v.dist * 1e6 * LY)} from the Milky Way · about ${formatDistance(v.size * 1e6 * LY)} across · ${v.note}`;
 }
 
+export function schwarzschildRadius(massKg) {
+  return 2 * G_SI * massKg / (C_SI * C_SI);
+}
+
+export function blackHoleSummary(bh) {
+  return `Supermassive black hole · ${compactNumber(bh.mass / SOLAR_MASS / 1e6)} million solar masses · Schwarzschild radius ${formatDistance(schwarzschildRadius(bh.mass))} · ${formatDistance(bh.distance)} from the Sun`;
+}
+
+export function sStarSummary(star) {
+  return `Star orbiting Sgr A* · periapsis ${formatDistance(star.a * (1 - star.e))} · apoapsis ${formatDistance(star.a * (1 + star.e))} · period ${formatPeriod(star.period)}`;
+}
+
 export function landmarkSummary(landmark) {
   return `Large-scale structure · ${formatDistance(landmark.dist)} from the Milky Way · approximate size ${formatDistance(landmark.size)}`;
 }
@@ -123,6 +138,72 @@ export function orbitalPosition(body, days) {
   const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
   const r = body.a * (1 - e * Math.cos(E));
   return { x: r * Math.cos(nu + varpi), y: r * Math.sin(nu + varpi) };
+}
+
+// Position on an orbit given in the visual-binary convention (see S_STARS in
+// data.js): offsets from the focus in meters, east and north on the sky and
+// depth positive away from the observer, so that a receding star has
+// increasing depth. Uses the standard Thiele-Innes geometry.
+export function skyOrbitPosition(orbit, days) {
+  const e = orbit.e || 0;
+  const M = ((TAU * (days - orbit.tP) / orbit.period) % TAU + TAU) % TAU;
+  const E = solveKepler(M, e);
+  return skyOrbitPoint(orbit, E);
+}
+
+function skyOrbitPoint(orbit, E) {
+  const e = orbit.e || 0;
+  const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+  const r = orbit.a * (1 - e * Math.cos(E));
+  const u = orbit.omega * D2R + nu;
+  const cO = Math.cos(orbit.Omega * D2R);
+  const sO = Math.sin(orbit.Omega * D2R);
+  const ci = Math.cos(orbit.i * D2R);
+  return {
+    north: r * (cO * Math.cos(u) - sO * Math.sin(u) * ci),
+    east: r * (sO * Math.cos(u) + cO * Math.sin(u) * ci),
+    depth: r * Math.sin(u) * Math.sin(orbit.i * D2R),
+  };
+}
+
+// The whole orbit as n points, evenly spaced in eccentric anomaly.
+export function skyOrbitPath(orbit, n = 128) {
+  const pts = [];
+  for (let k = 0; k < n; k++) pts.push(skyOrbitPoint(orbit, TAU * k / n));
+  return pts;
+}
+
+const NGP = { ra: 192.85948, dec: 27.12825 }; // north galactic pole, J2000
+
+// Position angle, from north through east, of the direction of increasing
+// galactic longitude on the sky at equatorial (ra, dec) in degrees.
+export function galacticPlanePositionAngle(ra, dec) {
+  const dA = (NGP.ra - ra) * D2R;
+  const toPole = Math.atan2(Math.sin(dA), Math.cos(dec * D2R) * Math.tan(NGP.dec * D2R) - Math.sin(dec * D2R) * Math.cos(dA));
+  return ((toPole / D2R + 90) % 360 + 360) % 360;
+}
+
+// Drop a sky offset at the galactic center into the plane of the map: depth
+// runs along +x, since the Sun looks toward the center along +x; the part
+// along increasing longitude runs along +y; the part toward galactic north
+// is dropped, as latitude is everywhere else.
+export function skyOffsetToPlane({ east, north, depth }, planePA) {
+  const pa = planePA * D2R;
+  return { x: depth, y: east * Math.sin(pa) + north * Math.cos(pa) };
+}
+
+// The level closest in scale to a view of the given radius at (cx, cy),
+// preferring levels whose center is within a few view widths of the camera
+// so a stop at the galactic center is not picked while looking at the Sun.
+export function pickLevel(levels, cx, cy, radius) {
+  const near = levels.filter((lv) => Math.hypot(cx - lv.cx, cy - lv.cy) < 10 * radius);
+  let best = null;
+  let bestD = Infinity;
+  for (const lv of near.length ? near : levels) {
+    const d = Math.abs(Math.log(lv.radius / radius));
+    if (d < bestD) { bestD = d; best = lv; }
+  }
+  return best;
 }
 
 export function lerp(a, b, u) {
