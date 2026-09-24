@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
@@ -347,6 +348,17 @@ test('the radio sphere grows at light speed from the first broadcast', () => {
   const text = radioSummary(RADIO, 12 * LY, [{ name: 'Near', dist: 4 }, { name: 'Far', dist: 20 }]);
   assert.match(text, /reached Near in 1924/);
   assert.match(text, /Far next, in 1940/);
+});
+
+test('the Gaia star file holds stars within 1500 ly with valid classes', () => {
+  const buf = readFileSync(new URL('../data/gaia-stars.bin', import.meta.url));
+  const n = buf.length / 5;
+  assert.ok(Number.isInteger(n) && n > 40000);
+  for (let i = 0; i < n; i++) {
+    assert.ok(Math.hypot(buf.readInt16LE(4 * i), buf.readInt16LE(4 * i + 2)) / 20 <= 1500.5);
+    const c = buf[4 * n + i];
+    assert.ok(c >> 2 < 6 && (c & 3) < 3);
+  }
 });
 
 test('clusters are ordered outward with sane sizes', () => {

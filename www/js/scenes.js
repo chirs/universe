@@ -709,13 +709,41 @@ const brightStars = {
   },
 };
 
+// Every star within 1500 light-years more luminous than absolute G = 1,
+// from Gaia DR3 (scripts/fetch-gaia.mjs), in its spectral color. Fetched on
+// first use; the layer is empty until it arrives.
 const fieldStars = (() => {
-  const pts = makeBlob(11, 900 * LY, 900 * LY, 6000);
+  const SPECTRAL = 'BAFGKM';
+  const SIZE = [2, 1.5, 1];
+  const ALPHA = [0.95, 0.8, 0.6];
+  // The less luminous classes would pile into a solid disc as the view
+  // widens, so they fade out first, leaving the O and B stars and giants.
+  const FADE = [null, [1500 * LY, 5000 * LY], [700 * LY, 2500 * LY]];
+  const fade = (lum, r) => (FADE[lum] ? Math.min(1, Math.max(0, Math.log(FADE[lum][1] / r) / Math.log(FADE[lum][1] / FADE[lum][0]))) : 1);
+  let groups = null;
+  const load = async () => {
+    const buf = await (await fetch('data/gaia-stars.bin')).arrayBuffer();
+    const n = buf.byteLength / 5;
+    const view = new DataView(buf);
+    const byClass = Array.from({ length: SPECTRAL.length * 4 }, () => []);
+    for (let i = 0; i < n; i++) {
+      byClass[view.getUint8(4 * n + i)].push(view.getInt16(4 * i, true) / 20 * LY, view.getInt16(4 * i + 2, true) / 20 * LY);
+    }
+    // Faintest first, so the luminous ones draw on top.
+    groups = byClass.map((pts, c) => ({ pts: Float64Array.from(pts), color: starStyle(SPECTRAL[c >> 2]).color, lum: c & 3 }))
+      .filter((g) => g.pts.length).sort((a, b) => b.lum - a.lum);
+  };
+  let loading = null;
   return {
     name: 'field stars',
-    range: [15 * LY, 1500 * LY],
+    range: [15 * LY, 5000 * LY],
     draw(ctx, view, alpha) {
-      drawPoints(ctx, view, pts, 0, 0, '#e8e0d0', 0.7 * alpha, 1.5);
+      loading ??= load();
+      if (!groups) return;
+      for (const g of groups) {
+        const a = ALPHA[g.lum] * alpha * fade(g.lum, view.radius);
+        if (a > 0.01) drawPoints(ctx, view, g.pts, 0, 0, g.color, a, SIZE[g.lum]);
+      }
     },
   };
 })();
