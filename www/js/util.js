@@ -557,7 +557,11 @@ export function mulberry32(seed) {
 // up into curved sheets, filaments and knots. kind 2 marks the densest knots,
 // kind 1 filaments, kind 0 the sparse field between. Particles whose starting
 // point lies within `hole` of the origin are left out, with a soft edge.
-export function makeZeldovichWeb(seed, radius, nCells, nPoints, hole = 0) {
+// `zone` limits the particles to an annulus of the same web: { inner,
+// outer, taper(r) in 0..1 }, with nPoints spread over that annulus. The
+// potential depends only on seed, radius and nCells, so zones of one web
+// line up.
+export function makeZeldovichWeb(seed, radius, nCells, nPoints, hole = 0, zone = null) {
   const rand = mulberry32(seed);
   const L = 2 * radius / Math.sqrt(nCells);
 
@@ -586,17 +590,20 @@ export function makeZeldovichWeb(seed, radius, nCells, nPoints, hole = 0) {
     return v;
   };
 
-  // Particles on a jittered lattice inside the disc, outside the hole.
-  const side = Math.ceil(Math.sqrt(nPoints * 4 / Math.PI));
-  const step = 2 * radius / side;
+  // Particles on a jittered lattice inside the disc (or zone), outside the hole.
+  const inner = zone ? zone.inner : 0;
+  const outer = zone ? zone.outer : radius;
+  const side = Math.ceil(Math.sqrt(nPoints * 4 * outer * outer / (Math.PI * (outer * outer - inner * inner))));
+  const step = 2 * outer / side;
   const q = [];
   for (let j = 0; j < side; j++) {
     for (let i = 0; i < side; i++) {
-      const x = -radius + (i + rand()) * step;
-      const y = -radius + (j + rand()) * step;
+      const x = -outer + (i + rand()) * step;
+      const y = -outer + (j + rand()) * step;
       const r = Math.hypot(x, y);
-      if (r > radius) continue;
+      if (r > outer || r < inner) continue;
       if (hole && r < hole && rand() > (r - 0.85 * hole) / (0.15 * hole)) continue;
+      if (zone && zone.taper && rand() > zone.taper(r)) continue;
       q.push(x, y);
     }
   }

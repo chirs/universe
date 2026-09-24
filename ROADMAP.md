@@ -6,8 +6,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Original 2D explorer
 
-- [ ] Scale-honest void size at the universe level, so the web is a fine
-      grain there and only resolves as filaments below a few Gly.
 - [ ] Decide whether the extragalactic levels should project onto the
       supergalactic plane instead of the galactic one. Most local structure
       is flat in that plane, which is why every map of the region uses it;

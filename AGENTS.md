@@ -73,8 +73,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
   nice-number scale bar, seeded PRNG, galactic-plane projection, and the
   cosmic web generator `makeZeldovichWeb` (a lattice of particles pushed
   along the gradient of a noise potential, so filaments curve and voids
-  come in a range of sizes). The supercluster web leaves a hole over the
-  500 Mly the real cluster data covers. `skyOrbitPosition` places a star on
+  come in a range of sizes). The web is one potential with cells about
+  as wide as real voids (0.35 Gly), dense within 6 Gly and sparse beyond;
+  it leaves a hole over the 500 Mly the real cluster data covers. It is too
+  many points to draw per frame, so the `cosmicWeb` layer draws only the
+  1 Gly buckets on screen and switches to images made once as it widens. `skyOrbitPosition` places a star on
   an orbit given in the visual-binary convention (sky east, north, depth),
   and `skyOffsetToPlane` drops that into the map's galactic plane using the
   plane's position angle at Sgr A*; `diskToSky` is the same rotation for a

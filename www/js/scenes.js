@@ -1326,42 +1326,121 @@ const distantObjects = (() => {
 
 // ---------------------------------------------------------------- cosmic web
 
-// `fade(r)` dims the web with distance; points are grouped into radial
-// shells so each shell draws at one alpha.
-function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0, fade = () => 1) {
-  const { pts, kind } = makeZeldovichWeb(seed, radius, nCells, nPoints, hole);
-  const SHELLS = 24;
-  const shells = Array.from({ length: SHELLS }, (_, s) => ({ fade: fade((s + 0.5) / SHELLS * radius), kinds: [[], [], []] }));
-  for (let i = 0; i < kind.length; i++) {
-    const r = Math.hypot(pts[2 * i], pts[2 * i + 1]);
-    const shell = shells[Math.min(SHELLS - 1, Math.floor(r / radius * SHELLS))];
-    shell.kinds[kind[i]].push(pts[2 * i], pts[2 * i + 1]);
-  }
-  for (const shell of shells) shell.kinds = shell.kinds.map((k) => Float64Array.from(k));
-  const drawn = shells.filter((shell) => shell.fade > 0.01);
+// The procedural web, one potential throughout. Dense out to 6 Gly, around
+// a hole over the real cluster data; sparse beyond, where it is a grain at the universe scale. Far too
+// many points to draw every frame: wide views use an image made once,
+// closer views only the 1 Gly buckets on screen. Farther out is earlier, so
+// galaxies thin toward the first ones at z = 20; the fade is per bucket.
+const cosmicWeb = (() => {
+  const R = UNIVERSE.radius;
+  const G = 1e9 * LY;
+  const nCells = Math.round((2 * R / UNIVERSE.webCell) ** 2);
+  const clamp01 = (v) => Math.min(1, Math.max(0, v));
+  const lookbackFade = (r) => clamp01((UNIVERSE.firstGalaxies.dist - r) / (UNIVERSE.firstGalaxies.dist - UNIVERSE.webFade)) ** 1.5;
+  // [zone, style per kind (color, alpha, size), weight in the image]
+  const ZONES = [
+    [{ count: Math.round(2000 * Math.PI * 36), hole: 0.5 * G, zone: { inner: 0, outer: 6 * G, taper: (r) => clamp01((6 * G - r) / (2 * G)) } },
+      [['#78809f', 0.18, 1], ['#c8d0f0', 0.45, 1], ['#f0f2ff', 0.7, 1.5]], 0.08],
+    [{ count: UNIVERSE.webPoints, hole: 0, zone: { inner: 4 * G, outer: R, taper: (r) => clamp01((r - 4 * G) / (1.5 * G)) } },
+      [['#78809f', 0.07, 1], ['#c8d0f0', 0.18, 1], ['#f0f2ff', 0.3, 1]], 0.8],
+  ];
+  const B = G;
+  const nb = Math.ceil(2 * R / B);
+  let buckets = null;
+  const build = () => {
+    buckets = Array.from({ length: nb * nb }, (_, k) => {
+      const cx = (k % nb + 0.5) * B - R;
+      const cy = (Math.floor(k / nb) + 0.5) * B - R;
+      return { fade: lookbackFade(Math.hypot(cx, cy)), zones: ZONES.map(() => [[], [], []]) };
+    });
+    ZONES.forEach(([cfg], z) => {
+      const { pts, kind } = makeZeldovichWeb(UNIVERSE.webSeed, R, nCells, cfg.count, cfg.hole, cfg.zone);
+      for (let i = 0; i < kind.length; i++) {
+        const x = pts[2 * i];
+        const y = pts[2 * i + 1];
+        buckets[Math.floor((y + R) / B) * nb + Math.floor((x + R) / B)].zones[z][kind[i]].push(x, y);
+      }
+    });
+    for (const b of buckets) b.zones = b.zones.map((kinds) => kinds.map((a) => Float64Array.from(a)));
+  };
+  // Images of the web made once: the whole disc for the widest views, and
+  // the dense zone alone, at finer resolution, for the middle scales.
+  const TEX = 2048;
+  const makeImage = (half, zonesIn, weight) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = TEX;
+    canvas.height = TEX;
+    const t = canvas.getContext('2d');
+    t.globalCompositeOperation = 'lighter';
+    const s = TEX / (2 * half);
+    for (const { fade, zones } of buckets) {
+      if (fade <= 0.01) continue;
+      for (const z of zonesIn) {
+        zones[z].forEach((a, k) => {
+          const [color, a0] = ZONES[z][1][k];
+          t.fillStyle = color;
+          t.globalAlpha = a0 * weight(z) * fade;
+          for (let i = 0; i < a.length; i += 2) t.fillRect((a[i] + half) * s, (half - a[i + 1]) * s, 1, 1);
+        });
+      }
+    }
+    return { canvas, half };
+  };
+  let whole = null;
+  let dense = null;
+  const drawImage = (ctx, view, img, a) => {
+    const size = 2 * img.half / view.mpp;
+    ctx.globalAlpha = a;
+    ctx.drawImage(img.canvas, view.sx(-img.half), view.sy(img.half), size, size);
+    ctx.globalAlpha = 1;
+  };
   return {
-    name,
-    range,
+    name: 'cosmic web',
+    range: [250e6 * LY, INF],
     draw(ctx, view, alpha) {
+      if (!buckets) build();
+      // 0 below 8 Gly, 1 above 16 Gly: the image takes over as the view widens.
+      const wide = clamp01(Math.log2(view.radius / (8 * G)));
       ctx.globalCompositeOperation = 'lighter';
-      for (const { fade: f, kinds: [field, filaments, nodes] } of drawn) {
-        const a = alpha * f;
-        drawPoints(ctx, view, field, 0, 0, '#78809f', 0.18 * a);
-        drawPoints(ctx, view, filaments, 0, 0, '#c8d0f0', 0.45 * a, 1);
-        drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.1 * a, 3);
-        drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.7 * a, 1.5);
+      if (wide > 0) {
+        whole ??= makeImage(R, [0, 1], (z) => ZONES[z][2]);
+        drawImage(ctx, view, whole, alpha * wide);
+      }
+      // The dense zone has about ten times the points per area, so it dims
+      // as the view widens to keep the same surface brightness as the rest.
+      const dim = 1 - 0.6 * clamp01(Math.log2(view.radius / (1.5 * G)) / 2);
+      // Past about 2 Gly the dense zone comes from its image, not its points.
+      const mid = clamp01(Math.log2(view.radius / (1.5 * G)) / 0.75);
+      if (mid > 0 && wide < 1) {
+        // Brighter than the points: shrunk on screen, the image averages away
+        // the single bright pixels that points keep.
+        dense ??= makeImage(6 * G, [0], () => 6);
+        drawImage(ctx, view, dense, alpha * (1 - wide) * mid * dim);
+      }
+      if (wide < 1) {
+        // The sparse grain is for wide views; up close the resolved web leads.
+        const grain = 0.35 + 0.65 * clamp01(Math.log2(view.radius / (2 * G)) / 1.5);
+        const x0 = Math.max(0, Math.floor((view.cx - view.w / 2 * view.mpp + R) / B));
+        const x1 = Math.min(nb - 1, Math.floor((view.cx + view.w / 2 * view.mpp + R) / B));
+        const y0 = Math.max(0, Math.floor((view.cy - view.h / 2 * view.mpp + R) / B));
+        const y1 = Math.min(nb - 1, Math.floor((view.cy + view.h / 2 * view.mpp + R) / B));
+        for (let by = y0; by <= y1; by++) {
+          for (let bx = x0; bx <= x1; bx++) {
+            const { fade, zones } = buckets[by * nb + bx];
+            const a = alpha * (1 - wide) * fade;
+            if (a <= 0.01) continue;
+            zones.forEach((kinds, z) => kinds.forEach((pts, k) => {
+              const [color, a0, size] = ZONES[z][1][k];
+              if (z === 0 && mid >= 1) return;
+              drawPoints(ctx, view, pts, 0, 0, color, a0 * a * (z === 0 ? dim * (1 - mid) : grain), size);
+            }));
+          }
+        }
       }
       ctx.globalCompositeOperation = 'source-over';
     },
   };
-}
-
-const superclusters = webLayer('supercluster web', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 14000,
-  [250e6 * LY, 4e9 * LY], 500e6 * LY);
-// Farther out is earlier: galaxies thin toward the first ones at z = 20.
-const cosmicWeb = webLayer('cosmic web', UNIVERSE.webSeed, UNIVERSE.radius, UNIVERSE.voids,
-  UNIVERSE.webPoints, [2e9 * LY, INF], 0,
-  (r) => Math.min(1, Math.max(0, (UNIVERSE.firstGalaxies.dist - r) / (UNIVERSE.firstGalaxies.dist - UNIVERSE.webFade))) ** 1.5);
+})();
 
 // Looking out is looking back: lookback rings, the dark ages, the glowing
 // microwave background and the opaque plasma just inside the horizon.
@@ -1499,7 +1578,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, eras, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
+  cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
   nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];

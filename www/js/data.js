@@ -771,8 +771,12 @@ export const UNIVERSE = {
   cmb: { dist: 45.219e9 * LY, z: 1089, sinceBigBang: '380,000 years' },
   lookbackRings: [[4, 4.643e9 * LY], [8, 11.193e9 * LY], [12, 22.690e9 * LY], [13, 28.469e9 * LY]],
   webSeed: 5,
-  webPoints: 20000,
-  voids: 140,
+  // The top-level web: cells about as wide as real voids and supercluster
+  // spacing, so at the universe scale it is a fine grain and resolves into
+  // filaments only below a few Gly. The inner 6 Gly is a
+  // denser zone of the same web, around the real cluster data.
+  webCell: 0.35e9 * LY,
+  webPoints: 1200000,
   landmarks: [
     { name: 'Virgo Supercluster', dist: 54e6 * LY, l: 284, b: 74, size: 55e6 * LY },
     { name: 'Laniakea', dist: 250e6 * LY, l: 307, b: 9, size: 260e6 * LY },
