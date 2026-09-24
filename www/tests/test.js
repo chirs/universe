@@ -9,14 +9,14 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE,
+  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
@@ -338,6 +338,15 @@ test('the heliopause half-body passes near both Voyager crossings', () => {
   for (const [r, deg] of crossings) assert.ok(Math.abs(rankineRadius(nose, deg * Math.PI / 180) - r) < 0.1 * r);
   // Twice as wide as the nose distance abeam of the Sun, pi/2 times.
   assert.ok(Math.abs(rankineRadius(nose, Math.PI / 2) / nose - Math.PI / 2) < 1e-12);
+});
+
+test('the radio sphere grows at light speed from the first broadcast', () => {
+  assert.equal(radioRadius(RADIO, RADIO.start - 1000), 0);
+  const tenYears = RADIO.start + 10 * YEAR_D * 86400e3;
+  assert.ok(Math.abs(radioRadius(RADIO, tenYears) / LY - 10) < 1e-9);
+  const text = radioSummary(RADIO, 12 * LY, [{ name: 'Near', dist: 4 }, { name: 'Far', dist: 20 }]);
+  assert.match(text, /reached Near in 1924/);
+  assert.match(text, /Far next, in 1940/);
 });
 
 test('clusters are ordered outward with sane sizes', () => {

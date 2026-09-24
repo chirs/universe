@@ -2,7 +2,7 @@ import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
   SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
-  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS,
+  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS, RADIO, J2000_MS, DAY_S,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import { GLOBULAR_CLUSTERS } from './globulars.js';
@@ -15,7 +15,7 @@ import {
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, rankineNose, rankineRadius, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
-  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
+  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -648,6 +648,41 @@ const localBubble = (() => {
         label(view, x, y, c.name, alpha, 0);
         hit(view, x, y, c.name, alpha, cloudSummary(c));
       }
+    },
+  };
+})();
+
+// The sphere our radio broadcasts have filled, growing at the speed of
+// light with the clock. The named stars it has passed are the bright stars
+// and the nearest systems.
+const radioSphere = (() => {
+  const named = [...STARS, ...BRIGHT_STARS];
+  return {
+    name: 'radio sphere',
+    range: [3 * LY, 3000 * LY],
+    draw(ctx, view, alpha, days) {
+      const radius = radioRadius(RADIO, J2000_MS + days * DAY_S * 1000);
+      const r = radius / view.mpp;
+      if (r < 6) return;
+      const x = view.sx(0);
+      const y = view.sy(0);
+      // A wavefront: brightest at the edge, thinning back toward the Sun.
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(120,230,200,0)');
+      g.addColorStop(0.7, 'rgba(120,230,200,0.015)');
+      g.addColorStop(1, 'rgba(120,230,200,0.08)');
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(140,235,205,0.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      const at = [x + r * Math.SQRT1_2, y + r * Math.SQRT1_2];
+      label(view, ...at, 'Our radio broadcasts', 0.8 * alpha, 1);
+      ringHit(view, x, y, r, 'Our radio broadcasts', alpha, radioSummary(RADIO, radius, named));
     },
   };
 })();
@@ -1626,7 +1661,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
-  nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
+  nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

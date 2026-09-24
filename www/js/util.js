@@ -1,4 +1,4 @@
-import { J2000_MS, DAY_S, AU, LY, PC, G_SI, C_SI, SOLAR_MASS } from './data.js';
+import { J2000_MS, DAY_S, YEAR_D, AU, LY, PC, G_SI, C_SI, SOLAR_MASS } from './data.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -414,6 +414,25 @@ export function rankineNose(crossings) {
 
 export function rankineRadius(nose, psi) {
   return psi === 0 ? nose : nose * psi / Math.sin(psi);
+}
+
+// How far the first broadcasts have travelled by a moment (ms), in meters.
+export function radioRadius(radio, ms) {
+  return Math.max(0, (ms - radio.start) / (YEAR_D * DAY_S * 1000)) * LY;
+}
+
+// stars: [{ name, dist (ly) }]; names the last one reached and the next.
+export function radioSummary(radio, radius, stars) {
+  const ly = radius / LY;
+  const year = (d) => new Date(radio.start + d * YEAR_D * DAY_S * 1000).getUTCFullYear();
+  const sorted = [...stars].sort((a, b) => a.dist - b.dist);
+  const last = sorted.filter((s) => s.dist <= ly).pop();
+  const next = sorted.find((s) => s.dist > ly);
+  const parts = [`Leading edge of our radio broadcasts, from ${radio.first} on ${radio.date}`, `now ${formatDistance(radius)} out`];
+  if (last) parts.push(`reached ${last.name} in ${year(last.dist)}`);
+  if (next) parts.push(`${next.name} next, in ${year(next.dist)}`);
+  parts.push('long since too faint for telescopes like ours to pick out');
+  return parts.join(' · ');
 }
 
 export function daysSinceJ2000(ms) {

@@ -342,6 +342,11 @@ export const STARS = [
   { name: 'Altair', dist: 16.73, l: 47.7, b: -8.9, types: ['A7IV-V'] },
 ];
 
+// The leading edge of Earth's radio broadcasts: the first scheduled
+// broadcast, KDKA Pittsburgh's election-night program (from memory). Earlier
+// spark and voice transmissions were weaker and sporadic.
+export const RADIO = { start: Date.UTC(1920, 10, 2), first: 'KDKA Pittsburgh', date: '2 November 1920' };
+
 // Close-up star systems, reached by clicking the star in the neighbourhood.
 // Binary orbits are in the visual-binary convention used for S_STARS,
 // transcribed from the Wikipedia orbit tables (which follow the published
