@@ -8,7 +8,7 @@ import {
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
-  starStyle, starSystemSummary, cloudSummary,
+  starStyle, starSystemSummary, cloudSummary, makeExpDisk,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import {
@@ -572,4 +572,20 @@ test('Local Bubble clouds sit a few hundred light-years out', () => {
     assert.match(cloudSummary(c), /^Molecular cloud · \d+ ly from the Sun · /);
   }
   assert.ok(LOCAL_BUBBLE.radius > 400 * LY && LOCAL_BUBBLE.radius < 600 * LY);
+});
+
+test('makeExpDisk follows an exponential surface density', () => {
+  const pts = makeExpDisk(3, 1, 200, 20000);
+  assert.deepEqual(pts, makeExpDisk(3, 1, 200, 20000));
+  let sum = 0;
+  let inside = 0;
+  for (let i = 0; i < pts.length; i += 2) {
+    const r = Math.hypot(pts[i], pts[i + 1]);
+    assert.ok(r <= 200);
+    sum += r;
+    if (r < 1) inside++;
+  }
+  assert.ok(Math.abs(sum / 20000 - 2) < 0.06, 'mean radius is twice the scale length');
+  // Fraction inside one scale length is 1 - 2/e for a Gamma(2) law.
+  assert.ok(Math.abs(inside / 20000 - (1 - 2 / Math.E)) < 0.02);
 });

@@ -1,5 +1,5 @@
 import {
-  AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
+  AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE,
 } from './data.js';
 import {
@@ -7,7 +7,7 @@ import {
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
-  galacticPlanePositionAngle, skyOffsetToPlane, makeArm, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
+  galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -366,23 +366,63 @@ const GC = skyToPlane(0, MILKY_WAY.sunDistance);
 // The disk, bulge and bar are schematic; the bar is tilted so its near end
 // lies at positive longitude. The arms are the Reid et al. 2019 fits, with
 // faint extrapolations beyond the measured azimuth ranges.
+// A radial glow whose brightness falls as exp(-r / scale), for the disk.
+function expGlow(ctx, x, y, rMax, scale, rgb, peak, alpha) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, rMax);
+  for (let i = 0; i <= 10; i++) g.addColorStop(i / 10, `rgba(${rgb},${peak * Math.exp(-i / 10 * rMax / scale)})`);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, rMax, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
 const milkyWay = (() => {
   const mw = MILKY_WAY;
-  const disk = makeBlob(mw.seed + 1, mw.diskRadius * 0.45, mw.diskRadius * 0.45, 6000);
-  const bulge = makeBlob(mw.seed + 2, mw.bulgeRadius * 0.5, mw.bulgeRadius * 0.5, 2500);
-  const bar = makeBlob(mw.seed + 3, mw.barHalfLength * 0.5, mw.bulgeRadius * 0.2, 1500, 180 - mw.barAngle);
-  const arms = SPIRAL_ARMS.map((arm, k) => ({ ...arm, ...makeArm(arm, mw.sunDistance, mw.seed + 10 + k) }));
+  const scale = mw.diskScaleLength;
+  const diskPts = makeExpDisk(mw.seed + 1, scale, mw.diskRadius, 16000);
+  // Warm inside a few kpc, blue-white outside, like a real disk.
+  const split = 13000 * LY;
+  const inner = [];
+  const outer = [];
+  for (let i = 0; i < diskPts.length; i += 2) (Math.hypot(diskPts[i], diskPts[i + 1]) < split ? inner : outer).push(diskPts[i], diskPts[i + 1]);
+  const diskInner = Float64Array.from(inner);
+  const diskOuter = Float64Array.from(outer);
+  const bulge = makeBlob(mw.seed + 2, mw.bulgeRadius * 0.45, mw.bulgeRadius * 0.45, 3000);
+  const bar = makeBlob(mw.seed + 3, mw.barHalfLength * 0.5, mw.bulgeRadius * 0.22, 3500, 180 - mw.barAngle);
+  const fade = (r) => Math.exp(-(r - 3000 * PC) / (8000 * PC));
+  const arms = SPIRAL_ARMS.map((arm, k) => ({ ...arm, ...makeArm(arm, mw.sunDistance, mw.seed + 10 + k, 50, fade) }));
+  // Star-forming knots beaded along the arms, denser where the fit is.
+  const knots = (() => {
+    const rand = mulberry32(mw.seed + 20);
+    const out = [];
+    for (const arm of arms) {
+      const walk = (spine, p) => {
+        for (const q of spine) {
+          if (rand() < p * fade(Math.hypot(q.x - GC.x, q.y - GC.y))) {
+            out.push({ x: q.x + (rand() - 0.5) * arm.width, y: q.y + (rand() - 0.5) * arm.width, size: (300 + rand() * 500) * LY });
+          }
+        }
+      };
+      walk(arm.fittedSpine, 0.35);
+      for (const s of arm.extraSpines) walk(s, 0.2);
+    }
+    return out;
+  })();
   return {
     name: 'milky way',
     range: [2000 * LY, 500e3 * LY],
     draw(ctx, view, alpha) {
       const gx = view.sx(GC.x);
       const gy = view.sy(GC.y);
-      glow(ctx, gx, gy, mw.diskRadius / view.mpp, 'rgba(120,130,180,0.35)', alpha);
-      drawPoints(ctx, view, disk, GC.x, GC.y, '#9aa4c8', 0.35 * alpha);
+      const px = (m) => m / view.mpp;
+      expGlow(ctx, gx, gy, px(mw.diskRadius), px(scale), '165,178,225', 0.75, alpha);
+      drawPoints(ctx, view, diskOuter, GC.x, GC.y, '#b8c4e8', 0.22 * alpha);
+      drawPoints(ctx, view, diskInner, GC.x, GC.y, '#f0dcc0', 0.25 * alpha);
       ctx.lineJoin = 'round';
       for (const arm of arms) {
-        ctx.lineWidth = 2 * arm.width / view.mpp;
+        ctx.lineWidth = 2 * px(arm.width);
         const band = (spine, a) => {
           if (spine.length < 2) return;
           ctx.strokeStyle = `rgba(170,185,230,${a * alpha})`;
@@ -390,15 +430,34 @@ const milkyWay = (() => {
           spine.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
           ctx.stroke();
         };
-        for (const spine of arm.extraSpines) band(spine, 0.05);
-        band(arm.fittedSpine, 0.09);
-        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.35 * alpha);
-        drawPoints(ctx, view, arm.fitted, 0, 0, '#dfe6ff', 0.6 * alpha);
+        for (const spine of arm.extraSpines) band(spine, 0.04);
+        band(arm.fittedSpine, 0.07);
+        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.5 * alpha);
+        drawPoints(ctx, view, arm.fitted, 0, 0, '#e8eeff', 0.6 * alpha);
       }
       ctx.lineJoin = 'miter';
-      drawPoints(ctx, view, bar, GC.x, GC.y, '#ffe2b0', 0.6 * alpha);
-      drawPoints(ctx, view, bulge, GC.x, GC.y, '#fff0cc', 0.7 * alpha);
-      glow(ctx, gx, gy, mw.bulgeRadius / view.mpp, 'rgba(255,230,180,0.6)', alpha);
+      // Knots are texture at galaxy scale, not objects: they fade out once
+      // they would be more than a few pixels across.
+      const knotAlpha = alpha * Math.min(1, Math.max(0, (10 - px(500 * LY)) / 5));
+      if (knotAlpha > 0) {
+        for (const k of knots) {
+          const x = view.sx(k.x);
+          const y = view.sy(k.y);
+          if (!onScreen(view, x, y)) continue;
+          glow(ctx, x, y, Math.max(2.5, 1.4 * px(k.size)), 'rgba(205,225,255,0.8)', knotAlpha);
+        }
+      }
+      // The bar: an elliptical glow along its axis, plus its points.
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.rotate(-(180 - mw.barAngle) * Math.PI / 180);
+      ctx.scale(1, 0.38);
+      glow(ctx, 0, 0, px(mw.barHalfLength), 'rgba(255,222,170,0.55)', alpha);
+      ctx.restore();
+      drawPoints(ctx, view, bar, GC.x, GC.y, '#ffe2b0', 0.55 * alpha);
+      drawPoints(ctx, view, bulge, GC.x, GC.y, '#fff0cc', 0.6 * alpha);
+      glow(ctx, gx, gy, px(mw.bulgeRadius), 'rgba(255,235,195,0.7)', alpha);
+      glow(ctx, gx, gy, px(mw.bulgeRadius) * 0.3, 'rgba(255,248,230,0.9)', alpha);
       for (const arm of arms) label(view, view.sx(arm.label.x), view.sy(arm.label.y), arm.name, 0.8 * alpha, 0);
     },
   };

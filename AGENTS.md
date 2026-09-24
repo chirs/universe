@@ -53,7 +53,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   highlight by scale among stops near the camera. `armRadius` and `makeArm`
   turn a Reid et al. arm (log spiral with a kink, galactocentric azimuth
   zero toward the Sun) into scattered points, fitted range and extrapolation
-  kept separate so the extrapolation can draw fainter.
+  kept separate so the extrapolation can draw fainter. `makeExpDisk` scatters an
+  exponential disk. The Milky Way layer's knots along the arms are texture,
+  not catalogued objects, and fade out once they would be more than a few
+  pixels across.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut. The galactic

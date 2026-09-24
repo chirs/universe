@@ -151,19 +151,24 @@ export function galactocentricToPlane(r, beta, sunDistance) {
 // arm.extend degrees at each end, kept between 3 and 14 kpc from the
 // center. Points scatter across the arm's width, in map meters about the
 // Sun. The spines are the centerlines, one per stretch, for a soft band.
-export function makeArm(arm, sunDistance, seed, perDegree = 30) {
+// `weight(r)` thins points with galactocentric radius, so the arms fade
+// with the disk; the continuations ramp down to half density over their
+// first 40 degrees rather than stepping.
+export function makeArm(arm, sunDistance, seed, perDegree = 50, weight = () => 1) {
   const rand = mulberry32(seed);
   const gaussian = () => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(TAU * rand());
   const width = arm.width * 1000 * PC;
-  const sample = (lo, hi, density) => {
+  const sample = (lo, hi, density, rampFrom) => {
     const out = [];
     const n = Math.round((hi - lo) * density);
     for (let k = 0; k < n; k++) {
       const beta = lo + rand() * (hi - lo);
       const r = armRadius(arm, beta);
       if (r < 3000 * PC || r > 14000 * PC) continue;
+      const ramp = rampFrom === undefined ? 1 : 1 - 0.5 * Math.min(1, Math.abs(beta - rampFrom) / 40);
+      if (rand() > weight(r) * ramp) continue;
       const p = galactocentricToPlane(r, beta, sunDistance);
-      out.push(p.x + gaussian() * width, p.y + gaussian() * width);
+      out.push(p.x + gaussian() * width * 1.5, p.y + gaussian() * width * 1.5);
     }
     return Float64Array.from(out);
   };
@@ -179,12 +184,28 @@ export function makeArm(arm, sunDistance, seed, perDegree = 30) {
   const [lead, trail] = arm.extend || [60, 60];
   return {
     fitted: sample(lo, hi, perDegree),
-    extra: Float64Array.from([...sample(lo - lead, lo, perDegree * 0.4), ...sample(hi, hi + trail, perDegree * 0.4)]),
+    extra: Float64Array.from([...sample(lo - lead, lo, perDegree, lo), ...sample(hi, hi + trail, perDegree, hi)]),
     fittedSpine: spine(lo, hi),
     extraSpines: [spine(lo - lead, lo), spine(hi, hi + trail)],
     width,
     label: galactocentricToPlane(armRadius(arm, arm.labelBeta), arm.labelBeta, sunDistance),
   };
+}
+
+// Points of an exponential disk about the origin: surface density falling
+// as exp(-r / scaleLength), cut at maxRadius. The radial law is a Gamma(2)
+// draw, -scaleLength * ln(u1 * u2).
+export function makeExpDisk(seed, scaleLength, maxRadius, count) {
+  const rand = mulberry32(seed);
+  const pts = new Float64Array(count * 2);
+  for (let i = 0; i < count; i++) {
+    let r;
+    do { r = -scaleLength * Math.log(rand() * rand() || 1e-12); } while (r > maxRadius);
+    const t = rand() * TAU;
+    pts[2 * i] = r * Math.cos(t);
+    pts[2 * i + 1] = r * Math.sin(t);
+  }
+  return pts;
 }
 
 export function landmarkSummary(landmark) {
