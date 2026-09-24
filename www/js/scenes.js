@@ -942,6 +942,29 @@ const milkyWay = (() => {
   };
 })();
 
+// Dust within 3 kpc: the Lallement et al. 2022 3D map collapsed onto the
+// plane by scripts/import-dust.mjs, one 10 pc column per pixel, drawn over
+// the disk and under the stars.
+const dust = (() => {
+  const HALF = 3005 * PC;
+  let img = null;
+  return {
+    name: 'dust',
+    range: [300 * LY, 40e3 * LY],
+    draw(ctx, view, alpha) {
+      if (!img) {
+        img = new Image();
+        img.src = 'data/dust.png';
+      }
+      if (!img.complete || !img.naturalWidth) return;
+      const size = 2 * HALF / view.mpp;
+      ctx.globalAlpha = 0.85 * alpha;
+      ctx.drawImage(img, view.sx(-HALF), view.sy(HALF), size, size);
+      ctx.globalAlpha = 1;
+    },
+  };
+})();
+
 // Nebulae, clusters and black holes in the nearby arms.
 const galacticObjects = (() => {
   const objects = MILKY_WAY_OBJECTS.map((o) => ({ ...o, ...skyToPlane(o.l, o.dist * LY) }));
@@ -1688,7 +1711,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
+  cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, globularClusters, nuclearCluster,
   nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
