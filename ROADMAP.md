@@ -38,12 +38,36 @@ Open work only; completed items are removed as they land (see git history).
 
 ## v3: time as a dimension
 
+The agreed direction: the map is about where; the best moments are about
+when. Build the atlas of moments first, with provenance underneath.
+
+- [ ] An atlas of moments: a curated timeline of dated events, each a level
+      plus a clock time (the `#level?t=` links), from Voyager's heliopause
+      crossing and Apophis in 2029 through S2's periapsis in 2034 and Halley
+      in 2061 to Andromeda's arrival. The space tour did not prove useful;
+      a walk through time may.
 - [ ] Let the clock's rate follow the zoom: years per second among the
       planets, centuries at the S-stars, millions of years at the galaxy, so
       S2 whips round Sgr A* and the Sun circles the galaxy on screen. The
       spiral arms are density waves, not rigid bodies, so they should not
       simply rotate; decide what moves (stars, the Sun, clusters) and what
       holds still before building it.
+
+## Provenance
+
+- [ ] Make sources first-class: each object carries where its numbers came
+      from, shown in the hover text, and anything fetched has a script that
+      refreshes it. Retire the values written from memory in data.js one
+      group at a time, starting with the ones a reader would quote.
+
+## Decisions to make
+
+- [ ] Whether `/v2/` becomes the site, with the 2D explorer folded into it,
+      or the 2D map is the work and the 3D draft is retired. Carrying both
+      means every addition is made once and owed twice.
+- [ ] Only if additions keep coming at the current pace: lazy, per-level
+      binary assets and a frame budget. `spacecraft.js` is 441 KB of
+      JavaScript parsed on every load, and every layer is drawn every frame.
 
 ## Deferred
 
