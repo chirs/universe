@@ -36,7 +36,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `S_STARS` orbital elements, transcribed from Gillessen et al. 2017, and
   the `SPIRAL_ARMS` fits, transcribed from Reid et al. 2019. The
   `MILKY_WAY_OBJECTS` distances are from memory; their longitudes were
-  computed from J2000 equatorial positions.
+  computed from J2000 equatorial positions. `STARS` is transcribed from the
+  Wikipedia list of nearest stars, with spectral types per component and
+  confirmed-planet counts; `LOCAL_BUBBLE` cloud distances are from memory.
   `SGR_A_STAR` carries the GRAVITY 2022 mass and distance, and the Sun's
   distance to the galactic center is taken from it.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
@@ -58,7 +60,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   center has two layers: the nuclear star cluster, which owns the
   "Galactic center" label from the Milky Way level inward, and the nucleus,
   which draws the S-star orbits and Sgr A* (a dot until its shadow resolves,
-  then horizon, shadow and innermost stable orbit to scale).
+  then horizon, shadow and innermost stable orbit to scale). The Local
+  Bubble outline is interpolated around the sky between the clouds on its
+  shell, with a schematic radius where there are none.
 - `www/js/overview.js` — the log-radius overview mode: pure mapping helpers
   (`logY`, `angleX`, `frame`) and `drawOverview`, which fills the same
   `labels` and `hits` arrays as the layers so hover and label placement are

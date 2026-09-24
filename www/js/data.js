@@ -152,30 +152,92 @@ export const BELTS = {
   oort: { inner: 2000 * AU, outer: 1.6 * LY, count: 4000, seed: 3 },
 };
 
-// Distance in light-years, galactic longitude and latitude in degrees.
+// Star systems within about 16.7 light-years, transcribed from the
+// Wikipedia list of nearest stars (Gaia-era distances). Distance in
+// light-years; galactic l and b computed from the J2000 positions; types
+// are the spectral types of the components, brown dwarfs L/T/Y and white
+// dwarfs D; planets counts confirmed planets where the list gives any.
 export const STARS = [
-  { name: 'Proxima Centauri', dist: 4.25, l: 313.9, b: -1.9 },
-  { name: 'Alpha Centauri', dist: 4.37, l: 315.7, b: -0.7 },
-  { name: "Barnard's Star", dist: 5.96, l: 31.0, b: 14.1 },
-  { name: 'Wolf 359', dist: 7.86, l: 244.1, b: 56.1 },
-  { name: 'Lalande 21185', dist: 8.31, l: 185.1, b: 65.4 },
-  { name: 'Sirius', dist: 8.60, l: 227.2, b: -8.9, bright: true },
-  { name: 'Luyten 726-8', dist: 8.73, l: 175.5, b: -75.7 },
-  { name: 'Ross 154', dist: 9.70, l: 11.3, b: -10.3 },
-  { name: 'Ross 248', dist: 10.3, l: 110.0, b: -16.9 },
-  { name: 'Epsilon Eridani', dist: 10.5, l: 195.8, b: -48.1, bright: true },
-  { name: 'Lacaille 9352', dist: 10.7, l: 5.1, b: -66.0 },
-  { name: 'Ross 128', dist: 11.0, l: 270.1, b: 59.6 },
-  { name: '61 Cygni', dist: 11.4, l: 82.3, b: -5.8 },
-  { name: 'Procyon', dist: 11.5, l: 213.7, b: 13.0, bright: true },
-  { name: 'Struve 2398', dist: 11.5, l: 89.3, b: 24.2 },
-  { name: 'Groombridge 34', dist: 11.6, l: 116.7, b: -18.4 },
-  { name: 'Epsilon Indi', dist: 11.9, l: 336.2, b: -48.0 },
-  { name: 'Tau Ceti', dist: 11.9, l: 173.1, b: -73.4, bright: true },
-  { name: "Luyten's Star", dist: 12.3, l: 212.3, b: 10.4 },
-  { name: "Kapteyn's Star", dist: 12.8, l: 250.5, b: -36.0 },
-  { name: 'Altair', dist: 16.7, l: 47.7, b: -8.9, bright: true },
+  { name: 'Proxima Centauri', dist: 4.25, l: 313.9, b: -1.9, types: ['M5.5V'], planets: 2 },
+  { name: 'Alpha Centauri', dist: 4.34, l: 315.7, b: -0.7, types: ['G2V', 'K1V'] },
+  { name: "Barnard's Star", dist: 5.96, l: 31.0, b: 14.1, types: ['M4V'], planets: 4 },
+  { name: 'Luhman 16', dist: 6.51, l: 285.2, b: 5.3, types: ['L8', 'T1'] },
+  { name: 'WISE 0855-0714', dist: 7.43, l: 235.0, b: 23.4, types: ['Y4'] },
+  { name: 'Wolf 359', dist: 7.86, l: 244.1, b: 56.1, types: ['M6V'] },
+  { name: 'Lalande 21185', dist: 8.3, l: 185.1, b: 65.4, types: ['M2V'], planets: 2 },
+  { name: 'Sirius', dist: 8.71, l: 227.2, b: -8.9, types: ['A1V', 'DA2'] },
+  { name: 'Gliese 65', dist: 8.77, l: 175.5, b: -75.7, types: ['M5.5V', 'M6V'] },
+  { name: 'Ross 154', dist: 9.71, l: 11.3, b: -10.3, types: ['M3.5V'] },
+  { name: 'Ross 248', dist: 10.31, l: 110.0, b: -16.9, types: ['M5.5V'] },
+  { name: 'Epsilon Eridani', dist: 10.47, l: 195.8, b: -48.1, types: ['K2V'], planets: 1 },
+  { name: 'Lacaille 9352', dist: 10.72, l: 5.1, b: -66.0, types: ['M0.5V'], planets: 4 },
+  { name: 'Ross 128', dist: 11.01, l: 270.1, b: 59.6, types: ['M4V'], planets: 1 },
+  { name: 'EZ Aquarii', dist: 11.11, l: 47.1, b: -57.0, types: ['M5V', 'M5V', 'M5V'] },
+  { name: '61 Cygni', dist: 11.4, l: 82.3, b: -5.8, types: ['K5V', 'K7V'] },
+  { name: 'Procyon', dist: 11.46, l: 213.7, b: 13.0, types: ['F5IV-V', 'DQZ'] },
+  { name: 'Struve 2398', dist: 11.49, l: 89.3, b: 24.2, types: ['M3V', 'M3.5V'] },
+  { name: 'Groombridge 34', dist: 11.62, l: 116.7, b: -18.4, types: ['M1.5V', 'M3.5V'], planets: 2 },
+  { name: 'DX Cancri', dist: 11.68, l: 197.0, b: 32.4, types: ['M6.5V'] },
+  { name: 'Epsilon Indi', dist: 11.87, l: 336.2, b: -48.0, types: ['K5V', 'T1', 'T6'], planets: 1 },
+  { name: 'Tau Ceti', dist: 11.91, l: 173.1, b: -73.4, types: ['G8.5V'], planets: 4 },
+  { name: 'GJ 1061', dist: 11.98, l: 251.9, b: -52.9, types: ['M5.5V'], planets: 3 },
+  { name: 'YZ Ceti', dist: 12.12, l: 149.7, b: -78.8, types: ['M4.5V'], planets: 3 },
+  { name: "Luyten's Star", dist: 12.35, l: 212.3, b: 10.4, types: ['M3.5V'], planets: 2 },
+  { name: "Teegarden's Star", dist: 12.5, l: 160.3, b: -37.0, types: ['M6.5V'], planets: 3 },
+  { name: "Kapteyn's Star", dist: 12.83, l: 250.5, b: -36.0, types: ['M1.5VI'] },
+  { name: 'Lacaille 8760', dist: 12.95, l: 3.9, b: -44.3, types: ['M0V'] },
+  { name: 'SCR 1845-6357', dist: 13.06, l: 331.5, b: -23.5, types: ['M8.5V', 'T6'] },
+  { name: 'Kruger 60', dist: 13.07, l: 104.7, b: -0.0, types: ['M3V', 'M4V'] },
+  { name: 'DENIS J1048-3956', dist: 13.19, l: 278.7, b: 17.1, types: ['M8.5V'] },
+  { name: 'Ross 614', dist: 13.36, l: 212.9, b: -6.2, types: ['M4.5V', 'M5.5V'] },
+  { name: 'UGPS J0722-0540', dist: 13.43, l: 221.5, b: 4.3, types: ['T9'] },
+  { name: 'Wolf 1061', dist: 14.05, l: 3.4, b: 23.7, types: ['M3V'], planets: 3 },
+  { name: "Van Maanen's Star", dist: 14.07, l: 121.9, b: -57.5, types: ['DZ7'] },
+  { name: 'Gliese 1', dist: 14.17, l: 343.6, b: -75.9, types: ['M1.5V'] },
+  { name: 'TZ Arietis', dist: 14.58, l: 147.7, b: -46.5, types: ['M4.5V'], planets: 1 },
+  { name: 'Wolf 424', dist: 14.6, l: 288.8, b: 71.4, types: ['M5.5V', 'M7V'] },
+  { name: 'Gliese 687', dist: 14.84, l: 98.6, b: 32.0, types: ['M3V'], planets: 2 },
+  { name: 'Gliese 674', dist: 14.85, l: 343.0, b: -6.8, types: ['M3V'], planets: 1 },
+  { name: 'LHS 292', dist: 14.87, l: 261.0, b: 41.3, types: ['M6.5V'] },
+  { name: 'Gliese 440', dist: 15.12, l: 296.0, b: -2.9, types: ['DQ6'] },
+  { name: 'GJ 1245', dist: 15.2, l: 78.9, b: 8.5, types: ['M5.5V', 'M6V', 'M5.5V'] },
+  { name: 'WISE 1741+2553', dist: 15.22, l: 50.1, b: 26.1, types: ['T9'] },
+  { name: 'Gliese 876', dist: 15.24, l: 52.0, b: -59.6, types: ['M3.5V'], planets: 4 },
+  { name: 'WISE 1639-6847', dist: 15.34, l: 321.2, b: -14.5, types: ['Y0.5'] },
+  { name: 'LHS 288', dist: 15.76, l: 288.2, b: -2.0, types: ['M5.5V'] },
+  { name: 'GJ 1002', dist: 15.81, l: 92.5, b: -67.7, types: ['M5.5V'], planets: 2 },
+  { name: 'DENIS 0255-4700', dist: 15.88, l: 260.6, b: -58.7, types: ['L7.5'] },
+  { name: 'Groombridge 1618', dist: 15.89, l: 165.9, b: 52.1, types: ['K7V'] },
+  { name: 'Gliese 412', dist: 16.0, l: 168.5, b: 63.1, types: ['M1V', 'M5.5V'] },
+  { name: 'AD Leonis', dist: 16.19, l: 216.5, b: 54.6, types: ['M3V'] },
+  { name: 'Gliese 832', dist: 16.2, l: 349.2, b: -46.3, types: ['M1.5V'], planets: 1 },
+  { name: 'Gliese 682', dist: 16.33, l: 346.0, b: -6.6, types: ['M4V'] },
+  { name: 'Omicron2 Eridani', dist: 16.33, l: 200.8, b: -38.0, types: ['K0.5V', 'DA4', 'M4V'] },
+  { name: 'EV Lacertae', dist: 16.48, l: 100.6, b: -13.1, types: ['M3.5V'] },
+  { name: '70 Ophiuchi', dist: 16.71, l: 29.9, b: 11.4, types: ['K0V', 'K5V'] },
+  { name: 'Altair', dist: 16.73, l: 47.7, b: -8.9, types: ['A7IV-V'] },
 ];
+
+// The Local Bubble: the cavity of hot thin gas the Sun sits in, swept out
+// by supernovae over the last 14 million years (Zucker et al. 2022). The
+// nearby star-forming clouds lie on its shell; the shell between them is
+// drawn at a schematic radius. Cloud distances (Zucker et al. 2020) and
+// directions are from memory. Perseus is on the far shell but, with its
+// latitude dropped, would pull the outline into a spike, so it is drawn
+// as a cloud only.
+export const LOCAL_BUBBLE = {
+  radius: 490 * LY,   // about 150 pc, "at least 1000 light-years across"
+  clouds: [
+    { name: 'Ophiuchus', dist: 455, l: 353, b: 17 },
+    { name: 'Pipe Nebula', dist: 530, l: 0, b: 5 },
+    { name: 'Corona Australis', dist: 490, l: 0, b: -20 },
+    { name: 'Perseus', dist: 960, l: 160, b: -20, outline: false },
+    { name: 'Taurus', dist: 460, l: 172, b: -15 },
+    { name: 'Chamaeleon', dist: 620, l: 300, b: -16 },
+    { name: 'Musca', dist: 555, l: 301, b: -9 },
+    { name: 'Lupus', dist: 520, l: 339, b: 15 },
+  ],
+};
 
 // Naked-eye stars beyond the nearest-star list. Distance in light-years
 // (Hipparcos-derived, rounded), galactic longitude in degrees, apparent

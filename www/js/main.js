@@ -21,7 +21,10 @@ export const LEVELS = [
   { id: 'outer', name: 'Outer solar system', shortcut: '5', radius: 50 * AU, cx: 0, cy: 0 },
   { id: 'trans-neptunian', name: 'TNOs', shortcut: 'k', radius: 120 * AU, cx: 0, cy: 0,
     caption: 'Official dwarf planets: Pluto, Haumea, Makemake, Eris. Other labeled TNOs are candidates.' },
-  { id: 'stars', name: 'Stellar neighborhood', shortcut: '6', radius: 20 * LY, cx: 0, cy: 0 },
+  { id: 'stars', name: 'Stellar neighborhood', shortcut: '6', radius: 20 * LY, cx: 0, cy: 0,
+    caption: 'Every known system within 16 light-years. Most are red dwarfs too faint for the eye; two of the nearest are brown dwarfs. Rings mark systems with known planets.' },
+  { id: 'local-bubble', name: 'Local Bubble', shortcut: 'u', radius: 700 * LY, cx: 0, cy: 0,
+    caption: 'A cavity about 1,000 ly across, swept out by supernovae over the last 14 million years. The star-forming clouds lie on its shell; the outline between them is schematic.' },
   { id: 'local-arm', name: 'Local arm', shortcut: 'l', radius: 8000 * LY, cx: 0, cy: 0,
     caption: 'The Sun sits in the Local arm, between the Sagittarius–Carina arm toward the center and the Perseus arm away from it. Arm positions are from maser parallaxes; faint stretches are extrapolated.' },
   { id: 'milky-way', name: 'Milky Way', shortcut: '7', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
@@ -52,7 +55,7 @@ const BAR = [
   ] },
   { label: 'Solar system', sections: [{ levels: ['trans-neptunian', 'outer', 'inner'].map(byId) }] },
   'stars',
-  { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'galactic-center', 'sgr-a'].map(byId) }] },
+  { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'local-bubble', 'galactic-center', 'sgr-a'].map(byId) }] },
   'local-group', 'virgo', 'universe',
 ];
 

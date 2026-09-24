@@ -1,13 +1,13 @@
 import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS,
+  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE,
 } from './data.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
-  galacticPlanePositionAngle, skyOffsetToPlane, makeArm, galacticObjectSummary,
+  galacticPlanePositionAngle, skyOffsetToPlane, makeArm, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -228,7 +228,9 @@ const sunDot = {
 
 // ---------------------------------------------------------------- stars
 
-const starPositions = STARS.map((s) => ({ ...s, ...skyToPlane(s.l, s.dist * LY) }));
+// Each system is drawn by its primary's spectral type; a ring marks systems
+// with known planets.
+const starPositions = STARS.map((s) => ({ ...s, ...skyToPlane(s.l, s.dist * LY), style: starStyle(s.types[0]) }));
 
 const nearestStars = {
   name: 'nearest stars',
@@ -238,14 +240,74 @@ const nearestStars = {
       const x = view.sx(s.x);
       const y = view.sy(s.y);
       if (!onScreen(view, x, y)) continue;
-      const r = s.bright ? 2.5 : 1.8;
-      glow(ctx, x, y, r * 4, '#ffffff', 0.25 * alpha);
-      dot(ctx, x, y, r, s.bright ? '#fff6dc' : '#d9c9b0', alpha);
-      label(view, x, y, s.name, alpha, s.bright ? 1 : 0);
-      hit(view, x, y, s.name, alpha, starSummary(s));
+      const { color, radius, visible } = s.style;
+      glow(ctx, x, y, radius * 4, color, (visible ? 0.35 : 0.2) * alpha);
+      dot(ctx, x, y, radius, color, alpha);
+      if (s.planets) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.5 * alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 3, 0, TAU);
+        ctx.stroke();
+      }
+      label(view, x, y, s.name, alpha, visible ? 1 : 0);
+      hit(view, x, y, s.name, alpha, starSystemSummary(s));
     }
   },
 };
+
+// The Local Bubble: a soft cavity whose shell passes through the nearby
+// star-forming clouds, at a schematic radius between them.
+const localBubble = (() => {
+  const clouds = LOCAL_BUBBLE.clouds.map((c) => ({ ...c, ...skyToPlane(c.l, c.dist * LY) }));
+  const anchors = [...clouds.filter((c) => c.outline !== false).map((c) => [c.l, c.dist * LY]), [90, LOCAL_BUBBLE.radius], [240, LOCAL_BUBBLE.radius]]
+    .sort((a, b) => a[0] - b[0]);
+  // Shell radius at longitude l, interpolated between anchors around the circle.
+  const shell = (l) => {
+    const n = anchors.length;
+    for (let i = 0; i < n; i++) {
+      const [l0, r0] = anchors[i];
+      const [l1raw, r1] = anchors[(i + 1) % n];
+      const l1 = i + 1 < n ? l1raw : l1raw + 360;
+      const lw = l < l0 ? l + 360 : l;
+      if (lw >= l0 && lw <= l1) {
+        const u = l1 === l0 ? 0 : (lw - l0) / (l1 - l0);
+        const e = u * u * (3 - 2 * u);
+        return Math.exp(Math.log(r0) + e * (Math.log(r1) - Math.log(r0)));
+      }
+    }
+    return anchors[0][1];
+  };
+  const outline = [];
+  for (let l = 0; l < 360; l += 2) outline.push(skyToPlane(l, shell(l)));
+  return {
+    name: 'local bubble',
+    range: [50 * LY, 3000 * LY],
+    draw(ctx, view, alpha) {
+      ctx.beginPath();
+      outline.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
+      ctx.closePath();
+      ctx.fillStyle = `rgba(120,150,210,${0.06 * alpha})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(150,180,240,${0.35 * alpha})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const edge = skyToPlane(120, shell(120));
+      label(view, view.sx(edge.x), view.sy(edge.y), 'Local Bubble', alpha, 1);
+      for (const c of clouds) {
+        const x = view.sx(c.x);
+        const y = view.sy(c.y);
+        if (!onScreen(view, x, y)) continue;
+        const r = Math.max(6, 25 * LY / view.mpp);
+        glow(ctx, x, y, r, 'rgba(255,160,150,0.7)', alpha);
+        label(view, x, y, c.name, alpha, 0);
+        hit(view, x, y, c.name, alpha, cloudSummary(c));
+      }
+    },
+  };
+})();
 
 const HUES = { b: '#c8d8ff', w: '#f4f4ff', y: '#fff0c0', o: '#ffb884' };
 
@@ -740,7 +802,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, galacticObjects, oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

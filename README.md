@@ -7,6 +7,10 @@ Distances are to scale at every level
 Planets move on approximate fixed ellipses with their real periods, initialized
 from J2000 elements.
 The `k` key jumps to the trans-Neptunian view; `h` jumps to the Milky Way halo.
+The stellar neighborhood shows every known system within 16 light-years,
+drawn by spectral type, with rings on systems that have known planets. `u`
+jumps to the Local Bubble, the supernova-blown cavity the Sun sits in, with
+the star-forming clouds that lie on its shell.
 `l` jumps to the Local arm, with nearby nebulae, clusters and black holes at
 their distances. The spiral arms are the log-spiral fits of Reid et al. 2019
 to maser parallaxes, drawn bright over the measured azimuth ranges and faint

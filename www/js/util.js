@@ -64,6 +64,36 @@ export function starSummary(star) {
   return parts.join(' · ');
 }
 
+// Colour, dot radius and kind for a spectral type: the letter sets the
+// colour and size, with brown dwarfs (L, T, Y) dark and small and white
+// dwarfs (D) small and white.
+const STAR_STYLES = {
+  O: ['#9bb0ff', 3.2], B: ['#aabfff', 3], A: ['#cad7ff', 2.8], F: ['#f8f7ff', 2.5], G: ['#fff4e8', 2.3],
+  K: ['#ffd2a1', 2], M: ['#ff9f6e', 1.6], L: ['#c8603a', 1.3], T: ['#a04a5a', 1.2], Y: ['#7a3a6a', 1.1], D: ['#e8f0ff', 1.1],
+};
+export function starStyle(type) {
+  const c = type[0];
+  const [color, radius] = STAR_STYLES[c] || ['#d9c9b0', 1.6];
+  const kind = 'LTY'.includes(c) ? 'brown dwarf' : c === 'D' ? 'white dwarf' : 'star';
+  return { color, radius, kind, visible: 'OBAFGK'.includes(c) };
+}
+
+export function starSystemSummary(system) {
+  const counts = new Map();
+  for (const t of system.types) {
+    const { kind } = starStyle(t);
+    counts.set(kind, (counts.get(kind) || 0) + 1);
+  }
+  const what = [...counts].map(([kind, n]) => (n > 1 ? `${n} ${kind}s` : kind)).join(' + ');
+  const parts = [what[0].toUpperCase() + what.slice(1), system.types.join(' + '), `${formatDistance(system.dist * LY)} from the Sun`];
+  if (system.planets) parts.push(`${system.planets} known ${system.planets > 1 ? 'planets' : 'planet'}`);
+  return parts.join(' · ');
+}
+
+export function cloudSummary(cloud) {
+  return `Molecular cloud · ${formatDistance(cloud.dist * LY)} from the Sun · star-forming, on the shell of the Local Bubble`;
+}
+
 export function galaxySummary(galaxy) {
   const kind = galaxy.spiral ? 'Spiral galaxy' : 'Galaxy';
   const distance = galaxy.dist ? `${formatDistance(galaxy.dist * LY)} from the Milky Way` : 'our galaxy';
@@ -467,7 +497,7 @@ export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
 // Stops of the guided tour, in order, and how long a leg between two zooms
 // should take: a fixed rate of about a second per decade, plus a floor.
 export const TOUR = [
-  'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars', 'local-arm',
+  'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars', 'local-bubble', 'local-arm',
   'milky-way', 'milky-way-halo', 'local-group', 'virgo', 'universe',
 ];
 export const TOUR_HOLD_MS = 2500;

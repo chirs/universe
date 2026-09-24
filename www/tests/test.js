@@ -8,11 +8,12 @@ import {
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
+  starStyle, starSystemSummary, cloudSummary,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
-  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC,
+  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE,
 } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -99,7 +100,7 @@ test('hover summaries describe each kind of named object', () => {
   assert.match(planetSummary(pluto), /^Dwarf planet /);
   assert.match(planetSummary(sedna), /^Dwarf-planet candidate /);
   assert.match(moonSummary(moon, earth.name), /^Moon of Earth /);
-  assert.equal(starSummary(STARS[0]), `Star · ${formatDistance(STARS[0].dist * LY)} from the Sun`);
+  assert.equal(starSummary(BRIGHT_STARS[0]), `Star · ${formatDistance(BRIGHT_STARS[0].dist * LY)} from the Sun · apparent magnitude 0.03`);
   assert.match(galaxySummary(LOCAL_GROUP[1]), /^Spiral galaxy /);
   assert.match(clusterSummary(CLUSTERS[0]), /^Galaxy group · centered on the Milky Way/);
   assert.match(clusterSummary(CLUSTERS.find((c) => c.name === 'Virgo Cluster')), /^Galaxy cluster /);
@@ -411,7 +412,8 @@ test('tour legs take longer over more decades and never go to zero', () => {
   assert.equal(TOUR[TOUR.length - 1], 'universe');
   assert.ok(TOUR.indexOf('outer') < TOUR.indexOf('trans-neptunian'));
   assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));
-  assert.ok(TOUR.indexOf('stars') < TOUR.indexOf('local-arm') && TOUR.indexOf('local-arm') < TOUR.indexOf('milky-way'));
+  assert.ok(TOUR.indexOf('stars') < TOUR.indexOf('local-bubble') && TOUR.indexOf('local-bubble') < TOUR.indexOf('local-arm'));
+  assert.ok(TOUR.indexOf('local-arm') < TOUR.indexOf('milky-way'));
   assert.ok(TOUR.indexOf('milky-way') < TOUR.indexOf('milky-way-halo'));
   assert.ok(TOUR.indexOf('milky-way-halo') < TOUR.indexOf('local-group'));
 });
@@ -541,4 +543,33 @@ test('galactic objects are unique, within the disk, and summarized', () => {
   }
   const bh = MILKY_WAY_OBJECTS.find((o) => o.name === 'Gaia BH1');
   assert.match(galacticObjectSummary(bh), /^Black hole · 1.56 kly from the Sun · /);
+});
+
+test('nearest systems are sorted, typed, and summarized by kind', () => {
+  let last = 0;
+  for (const s of STARS) {
+    assert.ok(s.dist >= last, s.name);
+    last = s.dist;
+    assert.ok(s.types.length >= 1 && s.types.every((t) => /^[OBAFGKMLTYD]/.test(t)), s.name);
+    if (s.planets !== undefined) assert.ok(Number.isInteger(s.planets) && s.planets > 0, s.name);
+  }
+  assert.equal(new Set(STARS.map((s) => s.name)).size, STARS.length);
+  assert.equal(STARS[0].name, 'Proxima Centauri');
+  assert.ok(STARS.some((s) => s.name === 'Luhman 16') && STARS.some((s) => s.name === 'WISE 0855-0714'));
+  assert.equal(starStyle('M5.5V').kind, 'star');
+  assert.equal(starStyle('T1').kind, 'brown dwarf');
+  assert.equal(starStyle('DA2').kind, 'white dwarf');
+  assert.ok(starStyle('A1V').visible && !starStyle('M2V').visible);
+  assert.equal(starSystemSummary(STARS.find((s) => s.name === 'Sirius')), 'Star + white dwarf · A1V + DA2 · 8.71 ly from the Sun');
+  assert.equal(starSystemSummary(STARS.find((s) => s.name === 'Luhman 16')), '2 brown dwarfs · L8 + T1 · 6.51 ly from the Sun');
+  assert.match(starSystemSummary(STARS[0]), /^Star · M5.5V · 4.25 ly from the Sun · 2 known planets$/);
+  assert.match(starSystemSummary(STARS.find((s) => s.name === 'Epsilon Eridani')), / · 1 known planet$/);
+});
+
+test('Local Bubble clouds sit a few hundred light-years out', () => {
+  for (const c of LOCAL_BUBBLE.clouds) {
+    assert.ok(c.dist > 300 && c.dist < 1100 && c.l >= 0 && c.l < 360, c.name);
+    assert.match(cloudSummary(c), /^Molecular cloud · \d+ ly from the Sun · /);
+  }
+  assert.ok(LOCAL_BUBBLE.radius > 400 * LY && LOCAL_BUBBLE.radius < 600 * LY);
 });
