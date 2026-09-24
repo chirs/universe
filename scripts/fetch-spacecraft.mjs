@@ -10,7 +10,7 @@ const FAR = '2100-01-01';
 async function query(sc, start, stop) {
   const params = {
     format: 'text', COMMAND: `'${sc.horizons}'`, OBJ_DATA: 'NO', MAKE_EPHEM: 'YES', EPHEM_TYPE: 'VECTORS',
-    CENTER: `'500@${sc.center || 10}'`, START_TIME: `'${start}'`, STOP_TIME: `'${stop}'`, STEP_SIZE: `'${sc.step} d'`,
+    CENTER: `'500@${sc.center || 10}'`, START_TIME: `'${start}'`, STOP_TIME: `'${stop}'`, STEP_SIZE: `'${Math.round(sc.step * 1440)} m'`,
     VEC_TABLE: '1', REF_PLANE: 'ECLIPTIC', OUT_UNITS: 'AU-D', CSV_FORMAT: 'YES',
   };
   const url = `${API}?${new URLSearchParams(params)}`;
@@ -30,7 +30,7 @@ function addDays(date, days) {
 }
 
 async function track(sc) {
-  let start = '1970-01-01';
+  let start = sc.from || '1970-01-01';
   let stop = FAR;
   for (let attempt = 0; attempt < 4; attempt++) {
     const text = await query(sc, start, stop);

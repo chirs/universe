@@ -446,9 +446,14 @@ export function galacticPlanePositionAngle(ra, dec) {
 // runs along +x, since the Sun looks toward the center along +x; the part
 // along increasing longitude runs along +y; the part toward galactic north
 // is dropped, as latitude is everywhere else.
-export function skyOffsetToPlane({ east, north, depth }, planePA) {
+export function skyOffsetToPlane({ east, north, depth }, planePA, l = 0) {
   const pa = planePA * D2R;
-  return { x: depth, y: east * Math.sin(pa) + north * Math.cos(pa) };
+  const along = east * Math.sin(pa) + north * Math.cos(pa);
+  // Depth runs along the line of sight at longitude l; `along` is the
+  // direction of increasing l at the object.
+  const c = Math.cos(l * D2R);
+  const s = Math.sin(l * D2R);
+  return { x: depth * c - along * s, y: depth * s + along * c };
 }
 
 // The level closest in scale to a view of the given radius at (cx, cy),

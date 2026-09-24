@@ -390,8 +390,10 @@ const sunDot = {
     const y = view.sy(0);
     glow(ctx, x, y, 8, SUN.color, 0.5 * alpha);
     dot(ctx, x, y, 2, SUN.color, alpha);
-    label(view, x, y, 'Sun', alpha, 3);
-    hit(view, x, y, 'Sun', alpha, starSummary(SUN));
+    // The solar system layer names the Sun where the two overlap.
+    const own = alpha * (1 - layerAlpha(view.radius, solarSystem.range));
+    label(view, x, y, 'Sun', own, 3);
+    hit(view, x, y, 'Sun', own, starSummary(SUN));
   },
 };
 
@@ -435,7 +437,7 @@ const starSystems = (() => {
     if (sys.binary) {
       const b = sys.binary;
       const planePA = galacticPlanePositionAngle(b.ra, b.dec);
-      const toPlane = (p) => skyOffsetToPlane(p, planePA);
+      const toPlane = (p) => skyOffsetToPlane(p, planePA, pos.l);
       const total = b.primary.mass + b.secondary.mass;
       out.toPlane = toPlane;
       out.path = skyOrbitPath(b.orbit).map(toPlane);
@@ -976,7 +978,7 @@ function orientGlyph(pts, g, sizeM, angle) {
     let x;
     let y;
     if (g.inclination !== undefined) {
-      const p = skyOffsetToPlane(diskToSky(g.inclination, g.pa, pts[i], pts[i + 1]), planePA);
+      const p = skyOffsetToPlane(diskToSky(g.inclination, g.pa, pts[i], pts[i + 1]), planePA, g.l);
       x = p.x;
       y = p.y;
     } else {
@@ -1048,12 +1050,14 @@ const magellanicStream = (() => {
   const place = (L, B) => {
     const { l } = greatCircleToSky(ms.pole, ms.origin, L, B);
     const kpc = L < 0 ? ms.cloudsKpc - ms.gradientKpcPerDeg * L : ms.cloudsKpc;
-    return skyToPlane(l, kpc * 1000 * PC);
+    // Spread in depth too, or the Leading Arm, which runs mostly in
+    // latitude, collapses onto one thin arc once latitude is dropped.
+    return skyToPlane(l, kpc * 1000 * PC * (1 + 0.08 * gaussian(rand)));
   };
   const pts = new Float64Array(ms.count * 2);
   for (let i = 0; i < ms.count; i++) {
     // Denser near the Clouds, thinning toward the tip.
-    const L = rand() < 0.25 ? rand() * ms.leadingArm : ms.tail * rand() ** 1.4;
+    const L = rand() < 0.12 ? rand() * ms.leadingArm : ms.tail * rand() ** 1.4;
     const p = place(L, gaussian(rand) * ms.sigmaB);
     pts[2 * i] = p.x;
     pts[2 * i + 1] = p.y;

@@ -693,6 +693,13 @@ test('solveKepler converges for high eccentricity on either side of apocenter', 
   }
 });
 
+test('skyOffsetToPlane turns depth to the line of sight at the object\'s longitude', () => {
+  const p = skyOffsetToPlane({ east: 0, north: 0, depth: 1 }, 0, 90);
+  assert.ok(Math.abs(p.x) < 1e-12 && Math.abs(p.y - 1) < 1e-12);
+  const q = skyOffsetToPlane({ east: 0, north: 1, depth: 0 }, 0, 90);
+  assert.ok(Math.abs(q.x + 1) < 1e-12 && Math.abs(q.y) < 1e-12);
+});
+
 test('Trojan points sit 60 degrees either side of the body on its circle', () => {
   const { l4, l5 } = trojanPoints({ x: 5 * AU, y: 0 });
   assert.ok(Math.abs(Math.atan2(l4.y, l4.x) - Math.PI / 3) < 1e-12);

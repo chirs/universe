@@ -177,8 +177,10 @@ export const ASTEROIDS = [
 
 // Spacecraft whose paths come from JPL Horizons: scripts/fetch-spacecraft.mjs
 // reads this list and writes the sampled tracks to spacecraft.js. `horizons`
-// is the Horizons id, `step` the sample spacing in days, `center` the body
-// the track is relative to (Sun unless given), `trail` how many days of past
+// is the Horizons id, `step` the sample spacing in days, `from` an optional
+// first date (Parker needs fine steps near the Sun, so only recent years are
+// kept), `center` the body the track is relative to (Sun unless given),
+// `trail` how many days of past
 // path to draw. Escaping craft are extrapolated past the end of the
 // ephemeris; the rest disappear there. Launch dates are Horizons' first
 // ephemeris epoch; the notes are from memory.
@@ -205,7 +207,7 @@ export const SPACECRAFT = [
     note: 'bound for Didymos and Dimorphos, the asteroid pair DART struck in 2022' },
   { name: 'BepiColombo', horizons: -121, step: 5, trail: 180,
     note: 'bound for orbit around Mercury, arriving November 2026' },
-  { name: 'Parker Solar Probe', horizons: -96, step: 2, trail: 88,
+  { name: 'Parker Solar Probe', horizons: -96, step: 0.5, from: '2024-06-01', trail: 88,
     note: 'has passed about 6 million km from the Sun\u2019s surface, closer than anything else' },
   { name: 'Solar Orbiter', horizons: -144, step: 5, trail: 180,
     note: 'the first craft to image the Sun\u2019s poles' },

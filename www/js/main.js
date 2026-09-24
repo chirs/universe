@@ -324,10 +324,12 @@ function updateHud() {
   barLabel.textContent = bar.label;
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
-  for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === near.id);
+  // The Earth close-ups are not in the bar; they show as Earth there.
+  const inBar = EARTH_LEVELS.includes(near) ? PLANET_LEVELS.find((lv) => lv.follow === near.follow) : near;
+  for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === inBar.id);
   for (const m of menus) {
-    const open = !overview && m.levels.includes(near);
-    m.toggle.textContent = `${open ? near.name : m.label} ▾`;
+    const open = !overview && m.levels.includes(inBar);
+    m.toggle.textContent = `${open ? inBar.name : m.label} ▾`;
     m.toggle.classList.toggle('active', open);
   }
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === runSpeed.label);
