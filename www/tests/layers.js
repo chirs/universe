@@ -10,7 +10,6 @@ const ctxHandler = {
   get(target, prop) {
     if (prop === 'measureText') return () => ({ width: 40 });
     if (prop === 'createRadialGradient' || prop === 'createLinearGradient') return () => gradient;
-    if (prop === 'createPattern') return () => ({ setTransform: noop });
     if (prop === 'getImageData') return () => ({ data: new Uint8ClampedArray(4) });
     if (prop === 'canvas') return { width: 1440, height: 900 };
     return noop;

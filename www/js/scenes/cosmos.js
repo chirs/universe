@@ -470,15 +470,10 @@ export const landmarks = {
   },
 };
 
-// The unobservable universe: the same web, drawn gray, outside the horizon.
-// It is illustration, not observation, so it is one repeating tile anchored
-// at the Sun. The tile is kept at halving sizes and the one nearest its
-// size on screen is used, so the grain averages down instead of shimmering.
-// Zoomed far out, other galaxies' horizons show ours is one of many; they
-// sit on a sparse jittered lattice, close enough that some overlap.
+// Past the horizon: the farthest we will ever see, and, zoomed far out,
+// other galaxies' horizons, to show ours is one of many. They sit on a
+// sparse jittered lattice, close enough that some overlap.
 export const beyond = (() => {
-  const T = 16e9 * LY;
-  const TEX = 256;
   const R = UNIVERSE.radius;
   const others = (() => {
     const rand = mulberry32(11);
@@ -493,53 +488,13 @@ export const beyond = (() => {
     }
     return out.sort((a, b) => a.dist - b.dist);
   })();
-  let levels = null;
-  const build = () => {
-    const density = UNIVERSE.webPoints / (Math.PI * (R * R - (4e9 * LY) ** 2));
-    const nCells = Math.round((2 * T / UNIVERSE.webCell) ** 2);
-    const { pts, kind } = makeZeldovichWeb(UNIVERSE.webSeed + 1, T, nCells, Math.round(density * Math.PI * T * T));
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = TEX;
-    const t = canvas.getContext('2d');
-    t.globalCompositeOperation = 'lighter';
-    t.fillStyle = '#9098a8';
-    const s = TEX / T;
-    for (let i = 0; i < kind.length; i++) {
-      const x = pts[2 * i];
-      const y = pts[2 * i + 1];
-      if (Math.abs(x) >= T / 2 || Math.abs(y) >= T / 2) continue;
-      t.globalAlpha = [0.06, 0.16, 0.28][kind[i]];
-      t.fillRect((x + T / 2) * s, (T / 2 - y) * s, 1, 1);
-    }
-    levels = [canvas];
-    for (let size = TEX / 2; size >= 8; size /= 2) {
-      const c = document.createElement('canvas');
-      c.width = c.height = size;
-      c.getContext('2d').drawImage(levels.at(-1), 0, 0, size, size);
-      levels.push(c);
-    }
-    levels = levels.map((c) => ({ size: c.width, pattern: null, canvas: c }));
-  };
   return {
     name: 'beyond',
     range: [40e9 * LY, INF],
     draw(ctx, view, alpha) {
-      if (!levels) build();
       const x = view.sx(0);
       const y = view.sy(0);
       const r = R / view.mpp;
-      const tile = T / view.mpp;
-      const lv = levels.findLast((l) => l.size >= tile) ?? levels[0];
-      lv.pattern ??= ctx.createPattern(lv.canvas, 'repeat');
-      const k = tile / lv.size;
-      lv.pattern.setTransform({ a: k, b: 0, c: 0, d: k, e: x - tile / 2, f: y - tile / 2 });
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = lv.pattern;
-      ctx.beginPath();
-      ctx.rect(0, 0, view.w, view.h);
-      ctx.arc(x, y, r, 0, TAU);
-      ctx.fill('evenodd');
-      ctx.globalAlpha = 1;
       const limit = UNIVERSE.visibilityLimit / view.mpp;
       ctx.setLineDash([4, 6]);
       ctx.lineWidth = 1;
