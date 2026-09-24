@@ -37,9 +37,15 @@ html, body {
 #volume { pointer-events: auto; width: 90px; accent-color: #cfd3dc; }
 #volume[hidden] { display: none; }
 
-#title {
+#top {
   top: 16px;
   left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+#title {
   font-size: 20px;
   font-weight: 600;
   color: #fff;
@@ -51,20 +57,24 @@ html, body {
   color: #8a90a0;
 }
 
-#help {
-  top: 44px;
-  left: 20px;
-  color: #6a7080;
-  font-size: 12px;
-}
-
 #modes {
-  top: 64px;
-  left: 20px;
   display: flex;
   gap: 6px;
   align-items: center;
 }
+
+#help-toggle { min-width: 28px; }
+#hud #help { flex-direction: row; gap: 24px; padding: 6px 12px 10px; }
+#hud #help .group { padding-left: 0; }
+#help dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 3px 12px;
+  font-size: 12px;
+}
+#help dt { color: #fff; font-variant-numeric: tabular-nums; }
+#help dd { margin: 0; color: #9ba1b1; white-space: nowrap; }
 
 #hover-info {
   max-width: 360px;
@@ -100,8 +110,8 @@ html, body {
   justify-content: center;
 }
 
-#levels .menu { position: relative; }
-#levels .menu-list {
+#hud .menu { position: relative; }
+#hud .menu-list {
   pointer-events: auto;
   position: absolute;
   left: 0;
@@ -114,15 +124,16 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }
-#levels .menu-list[hidden] { display: none; }
-#levels .menu-list .group {
+#hud .menu-list[hidden] { display: none; }
+#hud .menu-list.down { top: calc(100% + 6px); bottom: auto; }
+#hud .menu-list .group {
   padding: 8px 8px 3px;
   color: #6a7080;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-#levels .menu-list button {
+#hud .menu-list button {
   background: none;
   border-color: transparent;
   border-radius: 3px;
@@ -130,16 +141,19 @@ html, body {
   text-align: left;
   white-space: nowrap;
 }
-#levels .menu-list button:hover { background: rgba(255, 255, 255, 0.08); border-color: transparent; }
-#levels .menu-list button.active { background: rgba(255, 255, 255, 0.16); color: #fff; border-color: transparent; }
+#hud .menu-list button:hover { background: rgba(255, 255, 255, 0.08); border-color: transparent; }
+#hud .menu-list button.active { background: rgba(255, 255, 255, 0.16); color: #fff; border-color: transparent; }
 
 #time {
   top: 16px;
   right: 20px;
-  text-align: right;
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
-#speeds { display: flex; gap: 6px; justify-content: flex-end; }
-#date { margin-top: 6px; color: #8a90a0; font-variant-numeric: tabular-nums; }
+#time .menu-list { left: auto; right: 0; min-width: 120px; }
+#date { margin-right: 6px; color: #8a90a0; font-variant-numeric: tabular-nums; }
+#play { min-width: 32px; }
 
 #scalebar {
   min-width: 0;
@@ -167,7 +181,6 @@ html, body {
 }
 
 @media (max-width: 700px) {
-  #help { display: none; }
   #caption { display: none; }
   #bottom { bottom: 12px; }
 }

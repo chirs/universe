@@ -84,6 +84,9 @@ const levelsEl = document.getElementById('levels');
 const menus = [];
 const speedsEl = document.getElementById('speeds');
 const dateEl = document.getElementById('date');
+const playBtn = document.getElementById('play');
+const speedToggle = document.getElementById('speed-toggle');
+const helpEl = document.getElementById('help');
 const barEl = document.querySelector('#scalebar .bar');
 const barLabel = document.querySelector('#scalebar .label');
 const scalebarEl = document.getElementById('scalebar');
@@ -104,6 +107,7 @@ let h = 0;
 let dpr = 1;
 let simMs = Date.now();
 let speed = SPEEDS[2];
+let runSpeed = speed;
 let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
@@ -315,7 +319,9 @@ function updateHud() {
     m.toggle.textContent = `${open ? near.name : m.label} ▾`;
     m.toggle.classList.toggle('active', open);
   }
-  for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
+  for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === runSpeed.label);
+  playBtn.textContent = speed.perSec ? '⏸' : '▶';
+  speedToggle.textContent = `${runSpeed.label} ▾`;
   overviewBtn.classList.toggle('active', overview);
   soundBtn.classList.toggle('active', soundOn);
   volumeEl.hidden = !soundOn;
@@ -375,7 +381,20 @@ function frame(now) {
 }
 
 function closeMenus() {
-  for (const m of menus) m.list.hidden = true;
+  for (const list of document.querySelectorAll('#hud .menu-list')) list.hidden = true;
+}
+
+function setSpeed(s) {
+  speed = s;
+  if (s.perSec) runSpeed = s;
+}
+
+function wireMenu(toggle, list) {
+  toggle.addEventListener('click', () => {
+    const wasOpen = !list.hidden;
+    closeMenus();
+    list.hidden = wasOpen;
+  });
 }
 
 function levelButton(lv) {
@@ -405,12 +424,8 @@ function buildMenu(spec) {
     for (const lv of section.levels) list.appendChild(levelButton(lv));
   }
   wrap.append(toggle, list);
-  const menu = { label: spec.label, toggle, list, wrap, levels: spec.sections.flatMap((s) => s.levels) };
-  toggle.addEventListener('click', () => {
-    const wasOpen = !list.hidden;
-    closeMenus();
-    list.hidden = wasOpen;
-  });
+  const menu = { label: spec.label, toggle, list, levels: spec.sections.flatMap((s) => s.levels) };
+  wireMenu(toggle, list);
   menus.push(menu);
   return wrap;
 }
@@ -419,12 +434,22 @@ function buildHud() {
   for (const entry of BAR) {
     levelsEl.appendChild(typeof entry === 'string' ? levelButton(byId(entry)) : buildMenu(entry));
   }
-  for (const s of SPEEDS) {
+  for (const s of SPEEDS.filter((s) => s.perSec)) {
     const b = document.createElement('button');
     b.textContent = s.label;
     b.dataset.label = s.label;
-    b.addEventListener('click', () => { speed = s; });
+    b.addEventListener('click', () => { setSpeed(s); closeMenus(); });
     speedsEl.appendChild(b);
+  }
+  wireMenu(speedToggle, speedsEl);
+  wireMenu(document.getElementById('help-toggle'), helpEl);
+  const jumps = document.getElementById('help-jumps');
+  for (const lv of ALL_LEVELS.filter((lv) => lv.shortcut).sort((a, b) => a.radius - b.radius)) {
+    const dt = document.createElement('dt');
+    dt.textContent = lv.shortcut;
+    const dd = document.createElement('dd');
+    dd.textContent = lv.name;
+    jumps.append(dt, dd);
   }
 }
 
@@ -465,7 +490,9 @@ canvas.addEventListener('click', () => {
 });
 
 document.addEventListener('click', (e) => {
-  for (const m of menus) if (!m.wrap.contains(e.target)) m.list.hidden = true;
+  for (const wrap of document.querySelectorAll('#hud .menu')) {
+    if (!wrap.contains(e.target)) wrap.querySelector('.menu-list').hidden = true;
+  }
 });
 
 window.addEventListener('keydown', (e) => {
@@ -475,7 +502,8 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
   else if (level) { stopTour(); goTo(level); }
-  else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
+  else if (e.key === ' ') { e.preventDefault(); setSpeed(speed.perSec ? SPEEDS[0] : runSpeed); }
+  else if (e.key === '?') { const wasOpen = !helpEl.hidden; closeMenus(); helpEl.hidden = wasOpen; }
   else if (e.key === 'o') { stopTour(); setOverview(!overview); }
   else if (e.key === 'p') { if (tour) stopTour(); else startTour(); }
   else if (e.key === 'm') setSound(!soundOn);
@@ -487,6 +515,7 @@ window.addEventListener('hashchange', () => {
   if (location.hash === '#overview') setOverview(true);
   else goTo(levelFromHash(location.hash, ALL_LEVELS));
 });
+playBtn.addEventListener('click', () => setSpeed(speed.perSec ? SPEEDS[0] : runSpeed));
 overviewBtn.addEventListener('click', () => { stopTour(); setOverview(!overview); });
 tourBtn.addEventListener('click', () => { if (tour) stopTour(); else startTour(); });
 soundBtn.addEventListener('click', () => setSound(!soundOn));

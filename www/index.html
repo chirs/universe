@@ -10,13 +10,48 @@
 <body>
   <canvas id="space"></canvas>
   <div id="hud">
-    <div id="title">universe<span>a cosmic zoom</span></div>
-    <div id="help">scroll zooms · drag pans · hover for details · digits jump levels · k TNOs · u local bubble · l local arm · h halo · g galactic center · b black hole · click a planet to visit it, Sirius or Alpha Centauri for a star system, Andromeda for a galaxy · space pauses · o overview · p tour · m sound</div>
-    <div id="modes"><button id="tour" title="p">Tour</button><button id="overview" title="o">Overview</button><button id="sound" title="m">Sound</button><input id="volume" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume" hidden></div>
+    <div id="top">
+      <div id="title">universe<span>a cosmic zoom</span></div>
+      <div id="modes">
+        <button id="tour" title="p">Tour</button>
+        <button id="overview" title="o">Overview</button>
+        <button id="sound" title="m">Sound</button>
+        <input id="volume" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume" hidden>
+        <div class="menu">
+          <button id="help-toggle" title="?">?</button>
+          <div id="help" class="menu-list down" hidden>
+            <div class="help-col">
+              <div class="group">Controls</div>
+              <dl>
+                <dt>scroll</dt><dd>zoom</dd>
+                <dt>drag</dt><dd>pan</dd>
+                <dt>+ &minus;</dt><dd>zoom</dd>
+                <dt>hover</dt><dd>details</dd>
+                <dt>click</dt><dd>visit a planet, star system or galaxy</dd>
+                <dt>space</dt><dd>pause / resume time</dd>
+                <dt>p</dt><dd>tour</dd>
+                <dt>o</dt><dd>overview</dd>
+                <dt>m</dt><dd>sound</dd>
+                <dt>?</dt><dd>this help</dd>
+                <dt>esc</dt><dd>close menus</dd>
+              </dl>
+            </div>
+            <div class="help-col">
+              <div class="group">Jump to</div>
+              <dl id="help-jumps"></dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="hover-info" hidden><div class="name"></div><div class="details"></div></div>
     <div id="time">
-      <div id="speeds"></div>
-      <div id="date"></div>
+      <span id="date"></span>
+      <button id="play" title="space"></button>
+      <div class="menu">
+        <button id="speed-toggle" title="Time speed"></button>
+        <div id="speeds" class="menu-list down" hidden></div>
+      </div>
     </div>
     <div id="bottom">
       <div id="readouts">
