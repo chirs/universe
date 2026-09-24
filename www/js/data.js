@@ -517,6 +517,31 @@ export const MILKY_WAY_OBJECTS = [
   { name: 'Westerlund 1', dist: 13000, l: 339.5, b: -0.4, kind: 'Super star cluster', note: 'the most massive young cluster known in the galaxy' },
 ];
 
+// The Radcliffe Wave (Alves et al. 2020, Nature 578, 237; Extended Data
+// Table 2): the centerline is the quadratic through three anchor points in
+// heliocentric galactic X (toward the center) and Y (toward l = 90), in pc.
+// The minus signs were lost in the PDF's table and are restored from the
+// ends: Canis Major at l ~ 224, Cygnus at l ~ 80. width is the fitted
+// scatter about the centerline; the vertical wave (amplitude 160 pc) is out
+// of the plane and not drawn.
+export const RADCLIFFE_WAVE = {
+  anchors: [[-910, -860], [-270, 20], [290, 1400]], width: 62, amplitude: 160, length: 2700, count: 1400, seed: 21,
+  note: 'a 9,000 ly ribbon of star-forming gas, from Canis Major through Orion, Perseus, Taurus and Cepheus to Cygnus. It rises and falls up to 520 ly out of the galactic plane, which this flat map cannot show',
+};
+
+// The Magellanic Stream, in Nidever et al. (2008) Magellanic Stream
+// coordinates: a great circle with its pole at galactic (188.5, -7.5) and
+// longitude zero at the LMC, decreasing along the trailing stream (to about
+// -140) and increasing along the Leading Arm (to about +60). Distance along
+// the tail follows the stellar stream's gradient of -0.5 kpc per degree
+// (Chandra et al. 2023) from the LMC's 50 kpc; the Leading Arm's distance is
+// poorly known and held at 50 kpc. sigmaB is the drawn width in degrees.
+export const MAGELLANIC_STREAM = {
+  pole: [188.5, -7.5], origin: [280.47, -32.75], tail: -140, leadingArm: 60,
+  cloudsKpc: 50, gradientKpcPerDeg: 0.5, sigmaB: 3, count: 2400, seed: 22,
+  note: 'gas torn from the Magellanic Clouds, trailing 200 degrees across the sky. Distances past the Clouds are uncertain',
+};
+
 // Distance in light-years from the Milky Way, galactic l and b in degrees.
 // Size is a rough visual radius in light-years.
 // Spirals with `inclination` and `pa` (position angle of the major axis,

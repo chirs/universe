@@ -152,6 +152,41 @@ export function sStarSummary(star) {
   return `Star orbiting Sgr A* · periapsis ${formatDistance(star.a * (1 - star.e))} · apoapsis ${formatDistance(star.a * (1 + star.e))} · period ${formatPeriod(star.period)}`;
 }
 
+// Unit vector for galactic (l, b) in degrees, and back.
+function skyVector(l, b) {
+  return [Math.cos(b * D2R) * Math.cos(l * D2R), Math.cos(b * D2R) * Math.sin(l * D2R), Math.sin(b * D2R)];
+}
+
+function vectorSky([x, y, z]) {
+  return { l: ((Math.atan2(y, x) / D2R) + 360) % 360, b: Math.asin(Math.max(-1, Math.min(1, z))) / D2R };
+}
+
+// Galactic (l, b) of a point at longitude L and latitude B (degrees) on the
+// great-circle frame with the given pole and longitude zero toward `origin`,
+// longitude increasing counterclockwise about the pole.
+export function greatCircleToSky(pole, origin, L, B) {
+  const p = skyVector(...pole);
+  const o0 = skyVector(...origin);
+  const dot = o0[0] * p[0] + o0[1] * p[1] + o0[2] * p[2];
+  let o = o0.map((c, i) => c - dot * p[i]);
+  const n = Math.hypot(...o);
+  o = o.map((c) => c / n);
+  const q = [p[1] * o[2] - p[2] * o[1], p[2] * o[0] - p[0] * o[2], p[0] * o[1] - p[1] * o[0]];
+  const cL = Math.cos(L * D2R);
+  const sL = Math.sin(L * D2R);
+  const cB = Math.cos(B * D2R);
+  const sB = Math.sin(B * D2R);
+  return vectorSky([0, 1, 2].map((i) => cB * (cL * o[i] + sL * q[i]) + sB * p[i]));
+}
+
+// A point on the quadratic through three anchors at t = 0, 1/2 and 1.
+export function quadraticThrough([a, b, c], t) {
+  const la = 2 * (t - 0.5) * (t - 1);
+  const lb = -4 * t * (t - 1);
+  const lc = 2 * t * (t - 0.5);
+  return [la * a[0] + lb * b[0] + lc * c[0], la * a[1] + lb * b[1] + lc * c[1]];
+}
+
 export function galacticObjectSummary(o) {
   return `${o.kind} · ${formatDistance(o.dist * LY)} from the Sun · ${o.note}`;
 }

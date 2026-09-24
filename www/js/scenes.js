@@ -1,7 +1,7 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
-  SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS,
+  SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import {
@@ -12,6 +12,7 @@ import {
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, trojanPoints,
+  greatCircleToSky, quadraticThrough,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -775,6 +776,35 @@ const galacticObjects = (() => {
   };
 })();
 
+// The Radcliffe Wave: scatter about its fitted centerline, in the plane.
+const radcliffeWave = (() => {
+  const w = RADCLIFFE_WAVE;
+  const rand = mulberry32(w.seed);
+  const at = (t) => quadraticThrough(w.anchors, t).map((v) => v * PC);
+  const pts = new Float64Array(w.count * 2);
+  for (let i = 0; i < w.count; i++) {
+    const t = rand();
+    const [x, y] = at(t);
+    const [x2, y2] = at(Math.min(1, t + 0.001));
+    const len = Math.hypot(x2 - x, y2 - y) || 1;
+    const off = gaussian(rand) * w.width * PC;
+    pts[2 * i] = x - (y2 - y) / len * off;
+    pts[2 * i + 1] = y + (x2 - x) / len * off;
+  }
+  const marks = [0.1, 0.3, 0.5, 0.7, 0.9].map(at);
+  const detail = `Gas wave · ${w.note} · Alves et al. 2020`;
+  return {
+    name: 'radcliffe wave',
+    range: [200 * LY, 30e3 * LY],
+    draw(ctx, view, alpha) {
+      drawPoints(ctx, view, pts, 0, 0, '#ffb4a8', 0.45 * alpha, 1.5);
+      const [lx, ly] = marks[2];
+      label(view, view.sx(lx), view.sy(ly), 'Radcliffe Wave', 0.9 * alpha, 1);
+      for (const [x, y] of marks) hit(view, view.sx(x), view.sy(y), 'Radcliffe Wave', alpha, detail);
+    },
+  };
+})();
+
 // ------------------------------------------------------------ galactic center
 
 // Sgr A* and the S-stars. The orbits are the real three-dimensional ones,
@@ -945,6 +975,39 @@ const localGroup = (() => {
         label(view, x, y, g.name, gAlpha, g.spiral ? 2 : 0);
         hit(view, x, y, g.name, gAlpha, galaxySummary(g));
       }
+    },
+  };
+})();
+
+// The Magellanic Stream, placed along its great circle at the distances in
+// data.js and dropped into the plane by longitude like everything else.
+const magellanicStream = (() => {
+  const ms = MAGELLANIC_STREAM;
+  const rand = mulberry32(ms.seed);
+  const place = (L, B) => {
+    const { l } = greatCircleToSky(ms.pole, ms.origin, L, B);
+    const kpc = L < 0 ? ms.cloudsKpc - ms.gradientKpcPerDeg * L : ms.cloudsKpc;
+    return skyToPlane(l, kpc * 1000 * PC);
+  };
+  const pts = new Float64Array(ms.count * 2);
+  for (let i = 0; i < ms.count; i++) {
+    // Denser near the Clouds, thinning toward the tip.
+    const L = rand() < 0.25 ? rand() * ms.leadingArm : ms.tail * rand() ** 1.4;
+    const p = place(L, gaussian(rand) * ms.sigmaB);
+    pts[2 * i] = p.x;
+    pts[2 * i + 1] = p.y;
+  }
+  const marks = [-120, -90, -60, -30, 30].map((L) => place(L, 0));
+  const detail = `Gas stream · ${ms.note} · Nidever et al. 2008, 2010`;
+  return {
+    name: 'magellanic stream',
+    range: [20e3 * LY, 4e6 * LY],
+    draw(ctx, view, alpha) {
+      ctx.globalCompositeOperation = 'lighter';
+      drawPoints(ctx, view, pts, 0, 0, '#8fb8ff', 0.35 * alpha, 1.5);
+      ctx.globalCompositeOperation = 'source-over';
+      label(view, view.sx(marks[1].x), view.sy(marks[1].y), 'Magellanic Stream', 0.9 * alpha, 1);
+      for (const m of marks) hit(view, view.sx(m.x), view.sy(m.y), 'Magellanic Stream', alpha, detail);
     },
   };
 })();
@@ -1175,8 +1238,8 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, comets, spacecraft, moons, earthOrbiters, sunDot,
+  cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, nuclearCluster,
+  nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, comets, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

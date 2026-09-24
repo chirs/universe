@@ -51,7 +51,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `COMETS` (Halley, Hale–Bopp) are JPL small-body elements laid flat in the
   ecliptic like the planets; `TROJANS` is an illustrative scatter around
   Jupiter's L4 and L5 points.
-  `HELIOSPHERE` holds the Voyagers' boundary crossings. A craft with
+  `HELIOSPHERE` holds the Voyagers' boundary crossings. `RADCLIFFE_WAVE` is
+  the Alves et al. 2020 centerline fit (its vertical wave is out of the
+  plane and not drawn); `MAGELLANIC_STREAM` is placed in Nidever's stream
+  coordinates with a schematic distance model, noted in data.js. A craft with
   `center: 399` (JWST) is tracked relative to Earth and drawn in a frame
   turning with Earth, so its halo orbit stays beyond L2. The ISS and JWST
   stops (`EARTH_LEVELS` in main.js) follow Earth and are reached by clicking.

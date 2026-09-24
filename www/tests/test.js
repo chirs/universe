@@ -9,14 +9,14 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS,
+  SPACECRAFT, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 
@@ -714,4 +714,28 @@ test('Trojan points sit 60 degrees either side of the body on its circle', () =>
   assert.ok(Math.abs(Math.atan2(l4.y, l4.x) - Math.PI / 3) < 1e-12);
   assert.ok(Math.abs(Math.atan2(l5.y, l5.x) + Math.PI / 3) < 1e-12);
   assert.ok(Math.abs(Math.hypot(l4.x, l4.y) - 5 * AU) < 1);
+});
+
+test('Magellanic Stream frame starts at the LMC and runs over the south galactic pole', () => {
+  const [pole, origin] = [MAGELLANIC_STREAM.pole, MAGELLANIC_STREAM.origin];
+  const start = greatCircleToSky(pole, origin, 0, 0);
+  assert.ok(Math.abs(start.l - 280.5) < 5 && Math.abs(start.b + 32.8) < 3);
+  assert.ok(greatCircleToSky(pole, origin, -60, 0).b < -75);
+  assert.ok(greatCircleToSky(pole, origin, 60, 0).b > 20);
+  const onPole = greatCircleToSky(pole, origin, 0, 90);
+  assert.ok(Math.abs(onPole.l - 188.5) < 1e-6 && Math.abs(onPole.b + 7.5) < 1e-6);
+});
+
+test('Radcliffe Wave runs 2.7 kpc from Canis Major to Cygnus through its anchors', () => {
+  const { anchors } = RADCLIFFE_WAVE;
+  assert.deepEqual(quadraticThrough(anchors, 0.5), anchors[1]);
+  let length = 0;
+  for (let i = 0; i < 100; i++) {
+    const [x0, y0] = quadraticThrough(anchors, i / 100);
+    const [x1, y1] = quadraticThrough(anchors, (i + 1) / 100);
+    length += Math.hypot(x1 - x0, y1 - y0);
+  }
+  assert.ok(Math.abs(length - 2700) < 250, `length ${length}`);
+  const l = (p) => ((Math.atan2(p[1], p[0]) * 180 / Math.PI) + 360) % 360;
+  assert.ok(Math.abs(l(anchors[0]) - 224) < 5 && Math.abs(l(anchors[2]) - 80) < 5);
 });
