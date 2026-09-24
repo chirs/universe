@@ -950,13 +950,31 @@ export function shouldIgnoreGlobalKeys(tagName, isContentEditable = false) {
 // A w x h label to the right of the point (x, y), pushed back inside the
 // bounds. Always the same side, so a label never jumps around as things
 // move; labels may overlap where objects crowd.
-export function placeLabel(x, y, w, h, bounds, gap = 8) {
-  return {
-    x: Math.max(0, Math.min(x + gap, bounds.w - w)),
-    y: Math.max(0, Math.min(y - h / 2, bounds.h - h)),
+// A label sits to the right of its point, or, when that would cover a
+// rectangle in `taken`, to the left, above or below, trying `first` before the
+// others so a label keeps its side from frame to frame. Returns null when
+// every side is taken. Without `taken`, always the right.
+export const LABEL_SIDES = 4;
+export function placeLabel(x, y, w, h, bounds, gap = 8, taken = [], first = 0) {
+  const sides = [
+    [x + gap, y - h / 2],
+    [x - gap - w, y - h / 2],
+    [x - w / 2, y - gap - h],
+    [x - w / 2, y + gap],
+  ];
+  const clamp = ([sx, sy]) => ({
+    x: Math.max(0, Math.min(sx, bounds.w - w)),
+    y: Math.max(0, Math.min(sy, bounds.h - h)),
     w,
     h,
-  };
+  });
+  const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  for (let i = 0; i < sides.length; i++) {
+    const side = (first + i) % sides.length;
+    const rect = clamp(sides[side]);
+    if (!taken.some((r) => overlaps(r, rect))) return { ...rect, side };
+  }
+  return null;
 }
 
 // Stops of the guided tour, in order, and how long a leg between two zooms

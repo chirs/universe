@@ -72,6 +72,12 @@ function pointsFor(days) {
 
 export function drawOverview(ctx, view, days) {
   const fr = frame(view.w, view.h);
+  // The axes and their labels are outside the frame; keep labels off them.
+  view.keepOut = [
+    { x: 0, y: 0, w: fr.left, h: view.h },
+    { x: 0, y: 0, w: view.w, h: fr.top },
+    { x: 0, y: fr.bottom, w: view.w, h: view.h - fr.bottom },
+  ];
   ctx.font = '11px system-ui, -apple-system, sans-serif';
   ctx.textBaseline = 'middle';
 

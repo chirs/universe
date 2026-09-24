@@ -147,6 +147,7 @@ let overview = false;
 let lastLevelId = ALL_LEVELS[0].id;
 let tour = null;
 let shownLabels = [];
+let labelSides = new Map();
 let sound = null;
 let soundOn = false;
 try {
@@ -321,28 +322,36 @@ function drawLabels(view) {
   shownLabels = [];
   ctx.font = '12px system-ui, -apple-system, sans-serif';
   ctx.textBaseline = 'middle';
-  const sorted = view.labels.sort((a, b) => b.priority - a.priority);
-  // Labels are hidden, never moved. Important labels (priority 2 and up)
-  // keep their space from lesser ones, and a faint label, from a layer
-  // fading in or out, gives way to anything already drawn.
-  const reserved = [];
-  const drawn = [];
-  const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-  for (const l of sorted) {
-    if (l.x < 0 || l.x > w || l.y < 0 || l.y > h) continue;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(5, 6, 10, 0.85)';
+  // Higher priority first; a faint label, from a layer fading in or out,
+  // goes after every solid one. Each drawn label keeps its space, so a
+  // later label moves to a free side or is hidden. A label tries the side
+  // it had last frame first, so it stays put while there is room.
+  const rank = (l) => l.priority - (l.alpha < 0.5 ? 10 : 0);
+  const sorted = view.labels.sort((a, b) => rank(b) - rank(a));
+  const inView = sorted.filter((l) => l.x >= 0 && l.x <= w && l.y >= 0 && l.y <= h);
+  // Every labeled point keeps a small box, so a label never covers the dot
+  // of anything as important as its own.
+  const boxes = inView.map((l) => ({ x: l.x - 5, y: l.y - 5, w: 10, h: 10, priority: l.priority }));
+  const drawn = [...(view.keepOut ?? [])];
+  const sides = new Map();
+  for (const l of inView) {
     const isHover = hover && hover.name === l.text;
     const tw = ctx.measureText(l.text).width;
-    const rect = placeLabel(l.x, l.y, tw + 4, 16, { w, h });
-    const faint = l.alpha < 0.5;
-    if (!isHover && faint && drawn.some((r) => overlaps(r, rect))) continue;
-    if (!isHover && l.priority < 2 && reserved.some((r) => overlaps(r, rect))) continue;
-    if (l.priority >= 2 && !faint) reserved.push(rect);
+    const taken = isHover ? [] : [...drawn, ...boxes.filter((b) => b.priority >= l.priority)];
+    const rect = placeLabel(l.x, l.y, tw + 4, 16, { w, h }, 8, taken, labelSides.get(l.text) ?? 0);
+    if (!rect) continue;
+    sides.set(l.text, rect.side);
     drawn.push(rect);
     shownLabels.push({ rect, text: l.text, x: l.x, y: l.y });
     ctx.globalAlpha = l.alpha * (isHover ? 1 : 0.8);
     ctx.fillStyle = isHover ? '#ffffff' : '#cfd3dc';
+    ctx.strokeText(l.text, rect.x + 2, rect.y + 8);
     ctx.fillText(l.text, rect.x + 2, rect.y + 8);
   }
+  labelSides = sides;
   ctx.globalAlpha = 1;
 }
 
