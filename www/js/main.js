@@ -273,11 +273,22 @@ function drawLabels(view) {
   ctx.font = '12px system-ui, -apple-system, sans-serif';
   ctx.textBaseline = 'middle';
   const sorted = view.labels.sort((a, b) => b.priority - a.priority);
+  // Labels are hidden, never moved. Important labels (priority 2 and up)
+  // keep their space from lesser ones, and a faint label, from a layer
+  // fading in or out, gives way to anything already drawn.
+  const reserved = [];
+  const drawn = [];
+  const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   for (const l of sorted) {
     if (l.x < 0 || l.x > w || l.y < 0 || l.y > h) continue;
     const isHover = hover && hover.name === l.text;
     const tw = ctx.measureText(l.text).width;
     const rect = placeLabel(l.x, l.y, tw + 4, 16, { w, h });
+    const faint = l.alpha < 0.5;
+    if (!isHover && faint && drawn.some((r) => overlaps(r, rect))) continue;
+    if (!isHover && l.priority < 2 && reserved.some((r) => overlaps(r, rect))) continue;
+    if (l.priority >= 2 && !faint) reserved.push(rect);
+    drawn.push(rect);
     shownLabels.push({ rect, text: l.text, x: l.x, y: l.y });
     ctx.globalAlpha = l.alpha * (isHover ? 1 : 0.8);
     ctx.fillStyle = isHover ? '#ffffff' : '#cfd3dc';
