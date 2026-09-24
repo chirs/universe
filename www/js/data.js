@@ -269,14 +269,17 @@ export const MILKY_WAY = {
 // the pitch angles, in degrees, apply inside and outside the kink. Their fit
 // used R0 = 8.15 kpc; the arms are placed about the center as fitted, so the
 // Sun here sits 0.13 kpc farther out than in their figure. labelBeta is
-// where the name goes.
+// where the name goes. extend is how far, in degrees of azimuth, each arm
+// is continued beyond the fit: outward against rotation, then inward with
+// it, as in their Figure 2; the continuation stops at the disk edge or
+// inside the bar. The Local arm is a short spur and is barely extended.
 export const SPIRAL_ARMS = [
-  { name: 'Norma arm', beta: [5, 54], betaKink: 18, rKink: 4.46, pitchIn: -1.0, pitchOut: 19.5, width: 0.14, labelBeta: 35 },
-  { name: 'Scutum–Centaurus arm', beta: [0, 104], betaKink: 23, rKink: 4.91, pitchIn: 14.1, pitchOut: 12.1, width: 0.23, labelBeta: 60 },
-  { name: 'Sagittarius–Carina arm', beta: [2, 97], betaKink: 24, rKink: 6.04, pitchIn: 17.1, pitchOut: 1.0, width: 0.27, labelBeta: 2 },
-  { name: 'Local arm', beta: [-8, 34], betaKink: 9, rKink: 8.26, pitchIn: 11.4, pitchOut: 11.4, width: 0.31, labelBeta: -6 },
-  { name: 'Perseus arm', beta: [-23, 115], betaKink: 40, rKink: 8.87, pitchIn: 10.3, pitchOut: 8.7, width: 0.35, labelBeta: 25 },
-  { name: 'Outer arm', beta: [-16, 71], betaKink: 18, rKink: 12.24, pitchIn: 3.0, pitchOut: 9.4, width: 0.65, labelBeta: -30 },
+  { name: 'Norma arm', beta: [5, 54], betaKink: 18, rKink: 4.46, pitchIn: -1.0, pitchOut: 19.5, width: 0.14, labelBeta: 35, extend: [150, 30] },
+  { name: 'Scutum–Centaurus arm', beta: [0, 104], betaKink: 23, rKink: 4.91, pitchIn: 14.1, pitchOut: 12.1, width: 0.23, labelBeta: 60, extend: [250, 30] },
+  { name: 'Sagittarius–Carina arm', beta: [2, 97], betaKink: 24, rKink: 6.04, pitchIn: 17.1, pitchOut: 1.0, width: 0.27, labelBeta: 2, extend: [140, 120] },
+  { name: 'Local arm', beta: [-8, 34], betaKink: 9, rKink: 8.26, pitchIn: 11.4, pitchOut: 11.4, width: 0.31, labelBeta: -6, extend: [30, 30] },
+  { name: 'Perseus arm', beta: [-23, 115], betaKink: 40, rKink: 8.87, pitchIn: 10.3, pitchOut: 8.7, width: 0.35, labelBeta: 25, extend: [130, 150] },
+  { name: 'Outer arm', beta: [-16, 71], betaKink: 18, rKink: 12.24, pitchIn: 3.0, pitchOut: 9.4, width: 0.65, labelBeta: -30, extend: [160, 180] },
 ];
 
 // Landmarks within the nearby arms. Distance in light-years, galactic l and

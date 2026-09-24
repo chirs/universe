@@ -526,7 +526,7 @@ test('makeArm is deterministic and keeps points in the disk', () => {
   for (const pts of [a.fitted, a.extra]) {
     for (let i = 0; i < pts.length; i += 2) {
       const r = Math.hypot(pts[i] - D, pts[i + 1]);
-      assert.ok(r > 2e3 * PC && r < 17e3 * PC);
+      assert.ok(r > 2e3 * PC && r < 16e3 * PC);
     }
   }
   assert.ok(Math.hypot(a.label.x - D, a.label.y) < 15e3 * PC);

@@ -328,9 +328,9 @@ const milkyWay = (() => {
           spine.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
           ctx.stroke();
         };
-        for (const spine of arm.extraSpines) band(spine, 0.035);
+        for (const spine of arm.extraSpines) band(spine, 0.05);
         band(arm.fittedSpine, 0.09);
-        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.2 * alpha);
+        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.35 * alpha);
         drawPoints(ctx, view, arm.fitted, 0, 0, '#dfe6ff', 0.6 * alpha);
       }
       ctx.lineJoin = 'miter';

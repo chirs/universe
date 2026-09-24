@@ -117,11 +117,11 @@ export function galactocentricToPlane(r, beta, sunDistance) {
   return { x: sunDistance - r * Math.cos(beta * D2R), y: r * Math.sin(beta * D2R) };
 }
 
-// Points along an arm: the fitted azimuth range, and an extrapolation of
-// `extra` degrees at each end kept between 3 and 15 kpc from the center.
-// Points scatter across the arm's width, in map meters about the Sun. The
-// spines are the centerlines, one per stretch, for drawing a soft band.
-export function makeArm(arm, sunDistance, seed, perDegree = 30, extra = 60) {
+// Points along an arm: the fitted azimuth range, and its continuation by
+// arm.extend degrees at each end, kept between 3 and 14 kpc from the
+// center. Points scatter across the arm's width, in map meters about the
+// Sun. The spines are the centerlines, one per stretch, for a soft band.
+export function makeArm(arm, sunDistance, seed, perDegree = 30) {
   const rand = mulberry32(seed);
   const gaussian = () => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(TAU * rand());
   const width = arm.width * 1000 * PC;
@@ -131,7 +131,7 @@ export function makeArm(arm, sunDistance, seed, perDegree = 30, extra = 60) {
     for (let k = 0; k < n; k++) {
       const beta = lo + rand() * (hi - lo);
       const r = armRadius(arm, beta);
-      if (r < 3000 * PC || r > 15000 * PC) continue;
+      if (r < 3000 * PC || r > 14000 * PC) continue;
       const p = galactocentricToPlane(r, beta, sunDistance);
       out.push(p.x + gaussian() * width, p.y + gaussian() * width);
     }
@@ -141,16 +141,17 @@ export function makeArm(arm, sunDistance, seed, perDegree = 30, extra = 60) {
     const out = [];
     for (let beta = lo; beta <= hi; beta += 1) {
       const r = armRadius(arm, beta);
-      if (r >= 3000 * PC && r <= 15000 * PC) out.push(galactocentricToPlane(r, beta, sunDistance));
+      if (r >= 3000 * PC && r <= 14000 * PC) out.push(galactocentricToPlane(r, beta, sunDistance));
     }
     return out;
   };
   const [lo, hi] = arm.beta;
+  const [lead, trail] = arm.extend || [60, 60];
   return {
     fitted: sample(lo, hi, perDegree),
-    extra: Float64Array.from([...sample(lo - extra, lo, perDegree / 2), ...sample(hi, hi + extra, perDegree / 2)]),
+    extra: Float64Array.from([...sample(lo - lead, lo, perDegree * 0.4), ...sample(hi, hi + trail, perDegree * 0.4)]),
     fittedSpine: spine(lo, hi),
-    extraSpines: [spine(lo - extra, lo), spine(hi, hi + extra)],
+    extraSpines: [spine(lo - lead, lo), spine(hi, hi + trail)],
     width,
     label: galactocentricToPlane(armRadius(arm, arm.labelBeta), arm.labelBeta, sunDistance),
   };
