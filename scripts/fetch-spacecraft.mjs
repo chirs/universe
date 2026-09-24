@@ -1,7 +1,7 @@
 // Fetch spacecraft tracks from JPL Horizons and write www/js/spacecraft.js.
 // Usage: node scripts/fetch-spacecraft.mjs
 import { writeFileSync } from 'node:fs';
-import { SPACECRAFT } from '../www/js/data.js';
+import { SPACECRAFT, NEAR_EARTH } from '../www/js/data.js';
 
 const API = 'https://ssd.jpl.nasa.gov/api/horizons.api';
 const J2000_JD = 2451545.0;
@@ -31,7 +31,7 @@ function addDays(date, days) {
 
 async function track(sc) {
   let start = sc.from || '1970-01-01';
-  let stop = FAR;
+  let stop = sc.to || FAR;
   for (let attempt = 0; attempt < 4; attempt++) {
     const text = await query(sc, start, stop);
     const soe = text.indexOf('$$SOE');
@@ -55,9 +55,10 @@ async function track(sc) {
 }
 
 const tracks = {};
-for (const sc of SPACECRAFT) {
-  tracks[sc.name] = await track(sc);
-  const t = tracks[sc.name];
+for (const sc of [...SPACECRAFT, ...NEAR_EARTH]) {
+  const key = sc.track || sc.name;
+  tracks[key] = await track(sc);
+  const t = tracks[key];
   const end = new Date((J2000_JD - 2440587.5 + t.start + (t.lon.length - 1) * t.step) * 864e5).toISOString().slice(0, 10);
   const soon = new Date(end) - Date.now() < 90 * 864e5 ? ' (ends soon; rerun to extend)' : '';
   console.log(`${sc.name}: ${t.lon.length} samples from J2000${t.start >= 0 ? '+' : ''}${t.start} d to ${end}${soon}`);

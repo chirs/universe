@@ -23,8 +23,10 @@ import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
   SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO, SYSTEM_STARS, WR_140, DAY_S, INTERSTELLAR, S5_HVS1,
-  GALAXIES, ARECIBO_MESSAGE,
+  GALAXIES, ARECIBO_MESSAGE, NEAR_EARTH, EARTH_RINGS, KM,
 } from '../js/data.js';
+import { SCO_CEN } from '../js/scocen.js';
+import { timeFromHash } from '../js/util.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
 import { HII_REGIONS } from '../js/hii.js';
@@ -414,7 +416,7 @@ test('TRAPPIST-1 is wired in beyond the nearest-star list and WR 140 obeys Keple
 });
 
 test('interstellar visitors pass perihelion at q and leave at their known speeds', () => {
-  const speeds = { '\u02bbOumuamua': 26.4, '2I/Borisov': 32.3 };
+  const speeds = { '\u02bbOumuamua': 26.4, '2I/Borisov': 32.3, '3I/ATLAS': 58 };
   for (const b of INTERSTELLAR) {
     const p = hyperbolicPosition(b, b.tP);
     assert.ok(Math.abs(Math.hypot(p.x, p.y) - b.q) < 1e-6 * b.q, b.name);
@@ -826,9 +828,55 @@ test('the historical supernovae are remnants in date order of their light’s ar
   }
 });
 
+test('Apophis passes 38,000 km from Earth’s center on 13 April 2029, inside the geostationary ring', () => {
+  const flyby = TRACKS['Apophis flyby'];
+  let closest = Infinity;
+  let when = 0;
+  for (let d = flyby.start; d <= flyby.start + (flyby.lon.length - 1) * flyby.step; d += 1 / 96) {
+    const p = sampledPosition(flyby, d);
+    const r = Math.hypot(p.x, p.y);
+    if (r < closest) { closest = r; when = d; }
+  }
+  assert.ok(closest > 36000 * KM && closest < 40000 * KM, `${closest / KM} km`);
+  assert.ok(Math.abs(when - daysSinceJ2000(Date.UTC(2029, 3, 13, 21, 45))) < 0.05, `${when}`);
+  const geo = EARTH_RINGS.find((r) => r.name === 'Geostationary ring');
+  assert.ok(closest < geo.radius && geo.radius > EARTH_RINGS[0].radius);
+  // The map's heliocentric track hands over to the flyby track while it runs.
+  const helio = NEAR_EARTH.find((b) => b.flyby);
+  assert.equal(helio.flyby, 'Apophis flyby');
+  assert.ok(sampledPosition(TRACKS[helio.track], when));
+});
+
+test('hash times name a moment and leave the level alone', () => {
+  assert.equal(timeFromHash('#earth?t=2029-04-13T21:45'), Date.UTC(2029, 3, 13, 21, 45));
+  assert.equal(timeFromHash('#earth?t=2029-04-13'), Date.UTC(2029, 3, 13));
+  assert.equal(timeFromHash('#earth'), null);
+  assert.equal(timeFromHash('#earth?t=nonsense'), null);
+  assert.equal(levelFromHash('#earth?t=2029-04-13', [{ id: 'inner' }, { id: 'earth' }]).id, 'earth');
+});
+
+test('Sco-Cen clusters are the 37 of Ratzenböck et al. 2023, 100 to 210 pc out, in seven subregions', () => {
+  assert.equal(SCO_CEN.length, 37);
+  const regions = new Set();
+  for (const [region, group, l, b, dist, halfLon, halfDist, n] of SCO_CEN) {
+    regions.add(region.trim());
+    assert.ok(group && l >= 0 && l < 360 && Math.abs(b) < 45 && dist > 95 && dist < 215 && halfLon > 0 && halfDist > 0 && n >= 20, group);
+  }
+  assert.equal(regions.size, 7);
+  assert.ok(SCO_CEN.reduce((s, r) => s + r[7], 0) > 13000);
+});
+
+test('3I/ATLAS is retrograde and unbound, and Didymos sits between Earth and the belt', () => {
+  const atlas = INTERSTELLAR.find((b) => b.name === '3I/ATLAS');
+  assert.ok(atlas.e > 6 && atlas.retrograde && atlas.q > 1.3 * AU && atlas.q < 1.4 * AU);
+  const didymos = ASTEROIDS.find((b) => b.name === 'Didymos');
+  assert.ok(didymos.a * (1 - didymos.e) < 1.02 * AU && didymos.a * (1 + didymos.e) > 2.2 * AU);
+  assert.ok(Math.abs(didymos.period - 769) < 1);
+});
+
 test('spacecraft tracks cover every listed craft and put Voyager 1 near 170 AU in 2026', () => {
-  for (const sc of SPACECRAFT) {
-    const t = TRACKS[sc.name];
+  for (const sc of [...SPACECRAFT, ...NEAR_EARTH]) {
+    const t = TRACKS[sc.track || sc.name];
     assert.ok(t && t.lon.length === t.r.length && t.r.length > 10, sc.name);
   }
   const days = daysSinceJ2000(Date.UTC(2026, 0, 1));

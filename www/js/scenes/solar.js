@@ -1,5 +1,6 @@
 import {
   AU, LY, SUN, PLANETS, BELTS, SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, ASTEROIDS, YEAR_D, INTERSTELLAR,
+  NEAR_EARTH, EARTH_RINGS,
 } from '../data.js';
 import { TRACKS } from '../spacecraft.js';
 import {
@@ -363,20 +364,22 @@ export const spacecraft = {
   range: [0, 1500 * AU],
   draw(ctx, view, alpha, days) {
     ctx.lineWidth = 1;
-    for (const sc of SPACECRAFT) {
+    for (const sc of [...SPACECRAFT, ...NEAR_EARTH]) {
       if (sc.center) continue;
-      const track = TRACKS[sc.name];
+      // A body with an Earth-relative flyby track hands over to it while it runs.
+      if (sc.flyby && sampledPosition(TRACKS[sc.flyby], days)) continue;
+      const track = TRACKS[sc.track || sc.name];
       const pos = sampledPosition(track, days, sc.escape);
       if (!pos) continue;
       const path = trackPath(track, days - sc.trail, days, sc.escape);
-      ctx.strokeStyle = signal(0.1 * alpha);
+      ctx.strokeStyle = sc.color ? `${sc.color}22` : signal(0.1 * alpha);
       ctx.beginPath();
       for (let i = 0; i < path.length; i += 2) ctx.lineTo(view.sx(path[i]), view.sy(path[i + 1]));
       ctx.stroke();
       const x = view.sx(pos.x);
       const y = view.sy(pos.y);
       if (!onScreen(view, x, y)) continue;
-      dot(ctx, x, y, 2, SIGNAL, alpha);
+      dot(ctx, x, y, 2, sc.color || SIGNAL, alpha);
       const far = Math.hypot(x - view.sx(0), y - view.sy(0)) > 14;
       label(view, x, y, sc.name, far ? alpha : 0, 0);
       hit(view, x, y, sc.name, far ? alpha : 0, spacecraftSummary(sc, Math.hypot(pos.x, pos.y)));
@@ -409,15 +412,29 @@ export const earthOrbiters = {
       label(view, x, y, ISS.name, alpha, 0);
       hit(view, x, y, ISS.name, alpha, issSummary(ISS));
     }
-    for (const sc of SPACECRAFT) {
+    for (const ring of EARTH_RINGS) {
+      const r = ring.radius / view.mpp;
+      if (r < 8) continue;
+      ctx.strokeStyle = `rgba(255,255,255,${0.2 * alpha})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([1, 3]);
+      ctx.beginPath();
+      ctx.arc(ex, ey, r, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      label(view, ex - r * Math.SQRT1_2, ey + r * Math.SQRT1_2, ring.name, r > 24 ? 0.8 * alpha : 0, 0);
+      ringHit(view, ex, ey, r, ring.name, alpha, `${ring.name} · ${formatDistance(ring.radius)} from Earth’s center · ${ring.note}`);
+    }
+    for (const sc of [...SPACECRAFT, ...NEAR_EARTH]) {
       if (sc.center !== 399) continue;
-      const track = TRACKS[sc.name];
+      const track = TRACKS[sc.track || sc.name];
       const pos = sampledPosition(track, days);
       if (!pos) continue;
       // Past positions turned by Earth's motion since, so the trail keeps
       // its place relative to the Sun-Earth line.
       const eAngle = Math.atan2(e.y, e.x);
-      ctx.strokeStyle = signal(0.1 * alpha);
+      ctx.strokeStyle = sc.color ? `${sc.color}55` : signal(0.1 * alpha);
+      ctx.lineWidth = 1;
       ctx.beginPath();
       for (let d = days - sc.trail; d <= days; d += sc.step) {
         const p = sampledPosition(track, d);
@@ -433,7 +450,7 @@ export const earthOrbiters = {
       const x = view.sx(e.x + pos.x);
       const y = view.sy(e.y + pos.y);
       if (!onScreen(view, x, y)) continue;
-      dot(ctx, x, y, 2, SIGNAL, alpha);
+      dot(ctx, x, y, 2, sc.color || SIGNAL, alpha);
       const far = Math.hypot(x - ex, y - ey) > 14;
       label(view, x, y, sc.name, far ? alpha : 0, 0);
       hit(view, x, y, sc.name, far ? alpha : 0, spacecraftSummary(sc, Math.hypot(pos.x, pos.y), 'Earth'));

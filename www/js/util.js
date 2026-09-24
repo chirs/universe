@@ -641,9 +641,20 @@ export function skyToPlane(l, dist) {
   return { x: dist * Math.cos(lr), y: dist * Math.sin(lr) };
 }
 
+// The hash names a level, optionally with a clock time after '?', as in
+// '#earth?t=2029-04-13T21:45', so a moment can be linked.
 export function levelFromHash(hash, levels) {
-  const id = (hash || '').replace(/^#/, '');
+  const id = (hash || '').replace(/^#/, '').split('?')[0];
   return levels.find((lv) => lv.id === id) || levels[0];
+}
+
+export function timeFromHash(hash) {
+  const query = (hash || '').split('?')[1];
+  if (!query) return null;
+  const t = new URLSearchParams(query).get('t');
+  if (!t) return null;
+  const ms = Date.parse(/T/.test(t) && !/Z|[+-]\d\d:?\d\d$/.test(t) ? `${t}Z` : t);
+  return Number.isNaN(ms) ? null : ms;
 }
 
 export function levelFromShortcut(key, levels) {

@@ -230,6 +230,9 @@ export const COMETS = [
 export const ASTEROIDS = [
   { name: '16 Psyche', a: 2.925720466462538 * AU, e: 0.1349324738201893, period: 1827.87996016922, varpi: 20.008, L0: 358.132,
     radius: 111 * KM, color: '#c8c0b0', note: 'about 280 by 240 by 170 km, dense and metal-rich, perhaps the exposed core of a shattered protoplanet; NASA\u2019s Psyche arrives in 2029' },
+  // JPL solution 240, epoch 2026-10-08, laid flat like the planets.
+  { name: 'Didymos', a: 1.642709608529702 * AU, e: 0.3831233242624545, period: 769.0235207660371, varpi: 32.567, L0: 93.436,
+    radius: 0.39 * KM, color: '#c8c0b0', note: 'a 780 m asteroid with a 150 m moon, Dimorphos, whose orbit DART shortened by 33 minutes in 2022, the first test of deflecting an asteroid; Hera arrives in December 2026 to survey the result' },
   // Earth's companions, on Earth-length years (epoch 2026, full-precision
   // SBDB elements). Seen turning with Earth, Cruithne traces a kidney each
   // year and Kamo\u02bboalewa a loop around Earth; over centuries planetary
@@ -250,6 +253,9 @@ export const INTERSTELLAR = [
     color: '#e8c8a8', note: 'the first known interstellar object, found in October 2017 after it passed the Sun; elongated, perhaps 100 m long, and nudged by something other than gravity' },
   { name: '2I/Borisov', q: 2.006520878500843 * AU, e: 3.356475782676596, tP: 7281.053, varpi: 157.271,
     color: '#cfe8ff', note: 'the first known interstellar comet, found in August 2019 by an amateur astronomer; richer in carbon monoxide than comets born here' },
+  // JPL solution 54 (782 observations, 2025-2026), epoch 2026-02-19.
+  { name: '3I/ATLAS', q: 1.356481057231181 * AU, e: 6.141351449317625, tP: 9432.995, varpi: 194.147, retrograde: true,
+    color: '#d8e8d0', note: 'the third interstellar visitor, found in July 2025 and the fastest yet at 58 km/s; an active comet, perhaps older than the Sun, that passed the Sun in October 2025 and is on its way out' },
 ];
 
 // Spacecraft whose paths come from JPL Horizons: scripts/fetch-spacecraft.mjs
@@ -300,6 +306,26 @@ export const SPACECRAFT = [
     note: 'watches the solar wind and the sunlit Earth from a Lissajous orbit around the Sun\u2013Earth L1 point' },
   { name: 'IMAP', horizons: -43, step: 2, center: 399, trail: 182,
     note: 'maps the heliosphere\u2019s boundary from a halo orbit around the Sun\u2013Earth L1 point' },
+];
+
+// Small bodies tracked from Horizons like the craft, because their close
+// passes by Earth bend their orbits too much for fixed elements. Apophis
+// has two tracks: a heliocentric one for the map, and an Earth-relative
+// one at half-hour steps through the week of its 2029 flyby, drawn in
+// Earth's frame, which stands in for the first while it runs.
+export const NEAR_EARTH = [
+  { name: 'Apophis', track: 'Apophis', horizons: '99942;', step: 2, from: '2015-01-01', to: '2045-01-01', trail: 200,
+    kind: 'Asteroid', color: '#d8c8a8', flyby: 'Apophis flyby',
+    note: 'a 340 m asteroid that passes 32,000 km above Earth on 13 April 2029, inside the ring of geostationary satellites, visible to the naked eye; OSIRIS-APEX follows it in to see what the pass did. Set the clock to that day' },
+  { name: 'Apophis', track: 'Apophis flyby', horizons: '99942;', step: 1 / 48, center: 399, from: '2029-04-11', to: '2029-04-17', trail: 2,
+    kind: 'Asteroid', color: '#d8c8a8',
+    note: 'a 340 m asteroid passing 32,000 km above Earth on 13 April 2029, inside the ring of geostationary satellites; Earth\u2019s pull bends its path here and stretches it by tides' },
+];
+
+// Rings of our satellites around Earth: orbit radii from the center.
+export const EARTH_RINGS = [
+  { name: 'GPS orbits', radius: 26560 * KM, note: 'the navigation constellations circle here, 20,000 km up, twice a day' },
+  { name: 'Geostationary ring', radius: 42164 * KM, note: 'satellites that keep pace with Earth\u2019s spin, 36,000 km up, so they hang over one spot on the equator' },
 ];
 
 // The ISS, drawn face-on around Earth like the moons. Altitude and period

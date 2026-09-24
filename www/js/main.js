@@ -1,7 +1,7 @@
 import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS, STARS, SYSTEM_STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS, WR_140 } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, levelFromShortcut, hashForView, planetLevels, formatDate, shouldIgnoreGlobalKeys,
+  levelFromHash, levelFromShortcut, hashForView, timeFromHash, planetLevels, formatDate, shouldIgnoreGlobalKeys,
   skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, galaxyLevels, TOUR, TOUR_HOLD_MS, tourLegMs, coorbitalState,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER, M87_POSITION } from './scenes.js';
@@ -646,9 +646,21 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keydown', resumeSound, { once: true });
 window.addEventListener('pointerdown', resumeSound, { once: true });
 
+// A hash with a time, like #earth?t=2029-04-13T21:45, sets the clock to
+// that moment and pauses it, so a moment can be linked. Read before goTo,
+// which rewrites the hash to the level alone.
+function applyHashTime(hash) {
+  const t = timeFromHash(hash);
+  if (t === null) return;
+  simMs = t;
+  setSpeed(SPEEDS[0]);
+}
+
 window.addEventListener('hashchange', () => {
-  if (location.hash === '#overview') setOverview(true);
-  else goTo(levelFromHash(location.hash, ALL_LEVELS));
+  const hash = location.hash;
+  if (hash === '#overview') setOverview(true);
+  else goTo(levelFromHash(hash, ALL_LEVELS));
+  applyHashTime(hash);
 });
 playBtn.addEventListener('click', () => setSpeed(speed.perSec ? SPEEDS[0] : runSpeed));
 overviewBtn.addEventListener('click', () => { stopTour(); setOverview(!overview); });
@@ -667,7 +679,8 @@ window.addEventListener('resize', () => {
 
 buildHud();
 resize();
-const startOverview = location.hash === '#overview';
-goTo(levelFromHash(location.hash, ALL_LEVELS), true);
-if (startOverview) setOverview(true);
+const startHash = location.hash;
+goTo(levelFromHash(startHash, ALL_LEVELS), true);
+if (startHash === '#overview') setOverview(true);
+applyHashTime(startHash);
 requestAnimationFrame(frame);

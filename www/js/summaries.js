@@ -166,7 +166,7 @@ export function observableUniverseSummary(radius) {
 }
 
 export function spacecraftSummary(sc, distance, center = 'the Sun') {
-  return `Spacecraft · ${formatDistance(distance)} from ${center} · ${sc.note}`;
+  return `${sc.kind || 'Spacecraft'} · ${formatDistance(distance)} from ${center} · ${sc.note}`;
 }
 
 export function globularSummary(c) {
