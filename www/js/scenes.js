@@ -994,7 +994,10 @@ const localGroup = (() => {
   const members = LOCAL_GROUP.map((g) => {
     const m = { ...g, ...skyToPlane(g.l, g.dist * LY), sizeM: g.size * LY };
     const angle = rand() * TAU;
-    if (g.spiral) {
+    if (!g.spiral) {
+      // Dwarfs are diffuse swarms of stars, densest at the middle.
+      m.stars = makeBlob(60 + Math.round(g.dist % 997), m.sizeM * 0.35, m.sizeM * 0.35, 700);
+    } else {
       m.arms = orientGlyph(galaxyGlyph.arms, g, m.sizeM, angle);
       m.disk = orientGlyph(galaxyGlyph.disk, g, m.sizeM, angle);
       m.core = orientGlyph(galaxyGlyph.core, g, m.sizeM, angle);
@@ -1022,9 +1025,13 @@ const localGroup = (() => {
             drawPoints(ctx, view, g.core, g.x, g.y, '#fff2d8', 0.7 * gAlpha);
             glow(ctx, x, y, Math.max(r * 0.15, 3), 'rgba(255,240,215,0.8)', gAlpha);
           }
+        } else if (r < 3) {
+          glow(ctx, x, y, 5, 'rgba(220,210,190,0.7)', gAlpha);
+          dot(ctx, x, y, 1.5, '#e6dcc8', gAlpha);
         } else {
-          glow(ctx, x, y, Math.max(r * 2, 5), 'rgba(220,210,190,0.7)', gAlpha);
-          dot(ctx, x, y, Math.max(r * 0.5, 1.5), '#e6dcc8', gAlpha);
+          glow(ctx, x, y, r * 1.2, 'rgba(220,210,190,0.3)', gAlpha);
+          drawPoints(ctx, view, g.stars, g.x, g.y, '#e6dcc8', 0.55 * gAlpha);
+          glow(ctx, x, y, Math.max(r * 0.2, 3), 'rgba(240,230,210,0.6)', gAlpha);
         }
         label(view, x, y, g.name, gAlpha, g.spiral ? 2 : 0);
         hit(view, x, y, g.name, gAlpha, galaxySummary(g));
