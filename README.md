@@ -25,9 +25,17 @@ where extrapolated; the disk, bulge and bar are schematic.
 `g` jumps to the galactic center, where the S-stars run their measured orbits
 around Sgr A* (Gillessen et al. 2017), projected onto the galactic plane and
 moving with their real periods. `b` jumps to the black hole itself, with its
-event horizon, shadow and innermost stable orbit to scale under a schematic
-accretion glow. Clicking the galactic center at the Milky Way level zooms in
-the same way.
+event horizon, shadow and innermost stable orbit to scale, ringed by a
+schematic glow like the Event Horizon Telescope image. Clicking the galactic
+center at the Milky Way level zooms in the same way.
+
+Around the Sun, the stars out to 1,500 light-years are Gaia DR3's most
+luminous, in their colors, over the dust within 3 kpc from the Lallement et
+al. 2022 3D map; the pink glows along the arms are the HII regions of the
+WISE catalog (Anderson et al. 2014) at their distances. A pale sphere marks
+how far our radio broadcasts have travelled since 1920. The heliopause is
+drawn blunt toward the interstellar wind with a fading tail, and the giant
+planets have their ring systems.
 
 The moon systems include the major satellites plus selected smaller bodies
 such as Phobos, Amalthea, Hyperion, Puck, Nereid, and Pluto's four small moons.

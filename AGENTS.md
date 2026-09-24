@@ -53,7 +53,15 @@ playbooks, which clone the repo and serve `www/` as the document root.
   Jupiter's L4 and L5 points.
   `www/js/globulars.js` is generated the same way by
   `node scripts/import-globulars.mjs` from the Harris (2010 edition)
-  globular cluster catalog.
+  globular cluster catalog, and `www/js/hii.js` by
+  `node scripts/import-hii.mjs` from the WISE HII region catalog (Anderson
+  et al. 2014; known regions with distances). `www/data/` holds binary
+  assets fetched at runtime: `gaia-stars.bin` (`scripts/fetch-gaia.mjs`,
+  Gaia DR3 stars within 1500 ly with absolute G < 1) and `dust.png`
+  (`scripts/import-dust.mjs`, the Lallement et al. 2022 dust cube summed
+  over height; it streaks along sight lines past about 2 kpc, so it fades
+  out there). `RADIO` dates the first broadcast; the radio sphere grows with
+  the clock.
   `HELIOSPHERE` holds the Voyagers' boundary crossings. `RADCLIFFE_WAVE` is
   the Alves et al. 2020 centerline fit (its vertical wave is out of the
   plane and not drawn); `MAGELLANIC_STREAM` is placed in Nidever's stream
@@ -86,8 +94,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   turn a Reid et al. arm (log spiral with a kink, galactocentric azimuth
   zero toward the Sun) into scattered points, fitted range and extrapolation
   kept separate so the extrapolation can draw fainter. `makeExpDisk` scatters an
-  exponential disk. The Milky Way layer's knots along the arms are texture,
-  not catalogued objects, and fade out once they would be more than a few
+  exponential disk. The Milky Way layer's white knots along the arms are texture,
+  not catalogued objects (the pink ones are the real HII regions), and fade out once they would be more than a few
   pixels across. Arms draw as stacked additive strokes (a soft core) with a
   dust lane on the inner edge; the strokes fade out as they widen past a
   few dozen pixels, and a denser star set fades in, so up close the stars
