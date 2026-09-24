@@ -110,6 +110,7 @@ let hover = null;
 let overview = false;
 let lastLevelId = ALL_LEVELS[0].id;
 let tour = null;
+let shownLabels = [];
 let sound = null;
 let soundOn = false;
 try {
@@ -251,6 +252,7 @@ function nearestLevel() {
 
 function drawLabels(view) {
   const placed = [];
+  shownLabels = [];
   ctx.font = '12px system-ui, -apple-system, sans-serif';
   ctx.textBaseline = 'middle';
   const sorted = view.labels.sort((a, b) => b.priority - a.priority);
@@ -261,6 +263,7 @@ function drawLabels(view) {
     if (!rect && isHover) rect = { x: l.x + 8, y: l.y - 8, w: tw + 4, h: 16 };
     if (!rect) continue;
     placed.push(rect);
+    shownLabels.push({ rect, text: l.text, x: l.x, y: l.y });
     ctx.globalAlpha = l.alpha * (isHover ? 1 : 0.8);
     ctx.fillStyle = isHover ? '#ffffff' : '#cfd3dc';
     ctx.fillText(l.text, rect.x + 2, rect.y + 8);
@@ -284,6 +287,12 @@ function updateHover(view) {
         : { ...hit, markerX: hit.x + dx / radial * hit.radius, markerY: hit.y + dy / radial * hit.radius };
     }
   }
+  // A name counts as its object. Labels are placed after hover is decided,
+  // so this uses last frame's positions.
+  const label = shownLabels.find(({ rect: r }) =>
+    mouse.x >= r.x && mouse.x <= r.x + r.w && mouse.y >= r.y && mouse.y <= r.y + r.h);
+  const hit = label && view.hits.find((h) => h.name === label.text);
+  if (hit) hover = { ...hit, markerX: label.x, markerY: label.y };
   if (hover) {
     ctx.strokeStyle = 'rgba(255,255,255,0.6)';
     ctx.lineWidth = 1;
@@ -319,6 +328,13 @@ function updateHud() {
   if (hover) {
     hoverNameEl.textContent = hover.name;
     hoverDetailsEl.textContent = hover.detail;
+    // Beside the marker, flipped to the other side near the right or bottom edge.
+    const x = hover.markerX ?? hover.x;
+    const y = hover.markerY ?? hover.y;
+    const pw = hoverInfoEl.offsetWidth;
+    const ph = hoverInfoEl.offsetHeight;
+    hoverInfoEl.style.left = `${x + 16 + pw > w - 8 ? x - 16 - pw : x + 16}px`;
+    hoverInfoEl.style.top = `${Math.max(8, y + 16 + ph > h - 8 ? y - 16 - ph : y + 16)}px`;
   }
 }
 
