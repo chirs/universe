@@ -80,7 +80,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   drops automatically once the view is wider than a fraction of an AU.
   Every planet and dwarf planet gets a `PLANET_LEVELS` entry (built by
   `planetLevels` in `util.js`), listed in the Planets menu and reached by
-  clicking the planet or by `#uranus` and the like; the stop is sized to
+  clicking the planet or by `#uranus` and the like, named for the planet
+  alone; the stop is sized to
   the moon system, or to a couple of dozen radii for a moonless body. The
   level bar is laid out by `BAR`: plain
   levels and drop-up menus (Planets, Solar system, Milky Way), each menu

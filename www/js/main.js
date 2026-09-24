@@ -14,7 +14,7 @@ const VIRGO = skyToPlane(284, 54e6 * LY);
 // reached by clicking the planet or by hash. Each has `follow`, so the camera
 // stays centered on the planet as it moves.
 export const PLANET_LEVELS = planetLevels(PLANETS);
-for (const lv of PLANET_LEVELS) lv.shortcut = { 'earth-moon': '1', jupiter: '2', saturn: '3' }[lv.id];
+for (const lv of PLANET_LEVELS) lv.shortcut = { earth: '1', jupiter: '2', saturn: '3' }[lv.id];
 
 const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, STARS);
 const GALAXY_LEVELS = galaxyLevels(LOCAL_GROUP_STOPS, LOCAL_GROUP);
@@ -48,7 +48,8 @@ export const LEVELS = [
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];
 
-const ALL_LEVELS = [...PLANET_LEVELS, ...LEVELS];
+// LEVELS first so the inner solar system is the default view.
+const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS];
 
 // The level bar: a plain level id, or a menu of levels in sections, listed
 // widest at the top so a menu reads like the sky above the bar.

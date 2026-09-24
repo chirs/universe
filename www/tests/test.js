@@ -219,9 +219,9 @@ test('planet levels cover every planet, moons or not', () => {
   assert.equal(levels[0].id, 'mercury');
   assert.equal(levels[0].name, 'Mercury');
   assert.equal(levelFromHash('#venus', levels).radius, 25 * PLANETS[1].radius);
-  assert.equal(levelFromHash('#earth-moon', levels).name, 'Earth & Moon');
-  assert.equal(levelFromHash('#uranus', levels).name, 'Uranus & moons');
-  assert.equal(levelFromHash('#orcus', levels).name, 'Orcus & Vanth');
+  assert.equal(levelFromHash('#earth', levels).name, 'Earth');
+  assert.equal(levelFromHash('#uranus', levels).name, 'Uranus');
+  assert.equal(levelFromHash('#orcus', levels).name, 'Orcus');
   for (const lv of levels) assert.equal(lv.radius, lv.follow.moons ? moonSystemRadius(lv.follow) : 25 * lv.follow.radius);
 });
 
@@ -411,7 +411,7 @@ test('tour legs take longer over more decades and never go to zero', () => {
   assert.ok(tourLegMs(1, 100) > tourLegMs(1, 10));
   assert.equal(tourLegMs(1, 1000), tourLegMs(1000, 1));
   assert.equal(new Set(TOUR).size, TOUR.length);
-  assert.equal(TOUR[0], 'earth-moon');
+  assert.equal(TOUR[0], 'earth');
   assert.equal(TOUR[TOUR.length - 1], 'universe');
   assert.ok(TOUR.indexOf('outer') < TOUR.indexOf('trans-neptunian'));
   assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));

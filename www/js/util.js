@@ -504,8 +504,8 @@ export function moonSystemRadius(body) {
 // enough for its moons, or a couple of dozen radii around a moonless body.
 export function planetLevels(planets) {
   return planets.map((p) => ({
-    id: p.name === 'Earth' ? 'earth-moon' : p.name.toLowerCase(),
-    name: p.moons ? `${p.name} & ${p.moons.length === 1 ? p.moons[0].name : 'moons'}` : p.name,
+    id: p.name.toLowerCase(),
+    name: p.name,
     radius: p.moons ? moonSystemRadius(p) : 25 * p.radius,
     follow: p,
   }));
@@ -575,7 +575,7 @@ export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
 // Stops of the guided tour, in order, and how long a leg between two zooms
 // should take: a fixed rate of about a second per decade, plus a floor.
 export const TOUR = [
-  'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars', 'local-bubble', 'local-arm',
+  'earth', 'inner', 'outer', 'trans-neptunian', 'stars', 'local-bubble', 'local-arm',
   'milky-way', 'milky-way-halo', 'local-group', 'virgo', 'universe',
 ];
 export const TOUR_HOLD_MS = 2500;
