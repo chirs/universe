@@ -2,17 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
-  niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
-  levelFromShortcut, hashForView, moonSystemRadius, planetLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
-  formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
-  galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
-  makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
-  galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
-  starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary, horseshoe, coorbitalState, hyperbolicPosition, interstellarSummary, binaryOffset,
-  messageSummary, notableGalaxySummary,
+  meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha, niceScaleBar, mulberry32,
+  skyToPlane, levelFromHash, daysSinceJ2000, placeLabel, levelFromShortcut, hashForView, moonSystemRadius,
+  planetLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs, formatDistance, formatPeriod, makeZeldovichWeb,
+  schwarzschildRadius, skyOrbitPosition, skyOrbitPath, galacticPlanePositionAngle, skyOffsetToPlane,
+  pickLevel, armRadius, galactocentricToPlane, makeArm, starStyle, makeExpDisk, habitableZone, systemLevels,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough,
+  slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, horseshoe, coorbitalState,
+  hyperbolicPosition, binaryOffset,
 } from '../js/util.js';
+import {
+  planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary, superclusterSummary, voidSummary,
+  landmarkSummary, observableUniverseSummary, blackHoleSummary, sStarSummary, galacticObjectSummary,
+  starSystemSummary, cloudSummary, componentSummary, exoplanetSummary, radioSummary, interstellarSummary,
+  messageSummary, notableGalaxySummary,
+} from '../js/summaries.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {

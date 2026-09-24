@@ -7,9 +7,12 @@ import {
   UNIVERSE, SUN, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, GALAXIES,
 } from './data.js';
 import {
-  orbitalPosition, skyToPlane, formatDistance, planetSummary, starSummary,
-  galaxySummary, clusterSummary, landmarkSummary, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary, notableGalaxySummary,
+  orbitalPosition, skyToPlane, formatDistance, starStyle,
 } from './util.js';
+import {
+  planetSummary, starSummary, galaxySummary, clusterSummary, landmarkSummary, galacticObjectSummary,
+  starSystemSummary, cloudSummary, notableGalaxySummary,
+} from './summaries.js';
 
 export const R_MIN = 0.05 * AU;
 export const R_MAX = UNIVERSE.radius * 1.08;
