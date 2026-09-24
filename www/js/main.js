@@ -42,7 +42,7 @@ export const LEVELS = [
     caption: 'Stars orbiting Sgr A*, on their measured orbits projected onto the galactic plane, moving with their real periods.' },
   { id: 'sgr-a', name: 'Sgr A*', shortcut: 'b', radius: 1 * AU, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
     clickName: 'Sgr A*',
-    caption: 'Horizon, shadow and innermost stable orbit to scale. The glow stands in for the accretion flow.' },
+    caption: 'Horizon, shadow and innermost stable orbit to scale. The glow is schematic, ringing the shadow as in the Event Horizon Telescope image.' },
   { id: 'milky-way-halo', name: 'MW halo', shortcut: 'h', radius: 500e3 * LY, cx: 0, cy: 0,
     caption: 'Schematic top-down projection. Radial distances are to scale; galactic latitude is omitted and galaxy sizes are approximate.' },
   { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },

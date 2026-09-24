@@ -1097,7 +1097,7 @@ const globularClusters = (() => {
 // projected onto the galactic plane like everything else on the map. Below
 // the dot threshold the black hole is a dot; resolved, it shows the horizon,
 // the shadow an observer would see and the innermost stable circular orbit,
-// all to scale, under a schematic accretion glow.
+// all to scale, ringed by a schematic glow like the EHT image.
 const nucleus = (() => {
   const bh = SGR_A_STAR;
   const rs = schwarzschildRadius(bh.mass);
@@ -1134,9 +1134,24 @@ const nucleus = (() => {
         glow(ctx, gx, gy, 10, 'rgba(255,170,90,0.5)', alpha);
         dot(ctx, gx, gy, 3, '#ffc890', alpha);
       } else {
-        glow(ctx, gx, gy, 3.5 * shadowPx, 'rgba(255,150,70,0.6)', alpha);
+        // Emission peaks in a ring just outside the shadow, as in the Event
+        // Horizon Telescope image, and fades outward. Its brightness is
+        // schematic; the photon ring is its thin bright inner edge.
+        const g = ctx.createRadialGradient(gx, gy, shadowPx, gx, gy, 3.2 * shadowPx);
+        g.addColorStop(0, 'rgba(255,205,150,0.95)');
+        g.addColorStop(0.06, 'rgba(255,160,80,0.7)');
+        g.addColorStop(0.3, 'rgba(225,105,45,0.28)');
+        g.addColorStop(1, 'rgba(160,60,30,0)');
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 3.2 * shadowPx, 0, TAU);
+        ctx.arc(gx, gy, shadowPx, 0, TAU, true);
+        ctx.fill();
+        ctx.globalAlpha = 1;
         dot(ctx, gx, gy, shadowPx, '#000000', alpha);
-        ring(ctx, gx, gy, shadowPx, `rgba(255,225,190,${0.9 * alpha})`, 1.5, []);
+        ring(ctx, gx, gy, shadowPx + 1, `rgba(255,190,130,${0.3 * alpha})`, 5, []);
+        ring(ctx, gx, gy, shadowPx, `rgba(255,240,220,${0.95 * alpha})`, 1.5, []);
         ring(ctx, gx, gy, rs / view.mpp, `rgba(140,140,160,${0.7 * alpha})`, 1, [4, 4]);
         ring(ctx, gx, gy, iscoR / view.mpp, `rgba(255,255,255,${0.25 * alpha})`, 1, [2, 6]);
         if (shadowPx > 30) {
