@@ -11,7 +11,7 @@ const SWELL_HZ = [0.021, 0.034, 0.047, 0.029];
 const CHIMES = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
 const GLIDE_S = 1.5;
 const FADE_S = 3;
-const MAX_GAIN = 0.4;
+const MAX_GAIN = 1;
 const CHIME_S = 7;
 
 function span(a, b, t) {
