@@ -62,8 +62,9 @@ const SATURN = PLANETS.find((p) => p.name === 'Saturn');
 const EARTH = PLANETS.find((p) => p.name === 'Earth');
 const CLOSE_UPS = [
   { id: 'iss', name: 'ISS', radius: 20000e3, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'ISS' },
-  { id: 'jwst', name: 'JWST', radius: 2.2e9, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'JWST',
-    caption: 'JWST loops around the Sun\u2013Earth L2 point, 1.5 million km beyond Earth, keeping the Sun, Earth and Moon behind its shield.' },
+  { id: 'lagrange', name: 'Sun\u2013Earth L1 and L2', radius: 2.2e9, follow: PLANETS.find((p) => p.name === 'Earth'),
+    clickNames: ['JWST', 'Euclid', 'SOHO', 'DSCOVR', 'IMAP'],
+    caption: 'Craft loop around the Sun\u2013Earth Lagrange points, 1.5 million km from Earth: JWST and Euclid beyond it at L2, with the Sun, Earth and Moon behind their shields; SOHO, DSCOVR and IMAP sunward at L1, watching the Sun and the solar wind.' },
   { id: 'janus-epimetheus', name: 'Janus and Epimetheus', radius: 190000 * KM, follow: SATURN, clickNames: ['Janus', 'Epimetheus'],
     frame: 'janus',
     caption: 'Two moons on one orbit, 50 km apart. Every four years the inner one catches up, and they swap orbits before they meet. Drawn turning with the pair; run the clock at a year per second.' },

@@ -74,9 +74,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
   same cosmology: the cosmic web fades toward the first galaxies (z = 20),
   then the `eras` layer draws the dark ages, the microwave background and
   the opaque plasma out to the horizon. A craft with
-  `center: 399` (JWST) is tracked relative to Earth and drawn in a frame
-  turning with Earth, so its halo orbit stays beyond L2. The ISS and JWST
-  stops (`CLOSE_UPS` in main.js) follow Earth and are reached by clicking.
+  `center: 399` (JWST and Euclid at L2; SOHO, DSCOVR and IMAP at L1) is
+  tracked relative to Earth and drawn in a frame turning with Earth, so
+  its halo orbit stays on its side of Earth. Spektr-RG is not in Horizons,
+  so it is left out. The ISS and Lagrange-point stops (`CLOSE_UPS` in
+  main.js) follow Earth and are reached by clicking.
   A close-up with `spin` is drawn in a frame turning about its planet: the
   Janus and Epimetheus stop turns with the pair, whose horseshoe between
   swaps is modeled by `coorbitalState` in util.js (Saturn's `coorbitals`),

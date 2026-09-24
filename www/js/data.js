@@ -292,6 +292,14 @@ export const SPACECRAFT = [
     note: 'returned samples of Bennu in 2023; now bound for Apophis, arriving 2029' },
   { name: 'JWST', horizons: -170, step: 2, center: 399, trail: 182,
     note: 'infrared telescope in a halo orbit around the Sun\u2013Earth L2 point' },
+  { name: 'Euclid', horizons: -680, step: 2, center: 399, trail: 182,
+    note: 'dark-energy survey telescope in a halo orbit around the Sun\u2013Earth L2 point' },
+  { name: 'SOHO', horizons: -21, step: 2, center: 399, trail: 182,
+    note: 'solar observatory in a halo orbit around the Sun\u2013Earth L1 point since 1996' },
+  { name: 'DSCOVR', horizons: -78, step: 2, center: 399, trail: 182,
+    note: 'watches the solar wind and the sunlit Earth from a Lissajous orbit around the Sun\u2013Earth L1 point' },
+  { name: 'IMAP', horizons: -43, step: 2, center: 399, trail: 182,
+    note: 'maps the heliosphere\u2019s boundary from a halo orbit around the Sun\u2013Earth L1 point' },
 ];
 
 // The ISS, drawn face-on around Earth like the moons. Altitude and period

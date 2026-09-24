@@ -452,7 +452,7 @@ const spacecraft = {
 };
 
 // Around Earth: the ISS on a face-on circle, and craft whose Horizons track
-// is relative to Earth (JWST's halo orbit around L2).
+// is relative to Earth (the halo orbits around L1 and L2).
 const EARTH = PLANETS.find((p) => p.name === 'Earth');
 const earthOrbiters = {
   name: 'earth orbiters',
