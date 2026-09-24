@@ -151,7 +151,15 @@ playbooks, which clone the repo and serve `www/` as the document root.
   center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the
   Local Group stops (built from `LOCAL_GROUP_STOPS`) work. The guided tour walks
   the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
-  any user input stops it.
+  any user input stops it. Layers queue labels and `drawLabels` draws them
+  last, highest priority first: each sits to the right of its point, or on
+  the first free side of left, above and below (`placeLabel` in util.js),
+  keeping last frame's side while there is room, and is hidden when boxed
+  in. Labeled points reserve a small box so a label never covers the dot
+  of anything at least as important.
+- `www/fonts/` — Instrument Serif (OFL, license alongside), used for the
+  title, captions, hover names and the canvas signposts. Data labels stay
+  in the system sans.
 
 ## Conventions
 

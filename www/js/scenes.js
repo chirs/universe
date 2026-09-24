@@ -2062,7 +2062,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
   range: sp.range,
   draw(ctx, view, alpha) {
     if (Math.hypot(view.cx, view.cy) > 3 * view.radius) return;
-    ctx.font = 'italic 13px system-ui, -apple-system, sans-serif';
+    ctx.font = 'italic 17px "Instrument Serif", Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.globalAlpha = 0.8 * alpha;
