@@ -7,6 +7,10 @@ Distances are to scale at every level
 Planets move on approximate fixed ellipses with their real periods, initialized
 from J2000 elements.
 The `k` key jumps to the trans-Neptunian view; `h` jumps to the Milky Way halo.
+`l` jumps to the Local arm, with nearby nebulae, clusters and black holes at
+their distances. The spiral arms are the log-spiral fits of Reid et al. 2019
+to maser parallaxes, drawn bright over the measured azimuth ranges and faint
+where extrapolated; the disk, bulge and bar are schematic.
 `g` jumps to the galactic center, where the S-stars run their measured orbits
 around Sgr A* (Gillessen et al. 2017), projected onto the galactic plane and
 moving with their real periods. `b` jumps to the black hole itself, with its

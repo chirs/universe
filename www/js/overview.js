@@ -4,11 +4,11 @@
 // top of their planets here.
 import {
   AU, LY, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  UNIVERSE, SUN,
+  UNIVERSE, SUN, MILKY_WAY_OBJECTS,
 } from './data.js';
 import {
   orbitalPosition, skyToPlane, formatDistance, planetSummary, starSummary,
-  galaxySummary, clusterSummary, landmarkSummary,
+  galaxySummary, clusterSummary, landmarkSummary, galacticObjectSummary,
 } from './util.js';
 
 export const R_MIN = 0.05 * AU;
@@ -58,6 +58,7 @@ function pointsFor(days) {
   }
   for (const s of STARS) pts.push({ name: s.name, l: s.l, r: s.dist * LY, color: s.bright ? '#fff6dc' : '#d9c9b0', size: s.bright ? 2.4 : 1.8, priority: s.bright ? 1 : 0, detail: starSummary(s) });
   for (const s of BRIGHT_STARS) pts.push({ name: s.name, l: s.l, r: s.dist * LY, color: '#f4f4ff', size: Math.min(3, Math.max(1.3, 2.4 - 0.5 * s.mag)), priority: s.mag < 1 ? 1 : 0, detail: starSummary(s) });
+  for (const o of MILKY_WAY_OBJECTS) pts.push({ name: o.name, l: o.l, r: o.dist * LY, color: o.kind === 'Black hole' ? '#ffc890' : '#e8e4f4', size: 2.2, priority: 1, detail: galacticObjectSummary(o) });
   pts.push({ name: 'Galactic center', l: 0, r: MILKY_WAY.sunDistance, color: '#fff0cc', size: 4, priority: 3, detail: `Milky Way center · ${formatDistance(MILKY_WAY.sunDistance)} from the Sun` });
   for (const g of LOCAL_GROUP) if (g.dist > 0) pts.push({ name: g.name, l: g.l, r: g.dist * LY, color: g.spiral ? '#e4e9ff' : '#e6dcc8', size: g.spiral ? 3.2 : 1.8, priority: g.spiral ? 2 : 0, detail: galaxySummary(g) });
   for (const c of CLUSTERS) if (c.dist > 0) pts.push({ name: c.name, l: c.l, r: c.dist * 1e6 * LY, color: '#e8e4f4', size: c.n >= 200 ? 3.4 : 2.2, priority: c.n >= 200 ? 2 : c.n >= 100 ? 1 : 0, detail: clusterSummary(c) });

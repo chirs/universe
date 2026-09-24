@@ -33,7 +33,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   exceptions are the Abell clusters, `SUPERCLUSTERS` and `VOIDS`, which are
   transcribed from Powell's Atlas tables (H0 = 70, CMB frame) and Tully et
   al. 2019, with supergalactic coordinates converted to galactic, and the
-  `S_STARS` orbital elements, transcribed from Gillessen et al. 2017.
+  `S_STARS` orbital elements, transcribed from Gillessen et al. 2017, and
+  the `SPIRAL_ARMS` fits, transcribed from Reid et al. 2019. The
+  `MILKY_WAY_OBJECTS` distances are from memory; their longitudes were
+  computed from J2000 equatorial positions.
   `SGR_A_STAR` carries the GRAVITY 2022 mass and distance, and the Sun's
   distance to the galactic center is taken from it.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
@@ -45,7 +48,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   an orbit given in the visual-binary convention (sky east, north, depth),
   and `skyOffsetToPlane` drops that into the map's galactic plane using the
   plane's position angle at Sgr A*; `pickLevel` chooses the level to
-  highlight by scale among stops near the camera.
+  highlight by scale among stops near the camera. `armRadius` and `makeArm`
+  turn a Reid et al. arm (log spiral with a kink, galactocentric azimuth
+  zero toward the Sun) into scattered points, fitted range and extrapolation
+  kept separate so the extrapolation can draw fainter.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut. The galactic
@@ -77,7 +83,7 @@ playbooks, which clone the repo and serve `www/` as the document root.
   Galactic latitude is dropped, not projected, so distances stay to scale.
 - Bodies smaller than the dot threshold draw as fixed-size dots. Never fake a
   distance to make something fit.
-- Procedural content (belts, spiral arms, cosmic web) comes from a fixed-seed
+- Procedural content (belts, arm scatter, cosmic web) comes from a fixed-seed
   PRNG so the picture is stable across reloads.
 - Dropping galactic latitude scatters structures near the galactic poles:
   the Coma, Leo and Phoenix superclusters have members that land far apart

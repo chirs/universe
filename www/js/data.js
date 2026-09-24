@@ -18,8 +18,10 @@
 // directions use his centroids, distances stay with newer values.
 // Exceptions, transcribed rather than recalled: the Abell clusters,
 // SUPERCLUSTERS (both from Powell's tables), VOIDS (Tully et al. 2019) and
-// the S_STARS orbital elements (Gillessen et al. 2017, Table 3). SGR_A_STAR
-// uses the GRAVITY collaboration's 2022 mass and distance.
+// the S_STARS orbital elements (Gillessen et al. 2017, Table 3) and the
+// SPIRAL_ARMS (Reid et al. 2019, Table 2). SGR_A_STAR uses the GRAVITY
+// collaboration's 2022 mass and distance. MILKY_WAY_OBJECTS are from memory
+// again; their longitudes were computed from J2000 equatorial positions.
 // Everything else is close enough to look right, not to navigate by.
 
 export const AU = 1.495978707e11;       // meters
@@ -256,10 +258,44 @@ export const MILKY_WAY = {
   sunDistance: SGR_A_STAR.distance,   // Sun to galactic center
   diskRadius: 50000 * LY,
   bulgeRadius: 6000 * LY,
-  arms: 4,
-  pitch: 12,                 // degrees
+  barHalfLength: 16000 * LY,          // Wegg et al. 2015 long bar, about 5 kpc
+  barAngle: 28,                       // degrees from the Sun-center line, near end at positive longitude
   seed: 4,
 };
+
+// Spiral arms as log spirals with a kink, fitted to maser parallaxes by Reid
+// et al. 2019 (Table 2). beta is galactocentric azimuth in degrees, zero
+// toward the Sun and increasing with galactic rotation; radii are kpc and
+// the pitch angles, in degrees, apply inside and outside the kink. Their fit
+// used R0 = 8.15 kpc; the arms are placed about the center as fitted, so the
+// Sun here sits 0.13 kpc farther out than in their figure. labelBeta is
+// where the name goes.
+export const SPIRAL_ARMS = [
+  { name: 'Norma arm', beta: [5, 54], betaKink: 18, rKink: 4.46, pitchIn: -1.0, pitchOut: 19.5, width: 0.14, labelBeta: 35 },
+  { name: 'Scutum–Centaurus arm', beta: [0, 104], betaKink: 23, rKink: 4.91, pitchIn: 14.1, pitchOut: 12.1, width: 0.23, labelBeta: 60 },
+  { name: 'Sagittarius–Carina arm', beta: [2, 97], betaKink: 24, rKink: 6.04, pitchIn: 17.1, pitchOut: 1.0, width: 0.27, labelBeta: 2 },
+  { name: 'Local arm', beta: [-8, 34], betaKink: 9, rKink: 8.26, pitchIn: 11.4, pitchOut: 11.4, width: 0.31, labelBeta: -6 },
+  { name: 'Perseus arm', beta: [-23, 115], betaKink: 40, rKink: 8.87, pitchIn: 10.3, pitchOut: 8.7, width: 0.35, labelBeta: 25 },
+  { name: 'Outer arm', beta: [-16, 71], betaKink: 18, rKink: 12.24, pitchIn: 3.0, pitchOut: 9.4, width: 0.65, labelBeta: -30 },
+];
+
+// Landmarks within the nearby arms. Distance in light-years, galactic l and
+// b in degrees.
+export const MILKY_WAY_OBJECTS = [
+  { name: 'Hyades', dist: 153, l: 180.1, b: -22.3, kind: 'Open cluster', note: 'the nearest open cluster, the face of Taurus' },
+  { name: 'Pleiades', dist: 444, l: 166.6, b: -23.5, kind: 'Open cluster', note: 'the Seven Sisters' },
+  { name: 'Polaris', dist: 445, l: 123.3, b: 26.5, kind: 'Star', note: 'the North Star, a Cepheid variable' },
+  { name: 'Vela pulsar', dist: 950, l: 263.6, b: -2.8, kind: 'Supernova remnant', note: 'neutron star spinning 11 times a second, born about 11,000 years ago' },
+  { name: 'Orion Nebula', dist: 1344, l: 209.0, b: -19.4, kind: 'Emission nebula', note: 'the nearest massive star-forming region' },
+  { name: 'Gaia BH1', dist: 1560, l: 23.7, b: 18.6, kind: 'Black hole', note: 'the nearest known black hole, 9.6 solar masses, orbited by a Sun-like star' },
+  { name: 'Gaia BH3', dist: 1926, l: 51.7, b: -3.5, kind: 'Black hole', note: '33 solar masses, the most massive stellar black hole known in the galaxy' },
+  { name: 'Lagoon Nebula', dist: 4100, l: 6.0, b: -1.2, kind: 'Emission nebula', note: 'star-forming cloud in the Sagittarius arm' },
+  { name: 'Eagle Nebula', dist: 5700, l: 16.9, b: 0.8, kind: 'Emission nebula', note: 'home of the Pillars of Creation' },
+  { name: 'Crab Nebula', dist: 6500, l: 184.6, b: -5.8, kind: 'Supernova remnant', note: 'remnant of the supernova seen in 1054' },
+  { name: 'Cygnus X-1', dist: 7200, l: 71.3, b: 3.1, kind: 'Black hole', note: '21 solar masses, the first black hole identified, in 1971' },
+  { name: 'Carina Nebula', dist: 7500, l: 287.7, b: -0.8, kind: 'Emission nebula', note: 'home of Eta Carinae' },
+  { name: 'Westerlund 1', dist: 13000, l: 339.5, b: -0.4, kind: 'Super star cluster', note: 'the most massive young cluster known in the galaxy' },
+];
 
 // Distance in light-years from the Milky Way, galactic l and b in degrees.
 // Size is a rough visual radius in light-years.

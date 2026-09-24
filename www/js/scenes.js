@@ -1,13 +1,13 @@
 import {
   AU, LY, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS,
+  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS,
 } from './data.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
-  galacticPlanePositionAngle, skyOffsetToPlane,
+  galacticPlanePositionAngle, skyOffsetToPlane, makeArm, galacticObjectSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -20,12 +20,16 @@ function gaussian(rand) {
   return Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(TAU * rand());
 }
 
-function makeBlob(seed, sigmaX, sigmaY, count) {
+function makeBlob(seed, sigmaX, sigmaY, count, angleDeg = 0) {
   const rand = mulberry32(seed);
   const pts = new Float64Array(count * 2);
+  const c = Math.cos(angleDeg * Math.PI / 180);
+  const s = Math.sin(angleDeg * Math.PI / 180);
   for (let i = 0; i < count; i++) {
-    pts[2 * i] = gaussian(rand) * sigmaX;
-    pts[2 * i + 1] = gaussian(rand) * sigmaY;
+    const x = gaussian(rand) * sigmaX;
+    const y = gaussian(rand) * sigmaY;
+    pts[2 * i] = x * c - y * s;
+    pts[2 * i + 1] = x * s + y * c;
   }
   return pts;
 }
@@ -297,12 +301,15 @@ function makeSpiral(seed, arms, pitchDeg, innerR, outerR, count) {
 
 const GC = skyToPlane(0, MILKY_WAY.sunDistance);
 
+// The disk, bulge and bar are schematic; the bar is tilted so its near end
+// lies at positive longitude. The arms are the Reid et al. 2019 fits, with
+// faint extrapolations beyond the measured azimuth ranges.
 const milkyWay = (() => {
   const mw = MILKY_WAY;
-  const arms = makeSpiral(mw.seed, mw.arms, mw.pitch, mw.bulgeRadius * 0.6, mw.diskRadius, 14000);
   const disk = makeBlob(mw.seed + 1, mw.diskRadius * 0.45, mw.diskRadius * 0.45, 6000);
   const bulge = makeBlob(mw.seed + 2, mw.bulgeRadius * 0.5, mw.bulgeRadius * 0.5, 2500);
-  const bar = makeBlob(mw.seed + 3, mw.bulgeRadius * 0.9, mw.bulgeRadius * 0.25, 1500);
+  const bar = makeBlob(mw.seed + 3, mw.barHalfLength * 0.5, mw.bulgeRadius * 0.2, 1500, 180 - mw.barAngle);
+  const arms = SPIRAL_ARMS.map((arm, k) => ({ ...arm, ...makeArm(arm, mw.sunDistance, mw.seed + 10 + k) }));
   return {
     name: 'milky way',
     range: [2000 * LY, 500e3 * LY],
@@ -311,10 +318,50 @@ const milkyWay = (() => {
       const gy = view.sy(GC.y);
       glow(ctx, gx, gy, mw.diskRadius / view.mpp, 'rgba(120,130,180,0.35)', alpha);
       drawPoints(ctx, view, disk, GC.x, GC.y, '#9aa4c8', 0.35 * alpha);
-      drawPoints(ctx, view, arms, GC.x, GC.y, '#dfe6ff', 0.55 * alpha);
+      ctx.lineJoin = 'round';
+      for (const arm of arms) {
+        ctx.lineWidth = 2 * arm.width / view.mpp;
+        const band = (spine, a) => {
+          if (spine.length < 2) return;
+          ctx.strokeStyle = `rgba(170,185,230,${a * alpha})`;
+          ctx.beginPath();
+          spine.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
+          ctx.stroke();
+        };
+        for (const spine of arm.extraSpines) band(spine, 0.035);
+        band(arm.fittedSpine, 0.09);
+        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.2 * alpha);
+        drawPoints(ctx, view, arm.fitted, 0, 0, '#dfe6ff', 0.6 * alpha);
+      }
+      ctx.lineJoin = 'miter';
       drawPoints(ctx, view, bar, GC.x, GC.y, '#ffe2b0', 0.6 * alpha);
       drawPoints(ctx, view, bulge, GC.x, GC.y, '#fff0cc', 0.7 * alpha);
       glow(ctx, gx, gy, mw.bulgeRadius / view.mpp, 'rgba(255,230,180,0.6)', alpha);
+      for (const arm of arms) label(view, view.sx(arm.label.x), view.sy(arm.label.y), arm.name, 0.8 * alpha, 0);
+    },
+  };
+})();
+
+// Nebulae, clusters and black holes in the nearby arms.
+const galacticObjects = (() => {
+  const objects = MILKY_WAY_OBJECTS.map((o) => ({ ...o, ...skyToPlane(o.l, o.dist * LY) }));
+  const colors = {
+    'Open cluster': '#cfe0ff', Star: '#fff6dc', 'Supernova remnant': '#9fd6ff',
+    'Emission nebula': '#ff9fb0', 'Black hole': '#ffc890', 'Super star cluster': '#ffffff',
+  };
+  return {
+    name: 'galactic objects',
+    range: [100 * LY, 15e3 * LY],
+    draw(ctx, view, alpha) {
+      for (const o of objects) {
+        const x = view.sx(o.x);
+        const y = view.sy(o.y);
+        if (!onScreen(view, x, y)) continue;
+        if (o.kind === 'Black hole') glow(ctx, x, y, 9, 'rgba(255,170,90,0.5)', alpha);
+        dot(ctx, x, y, o.kind === 'Star' ? 2 : 2.5, colors[o.kind], alpha);
+        label(view, x, y, o.name, alpha, 1);
+        hit(view, x, y, o.name, alpha, galacticObjectSummary(o));
+      }
     },
   };
 })();
@@ -693,7 +740,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  nucleus, fieldStars, galacticObjects, oortCloud, brightStars, nearestStars, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

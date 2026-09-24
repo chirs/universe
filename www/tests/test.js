@@ -7,12 +7,12 @@ import {
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
-  galacticPlanePositionAngle, skyOffsetToPlane, pickLevel,
+  galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
-  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS,
+  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC,
 } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -411,6 +411,7 @@ test('tour legs take longer over more decades and never go to zero', () => {
   assert.equal(TOUR[TOUR.length - 1], 'universe');
   assert.ok(TOUR.indexOf('outer') < TOUR.indexOf('trans-neptunian'));
   assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));
+  assert.ok(TOUR.indexOf('stars') < TOUR.indexOf('local-arm') && TOUR.indexOf('local-arm') < TOUR.indexOf('milky-way'));
   assert.ok(TOUR.indexOf('milky-way') < TOUR.indexOf('milky-way-halo'));
   assert.ok(TOUR.indexOf('milky-way-halo') < TOUR.indexOf('local-group'));
 });
@@ -486,4 +487,58 @@ test('pickLevel prefers a stop near the camera and falls back to scale alone', (
   assert.equal(pickLevel(levels, gc.x, gc.y, 1 * AU).id, 'sgr-a');
   assert.equal(pickLevel(levels, gc.x, gc.y, 2000 * AU).id, 'galactic-center');
   assert.equal(pickLevel(levels, gc.x / 2, 0, 20 * LY).id, 'stars');
+});
+
+test('spiral arm fits put the known arms where they are seen from the Sun', () => {
+  const D = MILKY_WAY.sunDistance;
+  const arm = (name) => SPIRAL_ARMS.find((a) => a.name.startsWith(name));
+  const at = (a, beta) => galactocentricToPlane(armRadius(a, beta), beta, D);
+  assert.ok(Math.abs(armRadius(arm('Local'), 9) / (8.26e3 * PC) - 1) < 1e-12, 'radius at the kink is R_kink');
+  // Trailing arms: radius shrinks with azimuth outside the kink.
+  assert.ok(armRadius(arm('Perseus'), 60) < armRadius(arm('Perseus'), 40));
+  // The Sun sits just inside the Local arm; Perseus is about 2 kpc toward the anticenter.
+  const local = at(arm('Local'), 0);
+  assert.ok(local.x < 0 && Math.hypot(local.x, local.y) < 0.6e3 * PC, String(local.x / PC));
+  const perseus = at(arm('Perseus'), 0);
+  assert.ok(perseus.x < 0 && Math.abs(-perseus.x / (1.9e3 * PC) - 1) < 0.1);
+  // The Sagittarius arm passes the Lagoon Nebula; extrapolated, it passes the Carina Nebula.
+  const near = (a, o, betas, tol) => {
+    const p = skyToPlane(o.l, o.dist * LY);
+    return Math.min(...betas.map((b) => { const q = at(a, b); return Math.hypot(q.x - p.x, q.y - p.y); })) < tol;
+  };
+  const lagoon = MILKY_WAY_OBJECTS.find((o) => o.name === 'Lagoon Nebula');
+  const carina = MILKY_WAY_OBJECTS.find((o) => o.name === 'Carina Nebula');
+  const betas = Array.from({ length: 200 }, (_, k) => -40 + k);
+  assert.ok(near(arm('Sagittarius'), lagoon, betas, 0.5e3 * PC));
+  assert.ok(near(arm('Sagittarius'), carina, betas, 0.5e3 * PC));
+  // The Perseus arm holds the Crab Nebula and the Local arm the Orion Nebula and Cygnus X-1.
+  assert.ok(near(arm('Perseus'), MILKY_WAY_OBJECTS.find((o) => o.name === 'Crab Nebula'), betas, 0.6e3 * PC));
+  assert.ok(near(arm('Local'), MILKY_WAY_OBJECTS.find((o) => o.name === 'Orion Nebula'), betas, 0.6e3 * PC));
+  assert.ok(near(arm('Local'), MILKY_WAY_OBJECTS.find((o) => o.name === 'Cygnus X-1'), betas, 0.6e3 * PC));
+});
+
+test('makeArm is deterministic and keeps points in the disk', () => {
+  const D = MILKY_WAY.sunDistance;
+  const a = makeArm(SPIRAL_ARMS[1], D, 7);
+  const b = makeArm(SPIRAL_ARMS[1], D, 7);
+  assert.deepEqual(a.fitted, b.fitted);
+  assert.ok(a.fitted.length > 500 && a.extra.length > 100);
+  for (const pts of [a.fitted, a.extra]) {
+    for (let i = 0; i < pts.length; i += 2) {
+      const r = Math.hypot(pts[i] - D, pts[i + 1]);
+      assert.ok(r > 2e3 * PC && r < 17e3 * PC);
+    }
+  }
+  assert.ok(Math.hypot(a.label.x - D, a.label.y) < 15e3 * PC);
+  assert.ok(a.fittedSpine.length >= 100 && a.extraSpines.length === 2);
+});
+
+test('galactic objects are unique, within the disk, and summarized', () => {
+  assert.equal(new Set(MILKY_WAY_OBJECTS.map((o) => o.name)).size, MILKY_WAY_OBJECTS.length);
+  for (const o of MILKY_WAY_OBJECTS) {
+    assert.ok(o.dist > 100 && o.dist < 30000, o.name);
+    assert.ok(o.l >= 0 && o.l < 360 && Math.abs(o.b) < 40, o.name);
+  }
+  const bh = MILKY_WAY_OBJECTS.find((o) => o.name === 'Gaia BH1');
+  assert.match(galacticObjectSummary(bh), /^Black hole · 1.56 kly from the Sun · /);
 });

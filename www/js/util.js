@@ -1,4 +1,4 @@
-import { J2000_MS, DAY_S, AU, LY, G_SI, C_SI, SOLAR_MASS } from './data.js';
+import { J2000_MS, DAY_S, AU, LY, PC, G_SI, C_SI, SOLAR_MASS } from './data.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -98,6 +98,62 @@ export function blackHoleSummary(bh) {
 
 export function sStarSummary(star) {
   return `Star orbiting Sgr A* · periapsis ${formatDistance(star.a * (1 - star.e))} · apoapsis ${formatDistance(star.a * (1 + star.e))} · period ${formatPeriod(star.period)}`;
+}
+
+export function galacticObjectSummary(o) {
+  return `${o.kind} · ${formatDistance(o.dist * LY)} from the Sun · ${o.note}`;
+}
+
+// Galactocentric radius in meters of a spiral arm at azimuth beta (degrees):
+// a log spiral whose pitch angle changes at the kink (Reid et al. 2019).
+export function armRadius(arm, beta) {
+  const pitch = beta < arm.betaKink ? arm.pitchIn : arm.pitchOut;
+  return arm.rKink * 1000 * PC * Math.exp(-(beta - arm.betaKink) * D2R * Math.tan(pitch * D2R));
+}
+
+// Galactocentric polar coordinates to the map: the Sun is at beta = 0, and
+// beta increases with galactic rotation, toward +y.
+export function galactocentricToPlane(r, beta, sunDistance) {
+  return { x: sunDistance - r * Math.cos(beta * D2R), y: r * Math.sin(beta * D2R) };
+}
+
+// Points along an arm: the fitted azimuth range, and an extrapolation of
+// `extra` degrees at each end kept between 3 and 15 kpc from the center.
+// Points scatter across the arm's width, in map meters about the Sun. The
+// spines are the centerlines, one per stretch, for drawing a soft band.
+export function makeArm(arm, sunDistance, seed, perDegree = 30, extra = 60) {
+  const rand = mulberry32(seed);
+  const gaussian = () => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(TAU * rand());
+  const width = arm.width * 1000 * PC;
+  const sample = (lo, hi, density) => {
+    const out = [];
+    const n = Math.round((hi - lo) * density);
+    for (let k = 0; k < n; k++) {
+      const beta = lo + rand() * (hi - lo);
+      const r = armRadius(arm, beta);
+      if (r < 3000 * PC || r > 15000 * PC) continue;
+      const p = galactocentricToPlane(r, beta, sunDistance);
+      out.push(p.x + gaussian() * width, p.y + gaussian() * width);
+    }
+    return Float64Array.from(out);
+  };
+  const spine = (lo, hi) => {
+    const out = [];
+    for (let beta = lo; beta <= hi; beta += 1) {
+      const r = armRadius(arm, beta);
+      if (r >= 3000 * PC && r <= 15000 * PC) out.push(galactocentricToPlane(r, beta, sunDistance));
+    }
+    return out;
+  };
+  const [lo, hi] = arm.beta;
+  return {
+    fitted: sample(lo, hi, perDegree),
+    extra: Float64Array.from([...sample(lo - extra, lo, perDegree / 2), ...sample(hi, hi + extra, perDegree / 2)]),
+    fittedSpine: spine(lo, hi),
+    extraSpines: [spine(lo - extra, lo), spine(hi, hi + extra)],
+    width,
+    label: galactocentricToPlane(armRadius(arm, arm.labelBeta), arm.labelBeta, sunDistance),
+  };
 }
 
 export function landmarkSummary(landmark) {
@@ -410,7 +466,7 @@ export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
 // Stops of the guided tour, in order, and how long a leg between two zooms
 // should take: a fixed rate of about a second per decade, plus a floor.
 export const TOUR = [
-  'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars',
+  'earth-moon', 'inner', 'outer', 'trans-neptunian', 'stars', 'local-arm',
   'milky-way', 'milky-way-halo', 'local-group', 'virgo', 'universe',
 ];
 export const TOUR_HOLD_MS = 2500;
