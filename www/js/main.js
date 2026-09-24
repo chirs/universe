@@ -319,6 +319,15 @@ function nearestLevel() {
   return pickLevel(LEVELS, cam.cx, cam.cy, cam.mpp * halfMin());
 }
 
+// A soft darkening toward the corners, under the labels and HUD.
+function drawVignette() {
+  const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) / 2);
+  g.addColorStop(0, 'rgba(5, 6, 10, 0)');
+  g.addColorStop(1, 'rgba(5, 6, 10, 0.5)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+}
+
 function drawLabels(view) {
   shownLabels = [];
   ctx.font = '12px system-ui, -apple-system, sans-serif';
@@ -394,12 +403,13 @@ function updateHud() {
   barLabel.textContent = bar.label;
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
-  // The Earth close-ups are not in the bar; they show as Earth there.
+  // The close-ups are not in the bar; they light their planet's menu, which
+  // names the close-up.
   const inBar = CLOSE_UPS.includes(near) ? PLANET_LEVELS.find((lv) => lv.follow === near.follow) : near;
   for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === inBar.id);
   for (const m of menus) {
     const open = !overview && m.levels.includes(inBar);
-    m.toggle.textContent = `${open ? inBar.name : m.label} ▾`;
+    m.toggle.textContent = `${open ? near.name : m.label} ▾`;
     m.toggle.classList.toggle('active', open);
   }
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === runSpeed.label);
@@ -495,6 +505,7 @@ function frame(now) {
       }
     }
   }
+  if (!overview) drawVignette();
   if (sound && !overview) sound.update(view.radius);
   updateHover(view);
   drawLabels(view);

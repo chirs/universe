@@ -128,6 +128,34 @@ function orbitEllipse(ctx, view, body, style) {
   ctx.stroke();
 }
 
+// The last stretch of an orbit, brightening toward the body, so which way
+// it moves shows. The body's orbit is about (ox, oy), scaled by k (a binary
+// partner's share). Skipped when the orbit is so wide on screen that chords
+// would stray from it.
+function orbitTrail(ctx, view, body, days, ox, oy, k, color, alpha) {
+  if (k * body.a / view.mpp > 3000) return;
+  const span = 0.12 * body.period;
+  const n = 24;
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = color;
+  let prev = null;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const p = orbitalPosition(body, days - span * (1 - t));
+    const x = view.sx(ox + k * p.x);
+    const y = view.sy(oy + k * p.y);
+    if (prev) {
+      ctx.globalAlpha = 0.6 * alpha * t * t;
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+    prev = { x, y };
+  }
+  ctx.globalAlpha = 1;
+}
+
 const solarSystem = {
   name: 'solar system',
   range: [0, 1500 * AU],
@@ -136,7 +164,9 @@ const solarSystem = {
     const sy = view.sy(0);
     ctx.lineWidth = 1;
     for (const p of PLANETS) orbitEllipse(ctx, view, p, `rgba(255,255,255,${0.14 * alpha})`);
+    for (const p of PLANETS) orbitTrail(ctx, view, p, days, 0, 0, 1, p.color, alpha);
     const sunR = Math.max(SUN.radius / view.mpp, 4);
+    glow(ctx, sx, sy, Math.max(sunR * 12, 70), SUN.color, 0.12 * alpha);
     glow(ctx, sx, sy, sunR * 4, SUN.color, 0.35 * alpha);
     dot(ctx, sx, sy, sunR, SUN.color, alpha);
     label(view, sx, sy, SUN.name, alpha, 2);
@@ -148,6 +178,7 @@ const solarSystem = {
       const y = view.sy(pos.y + off.y);
       if (!onScreen(view, x, y)) continue;
       const r = Math.max(p.radius / view.mpp, p.dwarf ? 1.5 : 2.5);
+      if (r < 6) glow(ctx, x, y, r * 3, p.color, 0.3 * alpha);
       dot(ctx, x, y, r, p.color, alpha);
       const far = Math.hypot(x - sx, y - sy) > 14;
       label(view, x, y, p.name, far ? alpha : 0, p.dwarf ? 0 : 1);
@@ -216,11 +247,14 @@ const moons = {
         ctx.ellipse(px - a * e * Math.cos(varpi), py + a * e * Math.sin(varpi),
           a, a * Math.sqrt(1 - e * e), -varpi, 0, TAU);
         ctx.stroke();
+        if (a > 14) orbitTrail(ctx, view, m, days, pos.x, pos.y, k, m.color, alpha);
         const mp = orbitalPosition(m, days);
         const x = view.sx(pos.x + k * mp.x);
         const y = view.sy(pos.y + k * mp.y);
         if (!onScreen(view, x, y)) continue;
-        dot(ctx, x, y, Math.max(m.radius / view.mpp, 2), m.color, alpha);
+        const r = Math.max(m.radius / view.mpp, 2);
+        if (r < 6) glow(ctx, x, y, r * 3, m.color, 0.3 * alpha);
+        dot(ctx, x, y, r, m.color, alpha);
         const far = Math.hypot(x - px, y - py) > 14;
         label(view, x, y, m.name, far ? alpha : 0, 0);
         hit(view, x, y, m.name, far ? alpha : 0, moonSummary(m, p.name));

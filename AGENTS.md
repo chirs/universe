@@ -48,6 +48,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   from JPL Horizons for the craft listed in `SPACECRAFT` (data.js): sampled
   ecliptic longitude and true distance, interpolated by `sampledPosition` in
   `util.js`. Don't edit it by hand; rerun the script to refresh predictions.
+  A craft vanishes from the map once its track ends; the script prints each
+  track's end date and flags those ending within 90 days (the L1 craft's
+  ephemerides run only months ahead).
   `COMETS` (Halley, Hale–Bopp) and `ASTEROIDS` (16 Psyche) are JPL small-body elements laid flat in the
   ecliptic like the planets; `TROJANS` is an illustrative scatter around
   Jupiter's L4 and L5 points.
@@ -121,7 +124,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   carry the arm.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
-  zooming between levels is continuous rather than a scene cut. The galactic
+  zooming between levels is continuous rather than a scene cut. Planets and
+  moons trail the last eighth of their orbit in their own color
+  (`orbitTrail`), so their direction of motion shows; small dots get a soft
+  glow, and main.js darkens the corners with a vignette under the labels. The galactic
   center has two layers: the nuclear star cluster, which owns the
   "Galactic center" label from the Milky Way level inward, and the nucleus,
   which draws the S-star orbits and Sgr A* (a dot until its shadow resolves,
