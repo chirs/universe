@@ -51,6 +51,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `COMETS` (Halley, Hale–Bopp) and `ASTEROIDS` (16 Psyche) are JPL small-body elements laid flat in the
   ecliptic like the planets; `TROJANS` is an illustrative scatter around
   Jupiter's L4 and L5 points.
+  `www/js/globulars.js` is generated the same way by
+  `node scripts/import-globulars.mjs` from the Harris (2010 edition)
+  globular cluster catalog.
   `HELIOSPHERE` holds the Voyagers' boundary crossings. `RADCLIFFE_WAVE` is
   the Alves et al. 2020 centerline fit (its vertical wave is out of the
   plane and not drawn); `MAGELLANIC_STREAM` is placed in Nidever's stream

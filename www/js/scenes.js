@@ -5,6 +5,7 @@ import {
   GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
+import { GLOBULAR_CLUSTERS } from './globulars.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
@@ -12,7 +13,7 @@ import {
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
-  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, asteroidSummary, trojanPoints,
+  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
 } from './util.js';
 
@@ -861,6 +862,35 @@ const radcliffeWave = (() => {
   };
 })();
 
+// Globular clusters from the Harris catalog, sized by luminosity. Only the
+// brighter named ones, and the nearest, are labelled.
+const globularClusters = (() => {
+  const DISPLAY = { 'omega Cen': 'Omega Centauri', '47 Tuc': '47 Tucanae' };
+  const items = GLOBULAR_CLUSTERS.map(([id, name, l, b, dist, mv]) => {
+    const shown = DISPLAY[name] || name || id;
+    return {
+      id, name: shown, l, b, dist, mv, ...skyToPlane(l, dist * 1000 * PC),
+      r: mv === null ? 1 : Math.min(3, Math.max(1, 1 + (-mv - 5) * 0.45)),
+      labelled: Boolean(name) && ((mv !== null && mv <= -8.4) || dist < 3),
+    };
+  });
+  return {
+    name: 'globular clusters',
+    range: [3e3 * LY, 800e3 * LY],
+    draw(ctx, view, alpha) {
+      for (const c of items) {
+        const x = view.sx(c.x);
+        const y = view.sy(c.y);
+        if (!onScreen(view, x, y)) continue;
+        glow(ctx, x, y, c.r * 3, 'rgba(255,225,160,0.45)', alpha);
+        dot(ctx, x, y, c.r, '#ffe9bf', alpha);
+        if (c.labelled) label(view, x, y, c.name, 0.85 * alpha, 0);
+        hit(view, x, y, c.name, alpha, globularSummary(c));
+      }
+    },
+  };
+})();
+
 // ------------------------------------------------------------ galactic center
 
 // Sgr A* and the S-stars. The orbits are the real three-dimensional ones,
@@ -1384,7 +1414,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, nuclearCluster,
+  cosmicWeb, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
   nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];

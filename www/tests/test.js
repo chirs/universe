@@ -19,6 +19,7 @@ import {
   SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
+import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
 import { cosmologyAt } from '../v2/model.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -698,6 +699,15 @@ test('skyOffsetToPlane turns depth to the line of sight at the object\'s longitu
   assert.ok(Math.abs(p.x) < 1e-12 && Math.abs(p.y - 1) < 1e-12);
   const q = skyOffsetToPlane({ east: 0, north: 1, depth: 0 }, 0, 90);
   assert.ok(Math.abs(q.x + 1) < 1e-12 && Math.abs(q.y) < 1e-12);
+});
+
+test('the Harris globular clusters are all there, with Omega Centauri the brightest', () => {
+  assert.equal(GLOBULAR_CLUSTERS.length, 157);
+  for (const [id, , l, b, dist] of GLOBULAR_CLUSTERS) {
+    assert.ok(l >= 0 && l < 360 && Math.abs(b) <= 90 && dist > 0 && dist < 150, id);
+  }
+  const brightest = GLOBULAR_CLUSTERS.filter((c) => c[5] !== null).sort((a, b) => a[5] - b[5])[0];
+  assert.equal(brightest[1], 'omega Cen');
 });
 
 test('Trojan points sit 60 degrees either side of the body on its circle', () => {

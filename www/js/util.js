@@ -335,6 +335,11 @@ export function spacecraftSummary(sc, distance, center = 'the Sun') {
   return `Spacecraft · ${formatDistance(distance)} from ${center} · ${sc.note}`;
 }
 
+export function globularSummary(c) {
+  const lum = c.mv === null ? '' : ` · absolute magnitude ${c.mv.toFixed(1)}`;
+  return `Globular cluster${c.name ? ` ${c.id}` : ''} · ${formatDistance(c.dist * 1000 * PC)} from the Sun${lum} · an old, dense ball of hundreds of thousands of stars in the halo · Harris 2010`;
+}
+
 export function asteroidSummary(asteroid) {
   return `Asteroid · radius ${formatDistance(asteroid.radius)} · orbit ${formatDistance(asteroid.a)} · period ${formatPeriod(asteroid.period)} · ${asteroid.note}`;
 }
