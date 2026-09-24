@@ -1001,6 +1001,7 @@ export const SIGNPOSTS = [
   { range: [800 * AU, 1500 * AU], text: 'Nothing out here but Sedna\u2019s orbit. The Voyagers, our farthest craft, are inside 200 AU; the Oort cloud, if real, begins near 2,000 AU.' },
   { range: [2 * LY, 3.6 * LY], text: 'The nearest star, Proxima Centauri, is 4.2 light-years away, just off the edge.' },
   { range: [4e6 * LY, 8e6 * LY], text: 'The Local Group is on its own out to about 10 million light-years, where the Maffei and M81 groups begin.' },
+  { range: [200e9 * LY, Infinity], text: 'Beyond our horizon, as far as anyone can tell, more of the same: hundreds of times this volume at least, and perhaps without end.' },
 ];
 
 // Distances here are comoving, from the Planck cosmology in www/v2/model.js
@@ -1013,6 +1014,10 @@ export const UNIVERSE = {
   webFade: 20e9 * LY,
   firstGalaxies: { dist: 35.701e9 * LY, z: 20, sinceBigBang: '180 million years' },
   cmb: { dist: 45.219e9 * LY, z: 1089, sinceBigBang: '380,000 years' },
+  // The horizon plus the event horizon: as the expansion accelerates, the
+  // horizon grows toward this and never passes it.
+  visibilityLimit: 62.813e9 * LY,
+  eventHorizon: 16.680e9 * LY,
   lookbackRings: [[4, 4.643e9 * LY], [8, 11.193e9 * LY], [12, 22.690e9 * LY], [13, 28.469e9 * LY]],
   // Every power of ten in years, drawn at every scale. Up to a million
   // years the comoving distance is the light-travel distance to well under

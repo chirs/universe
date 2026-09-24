@@ -9,7 +9,7 @@ import {
 import {
   galaxySummary, clusterSummary, landmarkSummary, observableUniverseSummary, superclusterSummary, voidSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, wallSummary, distantSummary, herculesSummary,
-  lookbackPowerSummary, notableGalaxySummary,
+  lookbackPowerSummary, notableGalaxySummary, visibilityLimitSummary, otherHorizonSummary,
 } from '../summaries.js';
 import {
   TAU, INF, gaussian, makeBlob, drawPoints, dot, glow, label, hit, ringHit, onScreen,
@@ -469,6 +469,108 @@ export const landmarks = {
     }
   },
 };
+
+// The unobservable universe: the same web, drawn gray, outside the horizon.
+// It is illustration, not observation, so it is one repeating tile anchored
+// at the Sun. The tile is kept at halving sizes and the one nearest its
+// size on screen is used, so the grain averages down instead of shimmering.
+// Zoomed far out, other galaxies' horizons show ours is one of many; they
+// sit on a sparse jittered lattice, close enough that some overlap.
+export const beyond = (() => {
+  const T = 16e9 * LY;
+  const TEX = 256;
+  const R = UNIVERSE.radius;
+  const others = (() => {
+    const rand = mulberry32(11);
+    const step = 1.5 * R;
+    const out = [];
+    for (let j = -14; j <= 14; j++) {
+      for (let i = -14; i <= 14; i++) {
+        const x = (i + rand() - 0.5) * step;
+        const y = (j + rand() - 0.5) * step;
+        if (rand() < 0.25 && Math.hypot(x, y) > 1.4 * R) out.push({ x, y, dist: Math.hypot(x, y) });
+      }
+    }
+    return out.sort((a, b) => a.dist - b.dist);
+  })();
+  let levels = null;
+  const build = () => {
+    const density = UNIVERSE.webPoints / (Math.PI * (R * R - (4e9 * LY) ** 2));
+    const nCells = Math.round((2 * T / UNIVERSE.webCell) ** 2);
+    const { pts, kind } = makeZeldovichWeb(UNIVERSE.webSeed + 1, T, nCells, Math.round(density * Math.PI * T * T));
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = TEX;
+    const t = canvas.getContext('2d');
+    t.globalCompositeOperation = 'lighter';
+    t.fillStyle = '#9098a8';
+    const s = TEX / T;
+    for (let i = 0; i < kind.length; i++) {
+      const x = pts[2 * i];
+      const y = pts[2 * i + 1];
+      if (Math.abs(x) >= T / 2 || Math.abs(y) >= T / 2) continue;
+      t.globalAlpha = [0.06, 0.16, 0.28][kind[i]];
+      t.fillRect((x + T / 2) * s, (T / 2 - y) * s, 1, 1);
+    }
+    levels = [canvas];
+    for (let size = TEX / 2; size >= 8; size /= 2) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      c.getContext('2d').drawImage(levels.at(-1), 0, 0, size, size);
+      levels.push(c);
+    }
+    levels = levels.map((c) => ({ size: c.width, pattern: null, canvas: c }));
+  };
+  return {
+    name: 'beyond',
+    range: [40e9 * LY, INF],
+    draw(ctx, view, alpha) {
+      if (!levels) build();
+      const x = view.sx(0);
+      const y = view.sy(0);
+      const r = R / view.mpp;
+      const tile = T / view.mpp;
+      const lv = levels.findLast((l) => l.size >= tile) ?? levels[0];
+      lv.pattern ??= ctx.createPattern(lv.canvas, 'repeat');
+      const k = tile / lv.size;
+      lv.pattern.setTransform({ a: k, b: 0, c: 0, d: k, e: x - tile / 2, f: y - tile / 2 });
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = lv.pattern;
+      ctx.beginPath();
+      ctx.rect(0, 0, view.w, view.h);
+      ctx.arc(x, y, r, 0, TAU);
+      ctx.fill('evenodd');
+      ctx.globalAlpha = 1;
+      const limit = UNIVERSE.visibilityLimit / view.mpp;
+      ctx.setLineDash([4, 6]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(200,210,240,${0.45 * alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, limit, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      label(view, x, y + limit, 'Farthest we will ever see', 0.8 * alpha, 1);
+      ringHit(view, x, y, limit, 'Farthest we will ever see', alpha, visibilityLimitSummary(UNIVERSE));
+      // 0 below 100 Gly, 1 above 200 Gly.
+      const a = alpha * Math.min(1, Math.max(0, Math.log2(view.radius / (100e9 * LY))));
+      if (a <= 0) return;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255,170,120,${0.2 * a})`;
+      ctx.fillStyle = `rgba(255,215,160,${0.6 * a})`;
+      others.forEach((o, k) => {
+        const ox = view.sx(o.x);
+        const oy = view.sy(o.y);
+        if (!onScreen(view, ox, oy, r)) return;
+        ctx.beginPath();
+        ctx.arc(ox, oy, r, 0, TAU);
+        ctx.stroke();
+        ctx.fillRect(ox - 1, oy - 1, 2, 2);
+        const name = 'Another galaxy\u2019s observable universe';
+        if (k === 0) label(view, ox, oy - r, name, 0.8 * a, 0);
+        ringHit(view, ox, oy, r, name, a, otherHorizonSummary(o.dist, R));
+      });
+    },
+  };
+})();
 
 export const youAreHere = {
   name: 'you are here',

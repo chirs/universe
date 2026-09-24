@@ -31,7 +31,7 @@ import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
 import { HII_REGIONS } from '../js/hii.js';
 import { SGR_STREAM } from '../js/sgrstream.js';
-import { cosmologyAt, HORIZON } from '../v2/model.js';
+import { cosmologyAt, HORIZON, eventHorizon } from '../v2/model.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -956,6 +956,8 @@ test('the eras sit at their Planck-cosmology distances', () => {
   assert.ok(close(UNIVERSE.firstGalaxies.dist / LY / 1e6, cosmologyAt(UNIVERSE.firstGalaxies.z, 'z').distance));
   assert.ok(close(UNIVERSE.cmb.dist / LY / 1e6, cosmologyAt(UNIVERSE.cmb.z, 'z').distance));
   assert.ok(close(UNIVERSE.radius / LY / 1e6, HORIZON));
+  assert.ok(close(UNIVERSE.eventHorizon / LY / 1e6, eventHorizon()));
+  assert.ok(close(UNIVERSE.visibilityLimit, UNIVERSE.radius + UNIVERSE.eventHorizon));
   for (const [years, r] of UNIVERSE.lookbackRings) assert.ok(close(r / LY / 1e6, cosmologyAt(years, 'lookback').distance), `${years}`);
   // Beyond a million years the table is fine enough to check against.
   for (const [years, r] of UNIVERSE.lookbackPowers.filter(([y]) => y >= 1e8)) {

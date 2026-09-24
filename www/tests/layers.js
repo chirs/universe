@@ -10,6 +10,7 @@ const ctxHandler = {
   get(target, prop) {
     if (prop === 'measureText') return () => ({ width: 40 });
     if (prop === 'createRadialGradient' || prop === 'createLinearGradient') return () => gradient;
+    if (prop === 'createPattern') return () => ({ setTransform: noop });
     if (prop === 'getImageData') return () => ({ data: new Uint8ClampedArray(4) });
     if (prop === 'canvas') return { width: 1440, height: 900 };
     return noop;
@@ -29,7 +30,7 @@ test('every layer draws at every scale and around the Sun, the galactic center a
   const w = 1440;
   const h = 900;
   const centers = [{ x: 0, y: 0 }, GALACTIC_CENTER, M87_POSITION, { x: 1.5e11, y: 0 }];
-  const radii = [1e9, 1 * AU, 2 * AU, 50 * AU, 1000 * AU, 20 * LY, 700 * LY, 8000 * LY, 60e3 * LY, 3e6 * LY, 60e6 * LY, 2e9 * LY, 58e9 * LY];
+  const radii = [1e9, 1 * AU, 2 * AU, 50 * AU, 1000 * AU, 20 * LY, 700 * LY, 8000 * LY, 60e3 * LY, 3e6 * LY, 60e6 * LY, 2e9 * LY, 58e9 * LY, 460e9 * LY];
   let calls = 0;
   for (const c of centers) {
     for (const radius of radii) {

@@ -80,7 +80,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `UNIVERSE` takes its radius, era distances and lookback rings from the
   same cosmology: the cosmic web fades toward the first galaxies (z = 20),
   then the `eras` layer draws the dark ages, the microwave background and
-  the opaque plasma out to the horizon. A craft with
+  the opaque plasma out to the horizon. Past the horizon the `beyond` layer tiles a
+  gray patch of the same web generator, illustration rather than data,
+  with the farthest we will ever see (`visibilityLimit`, the horizon plus
+  `eventHorizon` in `www/v2/model.js`) as a dashed ring; zoomed far out,
+  other galaxies' horizons are scattered around ours. A craft with
   `center: 399` (JWST and Euclid at L2; SOHO, DSCOVR and IMAP at L1) is
   tracked relative to Earth and drawn in a frame turning with Earth, so
   its halo orbit stays on its side of Earth. Spektr-RG is not in Horizons,

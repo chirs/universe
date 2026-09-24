@@ -144,6 +144,14 @@ export function landmarkSummary(landmark) {
   return `Large-scale structure · ${formatDistance(landmark.dist)} from the Milky Way · approximate size ${formatDistance(landmark.size)}`;
 }
 
+export function visibilityLimitSummary(u) {
+  return `Farthest we will ever see · ${formatDistance(u.visibilityLimit)} (comoving) · the expansion is accelerating, so our horizon grows toward this and never passes it; light galaxies send today from beyond ${formatDistance(u.eventHorizon)} will never reach us`;
+}
+
+export function otherHorizonSummary(dist, radius) {
+  return `Another galaxy's observable universe · ${formatDistance(radius)} in radius, centered ${formatDistance(dist)} from us · every galaxy sits at the center of its own; these are placed for illustration`;
+}
+
 export function darkAgesSummary(u) {
   return `The dark ages · ${formatDistance(u.firstGalaxies.dist)} to ${formatDistance(u.cmb.dist)} away now · redshift ${u.firstGalaxies.z} to ${u.cmb.z} · neutral hydrogen and no stars yet, until the first galaxies about ${u.firstGalaxies.sinceBigBang} after the Big Bang`;
 }

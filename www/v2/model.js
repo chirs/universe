@@ -58,6 +58,16 @@ export function cosmologyAt(value, key = 'distance') {
   return Object.fromEntries(['z', 'distance', 'lookback'].map(k => [k, a[k] + (b[k] - a[k]) * t]));
 }
 export const HORIZON = COSMOLOGY.at(-1).distance;
+// Comoving distance light sent now will ever cover (the event horizon), in
+// Mly. Integrated over u = 1/a from today (u = 1) to the infinite future.
+export function eventHorizon(steps = 4096) {
+  const matter = 0.315, radiation = 0.000092;
+  const hubbleDistance = 299792.458 / 67.4 * 3.261563777;
+  const f = u => 1 / Math.sqrt(radiation * u ** 4 + matter * u ** 3 + 1 - matter - radiation);
+  let distance = 0;
+  for (let i = 0; i < steps; i++) distance += (f(i / steps) + f((i + 1) / steps)) / 2 / steps;
+  return distance * hubbleDistance;
+}
 export const CMB = cosmologyAt(1089, 'z').distance;
 export const FIRST_GALAXIES = cosmologyAt(20, 'z').distance;
 export const MIN_RADIUS = 0.18;
