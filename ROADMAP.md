@@ -6,10 +6,6 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Original 2D explorer
 
-- [ ] Lookback structure at the top level: fade galaxies out past about
-      27 Gly comoving, a dim band for the dark ages, and a warm rim for the
-      microwave background at 46 Gly (Ménard and Shtarkman's Map of the
-      Universe is the precedent).
 - [ ] Scale-honest void size at the universe level, so the web is a fine
       grain there and only resolves as filaments below a few Gly.
 - [ ] Decide whether the extragalactic levels should project onto the

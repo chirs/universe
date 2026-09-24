@@ -293,6 +293,18 @@ export function landmarkSummary(landmark) {
   return `Large-scale structure · ${formatDistance(landmark.dist)} from the Milky Way · approximate size ${formatDistance(landmark.size)}`;
 }
 
+export function darkAgesSummary(u) {
+  return `The dark ages · ${formatDistance(u.firstGalaxies.dist)} to ${formatDistance(u.cmb.dist)} away now · redshift ${u.firstGalaxies.z} to ${u.cmb.z} · neutral hydrogen and no stars yet, until the first galaxies about ${u.firstGalaxies.sinceBigBang} after the Big Bang`;
+}
+
+export function cmbSummary(u) {
+  return `Cosmic microwave background · ${formatDistance(u.cmb.dist)} away now · redshift ${u.cmb.z} · light from ${u.cmb.sinceBigBang} after the Big Bang, when the universe first turned transparent; nothing beyond it can be seen`;
+}
+
+export function lookbackSummary(years, dist) {
+  return `Lookback ${years} billion years · light from ${formatDistance(dist)} away (comoving) left when the universe was ${(13.8 - years).toFixed(1)} billion years old`;
+}
+
 export function observableUniverseSummary(radius) {
   return `Observable horizon · radius ${formatDistance(radius)} (comoving) · universe age about 13.8 billion years`;
 }

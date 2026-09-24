@@ -20,7 +20,7 @@ import {
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
-import { cosmologyAt } from '../v2/model.js';
+import { cosmologyAt, HORIZON } from '../v2/model.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -750,6 +750,16 @@ test('distant objects sit at the comoving distance for their redshift and inside
   }
   const zs = DISTANT_OBJECTS.map((o) => o.z);
   assert.deepEqual(zs, [...zs].sort((a, b) => a - b));
+});
+
+test('the eras sit at their Planck-cosmology distances', () => {
+  const close = (a, b) => Math.abs(a - b) / b < 0.002;
+  assert.ok(close(UNIVERSE.firstGalaxies.dist / LY / 1e6, cosmologyAt(UNIVERSE.firstGalaxies.z, 'z').distance));
+  assert.ok(close(UNIVERSE.cmb.dist / LY / 1e6, cosmologyAt(UNIVERSE.cmb.z, 'z').distance));
+  assert.ok(close(UNIVERSE.radius / LY / 1e6, HORIZON));
+  for (const [years, r] of UNIVERSE.lookbackRings) assert.ok(close(r / LY / 1e6, cosmologyAt(years, 'lookback').distance), `${years}`);
+  const far = Math.max(...DISTANT_OBJECTS.map((o) => o.dist * 1e6 * LY));
+  assert.ok(far < UNIVERSE.firstGalaxies.dist && UNIVERSE.firstGalaxies.dist < UNIVERSE.cmb.dist && UNIVERSE.cmb.dist < UNIVERSE.radius);
 });
 
 test('slerpSky follows the great circle between two points', () => {

@@ -14,6 +14,7 @@ import {
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
+  darkAgesSummary, cmbSummary, lookbackSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
 } from './util.js';
 
@@ -1303,28 +1304,31 @@ const distantObjects = (() => {
 
 // ---------------------------------------------------------------- cosmic web
 
-function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0) {
+// `fade(r)` dims the web with distance; points are grouped into radial
+// shells so each shell draws at one alpha.
+function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0, fade = () => 1) {
   const { pts, kind } = makeZeldovichWeb(seed, radius, nCells, nPoints, hole);
-  const filaments = new Float64Array(kind.reduce((n, k) => n + (k === 1), 0) * 2);
-  const nodes = new Float64Array(kind.reduce((n, k) => n + (k === 2), 0) * 2);
-  const field = new Float64Array(kind.reduce((n, k) => n + (k === 0), 0) * 2);
-  const indices = [0, 0, 0];
+  const SHELLS = 24;
+  const shells = Array.from({ length: SHELLS }, (_, s) => ({ fade: fade((s + 0.5) / SHELLS * radius), kinds: [[], [], []] }));
   for (let i = 0; i < kind.length; i++) {
-    const target = kind[i] === 2 ? nodes : kind[i] === 1 ? filaments : field;
-    const idx = indices[kind[i]];
-    target[idx] = pts[2 * i];
-    target[idx + 1] = pts[2 * i + 1];
-    indices[kind[i]] += 2;
+    const r = Math.hypot(pts[2 * i], pts[2 * i + 1]);
+    const shell = shells[Math.min(SHELLS - 1, Math.floor(r / radius * SHELLS))];
+    shell.kinds[kind[i]].push(pts[2 * i], pts[2 * i + 1]);
   }
+  for (const shell of shells) shell.kinds = shell.kinds.map((k) => Float64Array.from(k));
+  const drawn = shells.filter((shell) => shell.fade > 0.01);
   return {
     name,
     range,
     draw(ctx, view, alpha) {
       ctx.globalCompositeOperation = 'lighter';
-      drawPoints(ctx, view, field, 0, 0, '#78809f', 0.18 * alpha);
-      drawPoints(ctx, view, filaments, 0, 0, '#c8d0f0', 0.45 * alpha, 1);
-      drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.1 * alpha, 3);
-      drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.7 * alpha, 1.5);
+      for (const { fade: f, kinds: [field, filaments, nodes] } of drawn) {
+        const a = alpha * f;
+        drawPoints(ctx, view, field, 0, 0, '#78809f', 0.18 * a);
+        drawPoints(ctx, view, filaments, 0, 0, '#c8d0f0', 0.45 * a, 1);
+        drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.1 * a, 3);
+        drawPoints(ctx, view, nodes, 0, 0, '#f0f2ff', 0.7 * a, 1.5);
+      }
       ctx.globalCompositeOperation = 'source-over';
     },
   };
@@ -1332,8 +1336,67 @@ function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0) {
 
 const superclusters = webLayer('supercluster web', UNIVERSE.webSeed + 1, 1.5e9 * LY, 70, 14000,
   [250e6 * LY, 4e9 * LY], 500e6 * LY);
+// Farther out is earlier: galaxies thin toward the first ones at z = 20.
 const cosmicWeb = webLayer('cosmic web', UNIVERSE.webSeed, UNIVERSE.radius, UNIVERSE.voids,
-  UNIVERSE.webPoints, [2e9 * LY, INF]);
+  UNIVERSE.webPoints, [2e9 * LY, INF], 0,
+  (r) => Math.min(1, Math.max(0, (UNIVERSE.firstGalaxies.dist - r) / (UNIVERSE.firstGalaxies.dist - UNIVERSE.webFade))) ** 1.5);
+
+// Looking out is looking back: lookback rings, the dark ages, the glowing
+// microwave background and the opaque plasma just inside the horizon.
+const eras = {
+  name: 'eras',
+  range: [4e9 * LY, INF],
+  draw(ctx, view, alpha) {
+    const x = view.sx(0);
+    const y = view.sy(0);
+    const px = (m) => m / view.mpp;
+    const u = UNIVERSE;
+    // One gradient from the last galaxies out to the horizon: the dark
+    // ages deepen, the microwave background glows, the plasma beyond it
+    // stays warm and opaque.
+    const r0 = px(u.firstGalaxies.dist);
+    const r1 = px(u.radius);
+    const t = (u.cmb.dist - u.firstGalaxies.dist) / (u.radius - u.firstGalaxies.dist);
+    const g = ctx.createRadialGradient(x, y, r0, x, y, r1);
+    g.addColorStop(0, 'rgba(70,40,55,0)');
+    g.addColorStop(t * 0.5, 'rgba(70,40,55,0.12)');
+    g.addColorStop(t - 0.04, 'rgba(90,45,50,0.22)');
+    g.addColorStop(t, 'rgba(255,175,110,0.5)');
+    g.addColorStop(1, 'rgba(255,150,90,0.16)');
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r1, 0, TAU);
+    ctx.arc(x, y, r0, 0, TAU, true);
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,195,140,0.7)';
+    ctx.beginPath();
+    ctx.arc(x, y, px(u.cmb.dist), 0, TAU);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Labels sit on a diagonal so they clear the horizon label at the top.
+    const at = (r, deg) => [x + px(r) * Math.cos(deg * Math.PI / 180), y - px(r) * Math.sin(deg * Math.PI / 180)];
+    const mid = (u.firstGalaxies.dist + u.cmb.dist) / 2;
+    label(view, ...at(mid, -25), 'The dark ages', 0.8 * alpha, 1);
+    ringHit(view, x, y, px(mid), 'The dark ages', alpha, darkAgesSummary(u));
+    label(view, ...at(u.cmb.dist, 45), 'Cosmic microwave background', alpha, 2);
+    ringHit(view, x, y, px(u.cmb.dist), 'Cosmic microwave background', alpha, cmbSummary(u));
+    ctx.setLineDash([2, 6]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(200,210,240,${0.3 * alpha})`;
+    for (const [years, r] of u.lookbackRings) {
+      if (px(r) < 20) continue;
+      ctx.beginPath();
+      ctx.arc(x, y, px(r), 0, TAU);
+      ctx.stroke();
+      const name = `${years} billion years ago`;
+      label(view, ...at(r, -60), name, 0.6 * alpha, 0);
+      ringHit(view, x, y, px(r), name, alpha, lookbackSummary(years, r));
+    }
+    ctx.setLineDash([]);
+  },
+};
 
 const landmarks = {
   name: 'landmarks',
@@ -1414,7 +1477,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
+  cosmicWeb, eras, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, globularClusters, nuclearCluster,
   nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];

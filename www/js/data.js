@@ -758,8 +758,17 @@ export const SIGNPOSTS = [
   { range: [4e6 * LY, 8e6 * LY], text: 'The Local Group is on its own out to about 10 million light-years, where the Maffei and M81 groups begin.' },
 ];
 
+// Distances here are comoving, from the Planck cosmology in www/v2/model.js
+// (the same one DISTANT_OBJECTS use); a test recomputes them. The galaxies
+// thin out from webFade toward firstGalaxies (z = 20); the dark ages run
+// from there to the microwave background (z = 1089). lookbackRings pairs a
+// lookback time in billions of years with the distance its light left from.
 export const UNIVERSE = {
-  radius: 46.5e9 * LY,        // comoving radius of the observable universe
+  radius: 46.133e9 * LY,      // comoving radius of the observable universe
+  webFade: 20e9 * LY,
+  firstGalaxies: { dist: 35.701e9 * LY, z: 20, sinceBigBang: '180 million years' },
+  cmb: { dist: 45.219e9 * LY, z: 1089, sinceBigBang: '380,000 years' },
+  lookbackRings: [[4, 4.643e9 * LY], [8, 11.193e9 * LY], [12, 22.690e9 * LY], [13, 28.469e9 * LY]],
   webSeed: 5,
   webPoints: 20000,
   voids: 140,

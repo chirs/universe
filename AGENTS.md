@@ -61,7 +61,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `GREAT_WALLS` are waypoint chains drawn along great circles (high-latitude
   walls stretch into arcs when latitude is dropped); `DISTANT_OBJECTS` and
   `HERCULES_CORONA_BOREALIS` sit at comoving distances precomputed with the
-  v2 cosmology (`cosmologyAt` in `www/v2/model.js`), which a test rechecks. A craft with
+  v2 cosmology (`cosmologyAt` in `www/v2/model.js`), which a test rechecks.
+  `UNIVERSE` takes its radius, era distances and lookback rings from the
+  same cosmology: the cosmic web fades toward the first galaxies (z = 20),
+  then the `eras` layer draws the dark ages, the microwave background and
+  the opaque plasma out to the horizon. A craft with
   `center: 399` (JWST) is tracked relative to Earth and drawn in a frame
   turning with Earth, so its halo orbit stays beyond L2. The ISS and JWST
   stops (`EARTH_LEVELS` in main.js) follow Earth and are reached by clicking.
