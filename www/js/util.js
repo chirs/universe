@@ -399,6 +399,57 @@ export function cometSummary(comet) {
   return `Comet · perihelion ${formatDistance(q)} · aphelion ${formatDistance(Q)} · period ${formatPeriod(comet.period)} · ${comet.note}`;
 }
 
+// Position on an open (hyperbolic) orbit about the Sun, laid flat like the
+// comets: q perihelion distance, e > 1, tP perihelion (days after J2000).
+export function hyperbolicPosition(body, days) {
+  const a = body.q / (1 - body.e);
+  const n = Math.sqrt(G_SI * SOLAR_MASS / (-a) ** 3) * DAY_S;
+  const M = n * (days - body.tP);
+  let H = Math.asinh(M / body.e);
+  for (let i = 0; i < 50; i++) {
+    const dH = (body.e * Math.sinh(H) - H - M) / (body.e * Math.cosh(H) - 1);
+    H -= dH;
+    if (Math.abs(dH) < 1e-12) break;
+  }
+  const r = a * (1 - body.e * Math.cosh(H));
+  const nu = 2 * Math.atan(Math.sqrt((body.e + 1) / (body.e - 1)) * Math.tanh(H / 2));
+  const lon = body.varpi * D2R + (body.retrograde ? -nu : nu);
+  return { x: r * Math.cos(lon), y: r * Math.sin(lon) };
+}
+
+export function interstellarSummary(body, days) {
+  const p = hyperbolicPosition(body, days);
+  const vInf = Math.sqrt(G_SI * SOLAR_MASS * (body.e - 1) / body.q) / 1000;
+  const when = new Date(J2000_MS + body.tP * DAY_S * 1000).toISOString().slice(0, 7);
+  return `Interstellar object · passed ${formatDistance(body.q)} from the Sun in ${when} · now ${formatDistance(Math.hypot(p.x, p.y))} out, leaving at ${compactNumber(vInf)} km/s · ${body.note}`;
+}
+
+export function companionSummary(body) {
+  return `Asteroid · Earth companion · radius ${formatDistance(body.radius)} · period ${formatPeriod(body.period)} · ${body.note}`;
+}
+
+// A planet and its binary partner (Pluto and Charon) circle their
+// barycenter, which carries the planet's orbital elements: the share of
+// the separation each stands off it.
+export function binaryShares(planet) {
+  const partner = planet.moons.find((m) => m.name === planet.binary);
+  const total = planet.mass + partner.mass;
+  return { partner, planet: partner.mass / total, moon: planet.mass / total };
+}
+
+// Where the planet itself sits relative to its barycenter at `days`.
+export function binaryOffset(planet, days) {
+  if (!planet.binary) return { x: 0, y: 0 };
+  const { partner, planet: share } = binaryShares(planet);
+  const rel = orbitalPosition(partner, days);
+  return { x: -share * rel.x, y: -share * rel.y };
+}
+
+export function hypervelocitySummary(star) {
+  return `Hypervelocity star · leaving the galaxy at ${star.speed.toLocaleString('en-US')} km/s, flung from Sgr A* about ${star.ejected / 1e6} million years ago `
+    + `· ${formatDistance(star.dist)} from the Sun · path drawn straight from the center in this flattened map · Koposov et al. 2020`;
+}
+
 // The Lagrange points leading (L4) and trailing (L5) a body at `pos` by 60
 // degrees on a circle through it.
 export function trojanPoints(pos) {

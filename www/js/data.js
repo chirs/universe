@@ -161,9 +161,13 @@ export const PLANETS = [
     moons: [
       { name: 'Vanth', a: 8980 * KM, period: 9.5393, radius: 140 * KM, L0: 310, phaseApprox: true, color: '#8e8984' },
     ] },
+  // Pluto and Charon circle a point between them, above Pluto's surface;
+  // the elements are for that barycenter, which the small moons orbit.
+  // Masses from New Horizons (Stern et al. 2015), from memory.
   { name: 'Pluto', a: 39.482 * AU, period: 90560, radius: 1188.3 * KM, L0: 238.93, e: 0.2488273, varpi: 224.069, color: '#c9b8a8', dwarf: true,
+    mass: 1.303e22, binary: 'Charon',
     moons: [
-      { name: 'Charon', a: 19591 * KM, period: 6.387, radius: 606.0 * KM, L0: 266.141, retrograde: true, color: '#a8a4a0' },
+      { name: 'Charon', a: 19591 * KM, period: 6.387, radius: 606.0 * KM, L0: 266.141, retrograde: true, color: '#a8a4a0', mass: 1.586e21 },
       { name: 'Styx', a: 43200 * KM, period: 20.16, radius: 5.2 * KM, L0: 320.6, e: 0.025, varpi: 322.5, retrograde: true, color: '#8e8a88' },
       { name: 'Nix', a: 49300 * KM, period: 24.85, radius: 18 * KM, L0: 9.6, e: 0.015, varpi: 31.4, retrograde: true, color: '#bab6b2' },
       { name: 'Kerberos', a: 58300 * KM, period: 32.17, radius: 6 * KM, L0: 262.5, e: 0.010, varpi: 346.4, retrograde: true, color: '#777472' },
@@ -226,6 +230,26 @@ export const COMETS = [
 export const ASTEROIDS = [
   { name: '16 Psyche', a: 2.925720466462538 * AU, e: 0.1349324738201893, period: 1827.87996016922, varpi: 20.008, L0: 358.132,
     radius: 111 * KM, color: '#c8c0b0', note: 'about 280 by 240 by 170 km, dense and metal-rich, perhaps the exposed core of a shattered protoplanet; NASA\u2019s Psyche arrives in 2029' },
+  // Earth's companions, on Earth-length years (epoch 2026, full-precision
+  // SBDB elements). Seen turning with Earth, Cruithne traces a kidney each
+  // year and Kamo\u02bboalewa a loop around Earth; over centuries planetary
+  // pulls, not modeled here, slide them along Earth's orbit.
+  { name: 'Cruithne', a: 0.9977971735251305 * AU, e: 0.5149036013028605, period: 364.0506668686161, varpi: 170.072, L0: 164.138,
+    radius: 1.04 * KM, color: '#c8c0b0', companion: true,
+    note: 'on a year just shorter than Earth\u2019s; seen from Earth it traces a kidney each year, and over 770 years a horseshoe along Earth\u2019s orbit' },
+  { name: 'Kamo\u02bboalewa', a: 1.000810461656002 * AU, e: 0.1022388434937281, period: 365.7010283504758, varpi: 9.956, L0: 108.366,
+    radius: 0.03 * KM, color: '#c8c0b0', companion: true,
+    note: 'a quasi-moon, 40 to 100 m across: it circles the Sun, but seen from Earth it loops around us, never nearer than about 40 times the Moon\u2019s distance' },
+];
+
+// The two interstellar visitors, on open hyperbolic paths (full-precision
+// SBDB elements): q perihelion distance, e eccentricity, tP perihelion in
+// days after J2000, varpi as for comets (om - w when retrograde).
+export const INTERSTELLAR = [
+  { name: '\u02bbOumuamua', q: 0.2559115812959116 * AU, e: 1.201133796102373, tP: 6461.007, varpi: 142.786, retrograde: true,
+    color: '#e8c8a8', note: 'the first known interstellar object, found in October 2017 after it passed the Sun; elongated, perhaps 100 m long, and nudged by something other than gravity' },
+  { name: '2I/Borisov', q: 2.006520878500843 * AU, e: 3.356475782676596, tP: 7281.053, varpi: 157.271,
+    color: '#cfe8ff', note: 'the first known interstellar comet, found in August 2019 by an amateur astronomer; richer in carbon monoxide than comets born here' },
 ];
 
 // Spacecraft whose paths come from JPL Horizons: scripts/fetch-spacecraft.mjs
@@ -466,6 +490,21 @@ export const STAR_SYSTEMS = [
       L0: transitPhase(69.715, tTransit, period),
     })),
     caption: 'Seven Earth-sized planets, all far closer to their star than Mercury is to the Sun, their periods locked in ratios of 8:5, 5:3, 3:2, 3:2, 4:3 and 3:2. Placed by their transit times; three sit in the habitable zone.' },
+  // Four giant planets photographed directly: orbit sizes and periods from
+  // the Zurlo et al. 2016 fit (NASA Exoplanet Archive), masses from Marois
+  // et al. 2008 and 2010. The orbits are tilted about 30 degrees to our view
+  // and drawn face-on with display phases. The belts are round numbers
+  // from memory (Su et al. 2009).
+  { id: 'hr-8799', name: 'HR 8799', star: 'HR 8799', radius: 85 * AU,
+    host: { name: 'HR 8799', mass: 1.51, radius: 1.49338 * SOL, type: 'A5V', luminosity: 10 ** 0.69197 },
+    planets: [
+      { name: 'HR 8799 e', a: 16.99 * AU, period: 20815.6, L0: 290, massEarth: 10 * 317.8 },
+      { name: 'HR 8799 d', a: 26.97 * AU, period: 41627.54, L0: 200, massEarth: 10 * 317.8 },
+      { name: 'HR 8799 c', a: 42.81 * AU, period: 83255.09, L0: 330, massEarth: 10 * 317.8 },
+      { name: 'HR 8799 b', a: 67.96 * AU, period: 166510.17, L0: 60, massEarth: 7 * 317.8 },
+    ],
+    belts: [{ name: 'warm belt', inner: 6 * AU, outer: 15 * AU }, { name: 'cold belt', inner: 90 * AU, outer: 300 * AU }],
+    caption: 'Four planets five to ten times Jupiter\u2019s mass, the first photographed around another star, their periods near 1:2:4:8. Between two dust belts, like a scaled-up solar system.' },
 ];
 
 // Colliding-wind binary WR 140: a Wolf-Rayet star and an O supergiant on
@@ -485,11 +524,17 @@ export const WR_140 = {
   shellsShown: 20,
 };
 
+// S5-HVS1 (Koposov et al. 2020): an A star moving at 1,755 km/s from the
+// galactic center, thrown out by Sgr A* about 4.8 million years ago,
+// probably when a binary came too close and its partner was captured.
+export const S5_HVS1 = { name: 'S5-HVS1', l: 337.436, b: -57.400, dist: 8629 * PC, speed: 1755, ejected: 4.8e6 };
+
 // Hosts of close-up systems beyond the 16.7 light-year list above, drawn
 // in the neighbourhood like its stars. TRAPPIST-1 from the NASA Exoplanet
 // Archive (Gaia distance, galactic l and b as listed there).
 export const SYSTEM_STARS = [
   { name: 'TRAPPIST-1', dist: 40.54, l: 69.715, b: -56.649, types: ['M8V'], planets: 7 },
+  { name: 'HR 8799', dist: 134.52, l: 92.764, b: -35.575, types: ['A5V'], planets: 4 },
 ];
 
 // The Local Bubble: the cavity of hot thin gas the Sun sits in, swept out

@@ -10,18 +10,19 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary, horseshoe, coorbitalState,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary, horseshoe, coorbitalState, hyperbolicPosition, interstellarSummary, binaryOffset,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO, SYSTEM_STARS, WR_140, DAY_S,
+  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO, SYSTEM_STARS, WR_140, DAY_S, INTERSTELLAR, S5_HVS1,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
 import { HII_REGIONS } from '../js/hii.js';
+import { SGR_STREAM } from '../js/sgrstream.js';
 import { cosmologyAt, HORIZON } from '../v2/model.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -404,6 +405,36 @@ test('TRAPPIST-1 is wired in beyond the nearest-star list and WR 140 obeys Keple
   assert.ok(Math.abs(k - 1) < 0.01);
   // The 17th shell back reaches about 70,000 AU.
   assert.ok(Math.abs(WR_140.shellSpeed * 17 * o.period / AU - 70000) < 1);
+});
+
+test('interstellar visitors pass perihelion at q and leave at their known speeds', () => {
+  const speeds = { '\u02bbOumuamua': 26.4, '2I/Borisov': 32.3 };
+  for (const b of INTERSTELLAR) {
+    const p = hyperbolicPosition(b, b.tP);
+    assert.ok(Math.abs(Math.hypot(p.x, p.y) - b.q) < 1e-6 * b.q, b.name);
+    assert.ok(Math.abs(Math.atan2(p.y, p.x) - Math.atan2(Math.sin(b.varpi * Math.PI / 180), Math.cos(b.varpi * Math.PI / 180))) < 1e-9);
+    // Farther out every year afterward, and symmetric about perihelion.
+    const out = (y) => { const q = hyperbolicPosition(b, b.tP + y * YEAR_D); return Math.hypot(q.x, q.y); };
+    assert.ok(out(1) < out(2) && Math.abs(out(3) - out(-3)) < 1e-6 * out(3));
+    assert.match(interstellarSummary(b, b.tP), new RegExp(`leaving at ${speeds[b.name]} km/s`));
+  }
+});
+
+test('Pluto and Charon circle a barycenter outside Pluto; Earth\u2019s companions share its year', () => {
+  const pluto = PLANETS.find((p) => p.name === 'Pluto');
+  const off = binaryOffset(pluto, 1234);
+  const r = Math.hypot(off.x, off.y);
+  assert.ok(r > pluto.radius && Math.abs(r / 1000 - 2126) < 5, `${r}`);
+  assert.deepEqual(binaryOffset(PLANETS[0], 0), { x: 0, y: 0 });
+  for (const c of ASTEROIDS.filter((a) => a.companion)) assert.ok(Math.abs(c.period / 365.256 - 1) < 0.01, c.name);
+});
+
+test('the Sagittarius stream and S5-HVS1 sit in the halo', () => {
+  assert.ok(SGR_STREAM.length % 2 === 0 && SGR_STREAM.length > 10000);
+  for (let i = 0; i < SGR_STREAM.length; i += 2) {
+    assert.ok(SGR_STREAM[i] >= 0 && SGR_STREAM[i] < 360 && SGR_STREAM[i + 1] > 0 && SGR_STREAM[i + 1] < 120);
+  }
+  assert.ok(S5_HVS1.dist / PC > 8000 && S5_HVS1.speed > 1700);
 });
 
 test('clusters are ordered outward with sane sizes', () => {

@@ -59,17 +59,27 @@ export const LEVELS = [
 // level with `spin` is drawn in a frame turning by that angle (radians, a
 // function of days) about the planet.
 const SATURN = PLANETS.find((p) => p.name === 'Saturn');
+const EARTH = PLANETS.find((p) => p.name === 'Earth');
 const CLOSE_UPS = [
   { id: 'iss', name: 'ISS', radius: 20000e3, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'ISS' },
   { id: 'jwst', name: 'JWST', radius: 2.2e9, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'JWST',
     caption: 'JWST loops around the Sun\u2013Earth L2 point, 1.5 million km beyond Earth, keeping the Sun, Earth and Moon behind its shield.' },
   { id: 'janus-epimetheus', name: 'Janus and Epimetheus', radius: 190000 * KM, follow: SATURN, clickNames: ['Janus', 'Epimetheus'],
-    spin: (days) => coorbitalState(SATURN.coorbitals, days).center,
+    frame: 'janus',
     caption: 'Two moons on one orbit, 50 km apart. Every four years the inner one catches up, and they swap orbits before they meet. Drawn turning with the pair; run the clock at a year per second.' },
 ];
 
+// Earth's companions, seen from a frame turning with Earth about the Sun.
+const COMPANION_LEVELS = [
+  { id: 'cruithne', name: 'Cruithne', radius: 1.8 * AU, cx: 0, cy: 0, frame: 'earth', pivot: { x: 0, y: 0 }, clickName: 'Cruithne',
+    caption: 'Seen turning with Earth, Cruithne traces a kidney each year. Over centuries it creeps along Earth\u2019s orbit and back in a horseshoe, which is not modeled here.' },
+  { id: 'kamooalewa', name: 'Kamo\u02bboalewa', radius: 0.3 * AU, frame: 'earth', pivot: { x: 0, y: 0 }, clickName: 'Kamo\u02bboalewa',
+    at: (days) => { const p = orbitalPosition(EARTH, days); return { cx: p.x, cy: p.y }; },
+    caption: 'A small asteroid on its own orbit round the Sun that, seen turning with Earth, loops around us once a year: a quasi-moon. It may be a chip off our Moon.' },
+];
+
 // LEVELS first so the inner solar system is the default view.
-const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS, ...CLOSE_UPS];
+const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS, ...CLOSE_UPS, ...COMPANION_LEVELS];
 
 // The level bar: a plain level id, or a menu of levels in sections, listed
 // widest at the top so a menu reads like the sky above the bar.
@@ -79,7 +89,10 @@ const BAR = [
     { title: 'Dwarf planets', levels: PLANET_LEVELS.filter((lv) => lv.follow.dwarf).reverse() },
     { title: 'Planets', levels: PLANET_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
   ] },
-  { label: 'Solar system', sections: [{ levels: ['heliosphere', 'trans-neptunian', 'outer', 'inner'].map(byId) }] },
+  { label: 'Solar system', sections: [
+    { levels: ['heliosphere', 'trans-neptunian', 'outer', 'inner'].map(byId) },
+    { title: 'Earth\u2019s companions', levels: COMPANION_LEVELS },
+  ] },
   { label: 'Stellar neighborhood', sections: [
     { levels: [byId('stars')] },
     { title: 'Star systems, farthest first', levels: [...SYSTEM_LEVELS].reverse() },
@@ -159,31 +172,37 @@ function resize() {
 }
 
 function levelCenter(level) {
+  if (level.at) return level.at(daysSinceJ2000(simMs));
   if (!level.follow) return { cx: level.cx, cy: level.cy };
   const p = orbitalPosition(level.follow, daysSinceJ2000(simMs));
   return { cx: p.x, cy: p.y };
 }
 
-function setFollow(body, spin = null) {
-  const days = daysSinceJ2000(simMs);
+function setFollow(body) {
   cam.follow = body;
-  cam.followPos = body ? orbitalPosition(body, days) : null;
-  // The frame starts turning from where it is, so nothing jumps.
-  cam.spin = body && spin ? { fn: spin, ref: spin(days) } : null;
+  cam.followPos = body ? orbitalPosition(body, daysSinceJ2000(simMs)) : null;
 }
 
-// The frame's turn now, and the screen point it turns about.
-let spinNow = null;
+// Turning frames, by name: the angle (radians) the frame has turned by at
+// `days`. Janus and Epimetheus turn it with the pair, Earth's companions
+// with Earth.
+const FRAMES = {
+  janus: (days) => coorbitalState(SATURN.coorbitals, days).center,
+  earth: (days) => {
+    const p = orbitalPosition(EARTH, days);
+    return Math.atan2(p.y, p.x);
+  },
+};
 
-// A screen point as it would be without the turn.
-function unspin(x, y) {
-  if (!spinNow) return { x, y };
-  const c = Math.cos(spinNow.rot);
-  const s = Math.sin(spinNow.rot);
-  const dx = x - spinNow.px;
-  const dy = y - spinNow.py;
-  return { x: spinNow.px + dx * c + dy * s, y: spinNow.py - dx * s + dy * c };
+// A level with `frame` is drawn turning about the followed planet, or
+// about its `pivot`. The turn starts from where it is, so nothing jumps,
+// and stops once the view is much wider than the level.
+function setSpin(level) {
+  const fn = level && FRAMES[level.frame];
+  cam.spin = fn ? { level, fn, ref: fn(daysSinceJ2000(simMs)), pivot: level.pivot || null } : null;
 }
+
+
 
 // Keep the camera pinned to the followed body as it moves.
 function trackFollow() {
@@ -215,10 +234,12 @@ function goTo(level, instant = false, dur = 1400) {
   closeMenus();
   setOverview(false);
   setFollow(null);
+  setSpin(null);
   const to = { ...levelCenter(level), mpp: mppFor(level) };
   if (instant) {
     Object.assign(cam, to);
-    setFollow(level.follow || null, level.spin);
+    setFollow(level.follow || null);
+    setSpin(level);
     anim = null;
   } else {
     anim = { from: { cx: cam.cx, cy: cam.cy, mpp: cam.mpp }, level, start: performance.now(), dur };
@@ -240,7 +261,8 @@ function stepAnim(now) {
   cam.cx = lerp(from.cx, to.cx, wgt);
   cam.cy = lerp(from.cy, to.cy, wgt);
   if (u >= 1) {
-    setFollow(anim.level.follow || null, anim.level.spin);
+    setFollow(anim.level.follow || null);
+    setSpin(anim.level);
     anim = null;
   }
 }
@@ -274,7 +296,6 @@ function zoomAt(sx, sy, factor) {
   const minMpp = Math.min(...ALL_LEVELS.map(mppFor)) / 4;
   const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
   const next = Math.min(maxMpp, Math.max(minMpp, cam.mpp * factor));
-  ({ x: sx, y: sy } = unspin(sx, sy));
   const wx = cam.cx + (sx - w / 2) * cam.mpp;
   const wy = cam.cy - (sy - h / 2) * cam.mpp;
   cam.cx = wx - (sx - w / 2) * next;
@@ -285,6 +306,8 @@ function zoomAt(sx, sy, factor) {
 // The level to highlight: the followed moon system if there is one, else
 // whichever wide level is closest in scale.
 function nearestLevel() {
+  const turning = anim ? anim.level : cam.spin?.level;
+  if (turning && COMPANION_LEVELS.includes(turning)) return turning;
   const body = anim ? anim.level.follow : cam.follow;
   if (body) {
     const mpp = anim ? mppFor(anim.level) : cam.mpp;
@@ -406,43 +429,59 @@ function frame(now) {
   ctx.fillStyle = '#05060a';
   ctx.fillRect(0, 0, w, h);
 
+  const days = daysSinceJ2000(simMs);
+  if (cam.spin && cam.mpp * halfMin() > 6 * cam.spin.level.radius) cam.spin = null;
+  // In a turning frame the camera lives in turned coordinates. The layers
+  // draw real positions into a square big enough to cover the screen at any
+  // angle, centered where the camera sits in real coordinates (turned back
+  // about the pivot); that square is then turned about the screen center.
+  const spin = cam.spin && !overview ? cam.spin : null;
+  const rot = spin ? spin.fn(days) - spin.ref : 0;
+  let { cx, cy } = cam;
+  let vw = w;
+  let vh = h;
+  if (spin) {
+    const pivot = spin.pivot || cam.followPos;
+    const c = Math.cos(rot);
+    const s = Math.sin(rot);
+    cx = pivot.x + (cam.cx - pivot.x) * c - (cam.cy - pivot.y) * s;
+    cy = pivot.y + (cam.cx - pivot.x) * s + (cam.cy - pivot.y) * c;
+    vw = vh = Math.ceil(Math.hypot(w, h));
+  }
   const view = {
-    w, h, cx: cam.cx, cy: cam.cy, mpp: cam.mpp,
+    w: vw, h: vh, cx, cy, mpp: cam.mpp,
     radius: cam.mpp * halfMin(),
-    sx: (x) => w / 2 + (x - cam.cx) / cam.mpp,
-    sy: (y) => h / 2 - (y - cam.cy) / cam.mpp,
+    sx: (x) => vw / 2 + (x - cx) / cam.mpp,
+    sy: (y) => vh / 2 - (y - cy) / cam.mpp,
     hits: [],
     labels: [],
-    spinning: !!cam.spin && !overview,
+    frame: spin ? spin.level.frame : null,
   };
-  const days = daysSinceJ2000(simMs);
-  spinNow = view.spinning
-    ? { rot: cam.spin.fn(days) - cam.spin.ref, px: view.sx(cam.followPos.x), py: view.sy(cam.followPos.y) }
-    : null;
   if (overview) {
     drawOverview(ctx, view, days);
   } else {
-    if (spinNow) {
+    if (spin) {
       // The world turns counterclockwise on screen; turn it back.
       ctx.save();
-      ctx.translate(spinNow.px, spinNow.py);
-      ctx.rotate(spinNow.rot);
-      ctx.translate(-spinNow.px, -spinNow.py);
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(rot);
+      ctx.translate(-vw / 2, -vh / 2);
     }
     for (const layer of LAYERS) {
       const alpha = layerAlpha(view.radius, layer.range);
       if (alpha > 0) layer.draw(ctx, view, alpha, days);
     }
-    if (spinNow) {
+    if (spin) {
       ctx.restore();
-      // Labels and hover targets were placed unturned; turn them to match.
-      const c = Math.cos(spinNow.rot);
-      const s = Math.sin(spinNow.rot);
+      // Labels and hover targets were placed in the square; carry them to
+      // the screen.
+      const c = Math.cos(rot);
+      const s = Math.sin(rot);
       for (const p of [...view.labels, ...view.hits]) {
-        const dx = p.x - spinNow.px;
-        const dy = p.y - spinNow.py;
-        p.x = spinNow.px + dx * c - dy * s;
-        p.y = spinNow.py + dx * s + dy * c;
+        const dx = p.x - vw / 2;
+        const dy = p.y - vh / 2;
+        p.x = w / 2 + dx * c - dy * s;
+        p.y = h / 2 + dx * s + dy * c;
       }
     }
   }
@@ -544,11 +583,8 @@ canvas.addEventListener('mousemove', (e) => {
   const dy = e.offsetY - drag.y;
   if (!drag.moved && Math.hypot(dx, dy) < 4) return;
   if (!drag.moved) { stopTour(); anim = null; canvas.classList.add('dragging'); drag.moved = true; }
-  // In a turning frame, move along the unturned axes.
-  const o = unspin(0, 0);
-  const d = unspin(dx, dy);
-  cam.cx -= (d.x - o.x) * cam.mpp;
-  cam.cy += (d.y - o.y) * cam.mpp;
+  cam.cx -= dx * cam.mpp;
+  cam.cy += dy * cam.mpp;
   drag.x = e.offsetX;
   drag.y = e.offsetY;
 });

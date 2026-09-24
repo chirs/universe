@@ -17,7 +17,12 @@ face-on at their measured periods, a rough habitable zone in green.
 Clicking Janus or Epimetheus at Saturn shows the two moons that share an
 orbit and swap places every four years, in a frame turning with them. In
 the Milky Way menu, WR 140 throws off a shell of dust at each close pass of
-its two stars. In the Local Group, Andromeda,
+its two stars. The Solar system menu has Earth's companions, Cruithne and
+the quasi-moon Kamoʻoalewa, seen turning with Earth; the interstellar
+visitors ʻOumuamua and Borisov cross the planets on open paths; Pluto and
+Charon circle a point between them. HR 8799's four photographed planets
+open like the other systems; around the galaxy wrap the Sagittarius
+stream's stars, and S5-HVS1 runs out from Sgr A*. In the Local Group, Andromeda,
 Triangulum and the Magellanic Clouds open the same way, the spirals drawn
 at their real inclinations rotated into the galactic plane. `u`
 jumps to the Local Bubble, the supernova-blown cavity the Sun sits in, with

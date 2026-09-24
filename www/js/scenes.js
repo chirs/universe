@@ -2,8 +2,9 @@ import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
   SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
-  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS, RADIO, J2000_MS, DAY_S, YEAR_D, SYSTEM_STARS, WR_140,
+  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS, RADIO, J2000_MS, DAY_S, YEAR_D, SYSTEM_STARS, WR_140, INTERSTELLAR, S5_HVS1,
 } from './data.js';
+import { SGR_STREAM } from './sgrstream.js';
 import { TRACKS } from './spacecraft.js';
 import { GLOBULAR_CLUSTERS } from './globulars.js';
 import { HII_REGIONS } from './hii.js';
@@ -18,6 +19,7 @@ import {
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary, hiiSummary, yearsAgo, lookbackPowerSummary,
   coorbitalState, coorbitalSummary, wr140Summary, dustShellSummary,
+  hyperbolicPosition, interstellarSummary, companionSummary, binaryShares, binaryOffset, hypervelocitySummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -141,8 +143,9 @@ const solarSystem = {
     hit(view, sx, sy, SUN.name, alpha, starSummary(SUN));
     for (const p of PLANETS) {
       const pos = orbitalPosition(p, days);
-      const x = view.sx(pos.x);
-      const y = view.sy(pos.y);
+      const off = binaryOffset(p, days);
+      const x = view.sx(pos.x + off.x);
+      const y = view.sy(pos.y + off.y);
       if (!onScreen(view, x, y)) continue;
       const r = Math.max(p.radius / view.mpp, p.dwarf ? 1.5 : 2.5);
       dot(ctx, x, y, r, p.color, alpha);
@@ -184,8 +187,28 @@ const moons = {
         ctx.globalAlpha = 1;
         ringHit(view, px, py, (ro + ri) / 2, `${p.name}\u2019s ${ring.name}`, alpha, ringSummary(ring, p.name));
       }
+      const shares = p.binary ? binaryShares(p) : null;
+      if (shares) {
+        // The planet's own small circle about the barycenter, which is marked.
+        const r = shares.planet * shares.partner.a / view.mpp;
+        if (r > 3) {
+          ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, TAU);
+          ctx.stroke();
+          ctx.strokeStyle = `rgba(255,255,255,${0.5 * alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(px - 4, py); ctx.lineTo(px + 4, py);
+          ctx.moveTo(px, py - 4); ctx.lineTo(px, py + 4);
+          ctx.stroke();
+          hit(view, px, py, 'Barycenter', alpha,
+            `${p.name} and ${shares.partner.name} both circle this point, ${formatDistance(shares.planet * shares.partner.a)} from ${p.name}\u2019s center and outside it; the small moons orbit it too`);
+        }
+      }
       for (const m of p.moons) {
-        const a = m.a / view.mpp;
+        // A binary partner circles the barycenter at its share of the separation.
+        const k = shares && m === shares.partner ? shares.moon : 1;
+        const a = k * m.a / view.mpp;
         const e = m.e || 0;
         const varpi = (m.varpi || 0) * Math.PI / 180;
         ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
@@ -194,8 +217,8 @@ const moons = {
           a, a * Math.sqrt(1 - e * e), -varpi, 0, TAU);
         ctx.stroke();
         const mp = orbitalPosition(m, days);
-        const x = view.sx(pos.x + mp.x);
-        const y = view.sy(pos.y + mp.y);
+        const x = view.sx(pos.x + k * mp.x);
+        const y = view.sy(pos.y + k * mp.y);
         if (!onScreen(view, x, y)) continue;
         dot(ctx, x, y, Math.max(m.radius / view.mpp, 2), m.color, alpha);
         const far = Math.hypot(x - px, y - py) > 14;
@@ -226,7 +249,7 @@ const coorbitals = (() => {
       ctx.beginPath();
       ctx.arc(px, py, pair.a / view.mpp, 0, TAU);
       ctx.stroke();
-      if (view.spinning) {
+      if (view.frame === 'janus') {
         const span = pair.swapInterval;
         const step = 4;
         pair.moons.forEach((m, i) => {
@@ -305,15 +328,36 @@ const trojans = (() => {
   };
 })();
 
-// Comets and named asteroids on their flattened orbits.
+// Comets and named asteroids on their flattened orbits. Earth's companions
+// also trail their last year as seen turning with Earth, when the frame
+// turns with it (main.js), which is where their loops show.
+const EARTH_BODY = PLANETS.find((p) => p.name === 'Earth');
+const earthLon = (days) => {
+  const e = orbitalPosition(EARTH_BODY, days);
+  return Math.atan2(e.y, e.x);
+};
 const smallBodies = {
   name: 'small bodies',
   range: [0, 1500 * AU],
   draw(ctx, view, alpha, days) {
     ctx.lineWidth = 1;
+    const earthFrame = view.frame === 'earth';
     for (const c of [...COMETS, ...ASTEROIDS]) {
       const comet = COMETS.includes(c);
-      orbitEllipse(ctx, view, c, comet ? `rgba(190,220,255,${0.16 * alpha})` : `rgba(255,255,255,${0.1 * alpha})`);
+      if (!(earthFrame && c.companion)) {
+        orbitEllipse(ctx, view, c, comet ? `rgba(190,220,255,${0.16 * alpha})` : `rgba(255,255,255,${0.1 * alpha})`);
+      }
+      if (earthFrame && c.companion) {
+        const now = earthLon(days);
+        ctx.beginPath();
+        for (let d = days - 366; d <= days; d += 1) {
+          const p = orbitalPosition(c, d);
+          const turn = now - earthLon(d);
+          ctx.lineTo(view.sx(p.x * Math.cos(turn) - p.y * Math.sin(turn)), view.sy(p.x * Math.sin(turn) + p.y * Math.cos(turn)));
+        }
+        ctx.strokeStyle = `rgba(230,215,180,${0.45 * alpha})`;
+        ctx.stroke();
+      }
       const pos = orbitalPosition(c, days);
       const x = view.sx(pos.x);
       const y = view.sy(pos.y);
@@ -321,7 +365,46 @@ const smallBodies = {
       dot(ctx, x, y, 2, c.color, alpha);
       const far = Math.hypot(x - view.sx(0), y - view.sy(0)) > 14;
       label(view, x, y, c.name, far ? alpha : 0, 0);
-      hit(view, x, y, c.name, far ? alpha : 0, comet ? cometSummary(c) : asteroidSummary(c));
+      hit(view, x, y, c.name, far ? alpha : 0, comet ? cometSummary(c) : c.companion ? companionSummary(c) : asteroidSummary(c));
+    }
+  },
+};
+
+// The interstellar visitors on their open paths: behind them solid, ahead
+// dashed, both fading with distance from the present.
+const interstellar = {
+  name: 'interstellar',
+  range: [0, 3000 * AU],
+  draw(ctx, view, alpha, days) {
+    ctx.lineWidth = 1;
+    for (const b of INTERSTELLAR) {
+      for (const [from, to, dash] of [[-1, 0, []], [0, 1, [3, 5]]]) {
+        ctx.setLineDash(dash);
+        let last = null;
+        for (let i = 0; i <= 200; i++) {
+          // Denser near now: steps grow as the square of time from now.
+          const t = (from + (to - from) * i / 200);
+          const d = days + Math.sign(t) * t * t * 40 * YEAR_D;
+          const p = hyperbolicPosition(b, d);
+          const pt = [view.sx(p.x), view.sy(p.y)];
+          if (last) {
+            ctx.strokeStyle = `rgba(230,200,170,${0.35 * alpha * (1 - Math.abs(t))})`;
+            ctx.beginPath();
+            ctx.moveTo(...last);
+            ctx.lineTo(...pt);
+            ctx.stroke();
+          }
+          last = pt;
+        }
+      }
+      ctx.setLineDash([]);
+      const p = hyperbolicPosition(b, days);
+      const x = view.sx(p.x);
+      const y = view.sy(p.y);
+      if (!onScreen(view, x, y)) continue;
+      dot(ctx, x, y, 2, b.color, alpha);
+      label(view, x, y, b.name, alpha, 0);
+      hit(view, x, y, b.name, alpha, interstellarSummary(b, days));
     }
   },
 };
@@ -1449,6 +1532,72 @@ const magellanicStream = (() => {
   };
 })();
 
+// The Sagittarius stream: Gaia stars torn from the Sagittarius Dwarf,
+// wrapped almost pole to pole around the galaxy and dropped into the plane
+// by longitude like everything else, so here it folds onto the line
+// through the galactic center.
+const sgrStream = (() => {
+  const pts = new Float64Array(SGR_STREAM.length);
+  for (let i = 0; i < SGR_STREAM.length; i += 2) {
+    const p = skyToPlane(SGR_STREAM[i], SGR_STREAM[i + 1] * 1000 * PC);
+    pts[i] = p.x;
+    pts[i + 1] = p.y;
+  }
+  // Hover points along the stream, away from the dwarf itself.
+  const marks = [];
+  for (let i = 0; i < pts.length; i += 2 * 400) marks.push({ x: pts[i], y: pts[i + 1] });
+  const detail = 'Star stream · stars torn from the Sagittarius Dwarf over billions of years, wrapped nearly pole to pole around the galaxy; '
+    + 'it folds onto one line in this flattened map · Gaia members to about 60 kpc, Vasiliev et al. 2021; the stream reaches farther';
+  return {
+    name: 'sagittarius stream',
+    range: [20e3 * LY, 3e6 * LY],
+    draw(ctx, view, alpha) {
+      ctx.globalCompositeOperation = 'lighter';
+      drawPoints(ctx, view, pts, 0, 0, '#ffd9a0', 0.3 * alpha, 1.5);
+      ctx.globalCompositeOperation = 'source-over';
+      const m = marks[Math.floor(marks.length / 3)];
+      label(view, view.sx(m.x), view.sy(m.y), 'Sagittarius stream', 0.9 * alpha, 1);
+      for (const k of marks) hit(view, view.sx(k.x), view.sy(k.y), 'Sagittarius stream', alpha, detail);
+    },
+  };
+})();
+
+// S5-HVS1 and the straight path back to Sgr A*, and on out of the galaxy.
+const hypervelocityStar = (() => {
+  const star = { ...S5_HVS1, ...skyToPlane(S5_HVS1.l, S5_HVS1.dist) };
+  return {
+    name: 'hypervelocity star',
+    range: [3e3 * LY, 800e3 * LY],
+    draw(ctx, view, alpha) {
+      const gx = view.sx(GC.x);
+      const gy = view.sy(GC.y);
+      const x = view.sx(star.x);
+      const y = view.sy(star.y);
+      const g = ctx.createLinearGradient(gx, gy, x, y);
+      g.addColorStop(0, 'rgba(160,210,255,0)');
+      g.addColorStop(1, `rgba(160,210,255,${0.6 * alpha})`);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      // Ahead: as far again in the next few million years.
+      ctx.setLineDash([3, 6]);
+      ctx.strokeStyle = `rgba(160,210,255,${0.3 * alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(2 * x - gx, 2 * y - gy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      glow(ctx, x, y, 8, 'rgba(170,215,255,0.6)', alpha);
+      dot(ctx, x, y, 2, '#e8f2ff', alpha);
+      label(view, x, y, star.name, alpha, 1);
+      hit(view, x, y, star.name, alpha, hypervelocitySummary(star));
+    },
+  };
+})();
+
 // ---------------------------------------------------------------- clusters
 
 const clusters = (() => {
@@ -1925,8 +2074,8 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
-  nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
+  cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, sgrStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
+  nucleus, hypervelocityStar, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, interstellar, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 
