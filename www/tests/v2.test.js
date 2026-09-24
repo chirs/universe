@@ -1,3 +1,4 @@
+import { LOCAL_GROUP } from '../js/data.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spherical, toSupergalactic, fromSupergalactic, galacticPosition, cameraBasis, dot, renderPosition,
@@ -48,7 +49,7 @@ test('catalog objects have complete positions, unique identities, and a monotoni
     near(Math.hypot(...o.position), o.distance, 1e-6);
     assert.ok(o.radius > 0 && o.source.startsWith('https://'));
   }
-  assert.equal(GALAXIES.length, 18);
+  assert.equal(GALAXIES.length, LOCAL_GROUP.length);
   assert.ok(GROUPS.find(o => o.name === 'Virgo Cluster'));
   for (let i = 1; i < STOPS.length; i++) assert.ok(STOPS[i].radius < STOPS[i - 1].radius);
 });

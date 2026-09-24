@@ -512,6 +512,30 @@ export function moonLevels(planets) {
 
 // One camera stop per close-up star system, centered on its star in the
 // neighbourhood list and reached by clicking that star's label.
+// A point in a galaxy's disk (x along the major axis, y across it, any
+// units) to sky offsets for a disk inclined i degrees with its major axis at
+// position angle pa; the same rotation as a circular orbit's.
+export function diskToSky(i, pa, x, y) {
+  const cO = Math.cos(pa * D2R);
+  const sO = Math.sin(pa * D2R);
+  const ci = Math.cos(i * D2R);
+  return { north: x * cO - y * ci * sO, east: x * sO + y * ci * cO, depth: y * Math.sin(i * D2R) };
+}
+
+// One camera stop per Local Group close-up, centered on the mean position
+// of its member galaxies and reached by clicking any of them.
+export function galaxyLevels(stops, galaxies) {
+  return stops.map((stop) => {
+    const pts = stop.galaxies.map((name) => {
+      const g = galaxies.find((gal) => gal.name === name);
+      return skyToPlane(g.l, g.dist * LY);
+    });
+    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    return { id: stop.id, name: stop.name, radius: stop.radius * LY, cx, cy, clickNames: stop.galaxies, caption: stop.caption };
+  });
+}
+
 export function systemLevels(systems, stars) {
   return systems.map((sys) => {
     const star = stars.find((st) => st.name === sys.star);

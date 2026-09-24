@@ -448,11 +448,19 @@ export const MILKY_WAY_OBJECTS = [
 
 // Distance in light-years from the Milky Way, galactic l and b in degrees.
 // Size is a rough visual radius in light-years.
+// Spirals with `inclination` and `pa` (position angle of the major axis,
+// degrees) are drawn with their real tilt, rotated into the galactic plane
+// from `ra`/`dec`; those without get an arbitrary in-plane angle. The
+// orientations are the usual catalogue values from memory; M32 and M110
+// distances follow McConnachie (2012), which puts them beyond M31 along
+// the line of sight.
 export const LOCAL_GROUP = [
   { name: 'Milky Way', dist: 0, l: 0, b: 0, size: 50000, spiral: true },
-  { name: 'Andromeda (M31)', dist: 2540000, l: 121.2, b: -21.6, size: 110000, spiral: true },
-  { name: 'Triangulum (M33)', dist: 2730000, l: 133.6, b: -31.3, size: 30000, spiral: true },
-  { name: 'Large Magellanic Cloud', dist: 163000, l: 280.5, b: -32.9, size: 7000 },
+  { name: 'Andromeda (M31)', dist: 2540000, l: 121.2, b: -21.6, size: 76000, spiral: true, ra: 10.6847, dec: 41.2687, inclination: 77, pa: 35 },
+  { name: 'M32', dist: 2630000, l: 121.15, b: -22.0, size: 4000 },
+  { name: 'M110', dist: 2690000, l: 120.7, b: -21.1, size: 8500 },
+  { name: 'Triangulum (M33)', dist: 2730000, l: 133.6, b: -31.3, size: 30000, spiral: true, ra: 23.4621, dec: 30.6599, inclination: 54, pa: 23 },
+  { name: 'Large Magellanic Cloud', dist: 163000, l: 280.5, b: -32.9, size: 7000, spiral: true, ra: 80.8942, dec: -69.7561, inclination: 34.7, pa: 122.5 },
   { name: 'Small Magellanic Cloud', dist: 200000, l: 302.8, b: -44.3, size: 3500 },
   { name: 'Sagittarius Dwarf', dist: 70000, l: 5.6, b: -14.2, size: 3000 },
   { name: 'Draco', dist: 260000, l: 86.4, b: 34.7, size: 1000 },
@@ -467,6 +475,17 @@ export const LOCAL_GROUP = [
   { name: 'NGC 185', dist: 2000000, l: 120.8, b: -14.5, size: 2000 },
   { name: 'NGC 147', dist: 2200000, l: 119.8, b: -14.3, size: 2000 },
   { name: 'WLM', dist: 3000000, l: 75.9, b: -73.6, size: 3000 },
+];
+
+// Close-up stops in the Local Group: centered on the mean position of the
+// named members, reached by clicking any of them. radius in light-years.
+export const LOCAL_GROUP_STOPS = [
+  { id: 'andromeda', name: 'Andromeda', galaxies: ['Andromeda (M31)', 'M32', 'M110'], radius: 250000,
+    caption: 'M31, the nearest big spiral, tilted 77° to our line of sight and projected onto the galactic plane. Its companions M32 and M110 sit beyond it here because their measured distances are a little larger.' },
+  { id: 'magellanic-clouds', name: 'Magellanic Clouds', galaxies: ['Large Magellanic Cloud', 'Small Magellanic Cloud'], radius: 80000,
+    caption: 'The Milky Way’s two brightest satellites: a barred dwarf spiral seen at 35°, and an irregular, 160,000 and 200,000 ly from the Sun.' },
+  { id: 'triangulum', name: 'Triangulum', galaxies: ['Triangulum (M33)'], radius: 60000,
+    caption: 'M33, the third-largest galaxy in the Local Group, a loosely wound spiral tilted 54° to the line of sight.' },
 ];
 
 // Nearby galaxy groups and clusters. Distance in millions of light-years,

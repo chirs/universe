@@ -9,11 +9,12 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
+  diskToSky, galaxyLevels,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
-  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS,
+  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
 } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -623,4 +624,29 @@ test('star systems obey Kepler with the transcribed masses and are wired to the 
   const hz = habitableZone(1);
   assert.ok(Math.abs(hz.inner / AU - 0.95) < 1e-9 && Math.abs(hz.outer / AU - 1.67) < 1e-9);
   assert.ok(habitableZone(0.00072).outer < 0.05 * AU);
+});
+
+test('galaxy disks rotate like orbits and the Local Group stops are centered on their members', () => {
+  // Face-on at position angle 0: the disk is the sky.
+  let p = diskToSky(0, 0, 1, 0);
+  assert.ok(Math.abs(p.north - 1) < 1e-12 && Math.abs(p.east) < 1e-12 && Math.abs(p.depth) < 1e-12);
+  p = diskToSky(0, 0, 0, 1);
+  assert.ok(Math.abs(p.east - 1) < 1e-12 && Math.abs(p.depth) < 1e-12);
+  // Edge-on: the minor axis is all depth.
+  p = diskToSky(90, 0, 0, 1);
+  assert.ok(Math.abs(p.east) < 1e-12 && Math.abs(p.north) < 1e-12 && Math.abs(p.depth - 1) < 1e-12);
+  // The major axis follows the position angle, north through east.
+  p = diskToSky(77, 90, 1, 0);
+  assert.ok(Math.abs(p.east - 1) < 1e-12 && Math.abs(p.north) < 1e-12);
+  const levels = galaxyLevels(LOCAL_GROUP_STOPS, LOCAL_GROUP);
+  assert.equal(levels.length, 3);
+  for (const lv of levels) {
+    assert.ok(Number.isFinite(lv.cx) && Number.isFinite(lv.cy) && lv.radius > 0 && lv.clickNames.length >= 1 && lv.caption, lv.id);
+    for (const name of lv.clickNames) assert.ok(LOCAL_GROUP.some((g) => g.name === name), name);
+  }
+  const m31 = LOCAL_GROUP.find((g) => g.name === 'Andromeda (M31)');
+  const andromeda = levels.find((lv) => lv.id === 'andromeda');
+  const m31pos = skyToPlane(m31.l, m31.dist * LY);
+  assert.ok(Math.hypot(andromeda.cx - m31pos.x, andromeda.cy - m31pos.y) < andromeda.radius / 2);
+  for (const g of LOCAL_GROUP) if (g.inclination !== undefined) assert.ok(g.ra !== undefined && g.pa !== undefined && g.spiral, g.name);
 });

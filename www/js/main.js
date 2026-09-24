@@ -1,8 +1,8 @@
-import { AU, LY, SCALE_UNITS, DAY_S, PLANETS, STARS, STAR_SYSTEMS } from './data.js';
+import { AU, LY, SCALE_UNITS, DAY_S, PLANETS, STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
   levelFromHash, levelFromShortcut, hashForView, moonLevels, formatDate, shouldIgnoreGlobalKeys,
-  skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, TOUR, TOUR_HOLD_MS, tourLegMs,
+  skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, galaxyLevels, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
@@ -17,6 +17,7 @@ export const MOON_LEVELS = moonLevels(PLANETS);
 for (const lv of MOON_LEVELS) lv.shortcut = { 'earth-moon': '1', jupiter: '2', saturn: '3' }[lv.id];
 
 const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, STARS);
+const GALAXY_LEVELS = galaxyLevels(LOCAL_GROUP_STOPS, LOCAL_GROUP);
 
 export const LEVELS = [
   { id: 'inner', name: 'Inner solar system', shortcut: '4', radius: 2 * AU, cx: 0, cy: 0 },
@@ -41,6 +42,7 @@ export const LEVELS = [
   { id: 'milky-way-halo', name: 'MW halo', shortcut: 'h', radius: 500e3 * LY, cx: 0, cy: 0,
     caption: 'Schematic top-down projection. Radial distances are to scale; galactic latitude is omitted and galaxy sizes are approximate.' },
   { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },
+  ...GALAXY_LEVELS,
   { id: 'virgo', name: 'Virgo Supercluster', shortcut: '9', radius: 60e6 * LY, cx: VIRGO.x / 2, cy: VIRGO.y / 2 },
   { id: 'universe', name: 'Observable universe', shortcut: '0', radius: 58e9 * LY, cx: 0, cy: 0,
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
@@ -62,7 +64,8 @@ const BAR = [
     { title: 'Star systems, farthest first', levels: [...SYSTEM_LEVELS].reverse() },
   ] },
   { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'local-bubble', 'galactic-center', 'sgr-a'].map(byId) }] },
-  'local-group', 'virgo', 'universe',
+  { label: 'Local Group', sections: [{ levels: ['local-group', 'andromeda', 'magellanic-clouds', 'triangulum'].map(byId) }] },
+  'virgo', 'universe',
 ];
 
 const SPEEDS = [
@@ -416,7 +419,7 @@ window.addEventListener('mouseup', () => {
 canvas.addEventListener('mouseleave', () => { mouse = null; });
 canvas.addEventListener('click', () => {
   if (!hover || dragged) return;
-  const level = ALL_LEVELS.find((lv) => (lv.follow ? lv.follow.name : lv.clickName) === hover.name);
+  const level = ALL_LEVELS.find((lv) => (lv.follow ? [lv.follow.name] : lv.clickNames || [lv.clickName]).includes(hover.name));
   if (level) { stopTour(); goTo(level); }
 });
 

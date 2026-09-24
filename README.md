@@ -13,7 +13,9 @@ Ten systems open up when clicked: Alpha Centauri, Sirius, Procyon, Luhman
 16 and 40 Eridani with their companions on their real orbits projected onto
 the galactic plane, and Proxima, Epsilon Eridani, Tau Ceti, Teegarden's
 Star and Gliese 876 with their planets drawn face-on at their measured
-periods, a rough habitable zone in green. `u`
+periods, a rough habitable zone in green. In the Local Group, Andromeda,
+Triangulum and the Magellanic Clouds open the same way, the spirals drawn
+at their real inclinations rotated into the galactic plane. `u`
 jumps to the Local Bubble, the supernova-blown cavity the Sun sits in, with
 the star-forming clouds that lie on its shell.
 `l` jumps to the Local arm, with nearby nebulae, clusters and black holes at

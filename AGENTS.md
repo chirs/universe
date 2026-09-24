@@ -52,8 +52,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   500 Mly the real cluster data covers. `skyOrbitPosition` places a star on
   an orbit given in the visual-binary convention (sky east, north, depth),
   and `skyOffsetToPlane` drops that into the map's galactic plane using the
-  plane's position angle at Sgr A*; `pickLevel` chooses the level to
-  highlight by scale among stops near the camera. `armRadius` and `makeArm`
+  plane's position angle at Sgr A*; `diskToSky` is the same rotation for a
+  galaxy's disk given its inclination and position angle; `pickLevel`
+  chooses the level to highlight by scale among stops near the camera. `armRadius` and `makeArm`
   turn a Reid et al. arm (log spiral with a kink, galactocentric azimuth
   zero toward the Sun) into scattered points, fitted range and extrapolation
   kept separate so the extrapolation can draw fainter. `makeExpDisk` scatters an
@@ -82,8 +83,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   or by `#uranus` and the like. The level bar is laid out by `BAR`: plain
   levels and drop-up menus (Moons, Solar system, Milky Way), each menu
   listing its stops widest first and showing the active stop's name. A level with `clickName` is reached by
-  clicking that label, which is how the galactic center, Sgr A* and the
-  star-system stops (built from `STAR_SYSTEMS`) work. The guided tour walks
+  clicking that label (or any of `clickNames`), which is how the galactic
+  center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the
+  Local Group stops (built from `LOCAL_GROUP_STOPS`) work. The guided tour walks
   the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
   any user input stops it.
 

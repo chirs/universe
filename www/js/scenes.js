@@ -8,7 +8,7 @@ import {
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
-  componentSummary, exoplanetSummary, habitableZone,
+  componentSummary, exoplanetSummary, habitableZone, diskToSky,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -711,45 +711,69 @@ const nuclearCluster = (() => {
 
 // ---------------------------------------------------------------- Local Group
 
-const galaxyGlyph = makeSpiral(21, 2, 18, 0.12, 1, 900);
-const galaxyCore = makeBlob(22, 0.12, 0.12, 300);
+// A unit spiral galaxy: arms, an exponential disk and a core, in the disk
+// plane with x along the major axis. Each spiral member gets its own copy,
+// rotated by its real inclination and position angle into the galactic
+// plane when those are known, or by an arbitrary in-plane angle when not.
+const galaxyGlyph = {
+  arms: makeSpiral(21, 2, 18, 0.12, 1, 5000),
+  disk: makeExpDisk(23, 0.3, 1, 2500),
+  core: makeBlob(22, 0.1, 0.1, 400),
+};
+
+function orientGlyph(pts, g, sizeM, angle) {
+  const out = new Float64Array(pts.length);
+  const planePA = g.inclination !== undefined ? galacticPlanePositionAngle(g.ra, g.dec) : 0;
+  for (let i = 0; i < pts.length; i += 2) {
+    let x;
+    let y;
+    if (g.inclination !== undefined) {
+      const p = skyOffsetToPlane(diskToSky(g.inclination, g.pa, pts[i], pts[i + 1]), planePA);
+      x = p.x;
+      y = p.y;
+    } else {
+      x = pts[i] * Math.cos(angle) - pts[i + 1] * Math.sin(angle);
+      y = pts[i] * Math.sin(angle) + pts[i + 1] * Math.cos(angle);
+    }
+    out[i] = x * sizeM;
+    out[i + 1] = y * sizeM;
+  }
+  return out;
+}
 
 const localGroup = (() => {
   const rand = mulberry32(31);
-  const members = LOCAL_GROUP.map((g) => ({
-    ...g,
-    ...skyToPlane(g.l, g.dist * LY),
-    angle: rand() * TAU,
-    sizeM: g.size * LY,
-  }));
+  const members = LOCAL_GROUP.map((g) => {
+    const m = { ...g, ...skyToPlane(g.l, g.dist * LY), sizeM: g.size * LY };
+    const angle = rand() * TAU;
+    if (g.spiral) {
+      m.arms = orientGlyph(galaxyGlyph.arms, g, m.sizeM, angle);
+      m.disk = orientGlyph(galaxyGlyph.disk, g, m.sizeM, angle);
+      m.core = orientGlyph(galaxyGlyph.core, g, m.sizeM, angle);
+    }
+    return m;
+  });
   return {
     name: 'local group',
-    range: [250e3 * LY, 25e6 * LY],
+    range: [20e3 * LY, 25e6 * LY],
     draw(ctx, view, alpha) {
       for (const g of members) {
         const gAlpha = g.name === 'Milky Way' ? alpha * (1 - layerAlpha(view.radius, milkyWay.range)) : alpha;
         if (gAlpha <= 0.05) continue;
         const x = view.sx(g.x);
         const y = view.sy(g.y);
-        if (!onScreen(view, x, y, 200)) continue;
         const r = g.sizeM / view.mpp;
+        if (!onScreen(view, x, y, Math.max(200, r))) continue;
         if (g.spiral) {
           glow(ctx, x, y, Math.max(r, 3), 'rgba(140,150,200,0.5)', gAlpha);
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(g.angle);
-          ctx.fillStyle = '#e4e9ff';
-          ctx.globalAlpha = 0.6 * gAlpha;
-          const s = Math.max(r, 2);
-          for (let i = 0; i < galaxyGlyph.length; i += 2) {
-            ctx.fillRect(galaxyGlyph[i] * s, galaxyGlyph[i + 1] * s, 1, 1);
+          if (r < 3) {
+            dot(ctx, x, y, 2, '#e4e9ff', gAlpha);
+          } else {
+            drawPoints(ctx, view, g.disk, g.x, g.y, '#b8c4e8', 0.3 * gAlpha);
+            drawPoints(ctx, view, g.arms, g.x, g.y, '#e4e9ff', 0.6 * gAlpha);
+            drawPoints(ctx, view, g.core, g.x, g.y, '#fff2d8', 0.7 * gAlpha);
+            glow(ctx, x, y, Math.max(r * 0.15, 3), 'rgba(255,240,215,0.8)', gAlpha);
           }
-          ctx.fillStyle = '#fff2d8';
-          for (let i = 0; i < galaxyCore.length; i += 2) {
-            ctx.fillRect(galaxyCore[i] * s, galaxyCore[i + 1] * s, 1, 1);
-          }
-          ctx.restore();
-          ctx.globalAlpha = 1;
         } else {
           glow(ctx, x, y, Math.max(r * 2, 5), 'rgba(220,210,190,0.7)', gAlpha);
           dot(ctx, x, y, Math.max(r * 0.5, 1.5), '#e6dcc8', gAlpha);
