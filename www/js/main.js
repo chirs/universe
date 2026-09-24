@@ -42,6 +42,20 @@ export const LEVELS = [
 
 const ALL_LEVELS = [...MOON_LEVELS, ...LEVELS];
 
+// The level bar: a plain level id, or a menu of levels in sections, listed
+// widest at the top so a menu reads like the sky above the bar.
+const byId = (id) => LEVELS.find((lv) => lv.id === id);
+const BAR = [
+  { label: 'Moons', sections: [
+    { title: 'Dwarf planets', levels: MOON_LEVELS.filter((lv) => lv.follow.dwarf).reverse() },
+    { title: 'Planets', levels: MOON_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
+  ] },
+  { label: 'Solar system', sections: [{ levels: ['trans-neptunian', 'outer', 'inner'].map(byId) }] },
+  'stars',
+  { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'galactic-center', 'sgr-a'].map(byId) }] },
+  'local-group', 'virgo', 'universe',
+];
+
 const SPEEDS = [
   { label: 'paused', perSec: 0 },
   { label: '1 hour/s', perSec: 3600 },
@@ -53,9 +67,7 @@ const SPEEDS = [
 const canvas = document.getElementById('space');
 const ctx = canvas.getContext('2d');
 const levelsEl = document.getElementById('levels');
-const moonsEl = document.getElementById('moons');
-const moonsBtn = document.getElementById('moons-toggle');
-const moonsMenu = document.getElementById('moons-menu');
+const menus = [];
 const speedsEl = document.getElementById('speeds');
 const dateEl = document.getElementById('date');
 const barEl = document.querySelector('#scalebar .bar');
@@ -126,7 +138,7 @@ function setOverview(on) {
 }
 
 function goTo(level, instant = false, dur = 1400) {
-  moonsMenu.hidden = true;
+  closeMenus();
   setOverview(false);
   setFollow(null);
   const to = { ...levelCenter(level), mpp: mppFor(level) };
@@ -183,7 +195,7 @@ function stepTour(now) {
 function zoomAt(sx, sy, factor) {
   if (overview) return;
   stopTour();
-  moonsMenu.hidden = true;
+  closeMenus();
   anim = null;
   const minMpp = Math.min(...ALL_LEVELS.map(mppFor)) / 4;
   const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
@@ -255,9 +267,11 @@ function updateHud() {
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
   for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === near.id);
-  const moon = !overview && MOON_LEVELS.includes(near) ? near : null;
-  moonsBtn.textContent = `${moon ? moon.name : 'Moons'} ▾`;
-  moonsBtn.classList.toggle('active', !!moon);
+  for (const m of menus) {
+    const open = !overview && m.levels.includes(near);
+    m.toggle.textContent = `${open ? near.name : m.label} ▾`;
+    m.toggle.classList.toggle('active', open);
+  }
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
   overviewBtn.classList.toggle('active', overview);
   tourBtn.textContent = tour ? 'Stop tour' : 'Tour';
@@ -307,31 +321,51 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-function buildHud() {
-  // Farthest at the top, Earth at the bottom, so the menu reads like the sky above the bar.
-  const groups = [['Dwarf planets', (p) => p.dwarf], ['Planets', (p) => !p.dwarf]];
-  for (const [title, pick] of groups) {
-    const head = document.createElement('div');
-    head.className = 'group';
-    head.textContent = title;
-    moonsMenu.appendChild(head);
-    for (const lv of MOON_LEVELS.filter((lv) => pick(lv.follow)).reverse()) {
-      const b = document.createElement('button');
-      b.textContent = lv.name;
-      b.dataset.id = lv.id;
-      if (lv.shortcut) b.title = lv.shortcut;
-      b.addEventListener('click', () => { stopTour(); goTo(lv); });
-      moonsMenu.appendChild(b);
+function closeMenus() {
+  for (const m of menus) m.list.hidden = true;
+}
+
+function levelButton(lv) {
+  const b = document.createElement('button');
+  b.textContent = lv.name;
+  b.dataset.id = lv.id;
+  if (lv.shortcut) b.title = lv.shortcut;
+  b.addEventListener('click', () => { stopTour(); goTo(lv); });
+  return b;
+}
+
+function buildMenu(spec) {
+  const wrap = document.createElement('div');
+  wrap.className = 'menu';
+  const toggle = document.createElement('button');
+  toggle.textContent = `${spec.label} ▾`;
+  const list = document.createElement('div');
+  list.className = 'menu-list';
+  list.hidden = true;
+  for (const section of spec.sections) {
+    if (section.title) {
+      const head = document.createElement('div');
+      head.className = 'group';
+      head.textContent = section.title;
+      list.appendChild(head);
     }
+    for (const lv of section.levels) list.appendChild(levelButton(lv));
   }
-  LEVELS.forEach((lv) => {
-    const b = document.createElement('button');
-    b.textContent = lv.name;
-    b.dataset.id = lv.id;
-    b.title = lv.shortcut;
-    b.addEventListener('click', () => { stopTour(); goTo(lv); });
-    levelsEl.appendChild(b);
+  wrap.append(toggle, list);
+  const menu = { label: spec.label, toggle, list, wrap, levels: spec.sections.flatMap((s) => s.levels) };
+  toggle.addEventListener('click', () => {
+    const wasOpen = !list.hidden;
+    closeMenus();
+    list.hidden = wasOpen;
   });
+  menus.push(menu);
+  return wrap;
+}
+
+function buildHud() {
+  for (const entry of BAR) {
+    levelsEl.appendChild(typeof entry === 'string' ? levelButton(byId(entry)) : buildMenu(entry));
+  }
   for (const s of SPEEDS) {
     const b = document.createElement('button');
     b.textContent = s.label;
@@ -377,13 +411,14 @@ canvas.addEventListener('click', () => {
   if (level) { stopTour(); goTo(level); }
 });
 
-moonsBtn.addEventListener('click', () => { moonsMenu.hidden = !moonsMenu.hidden; });
-document.addEventListener('click', (e) => { if (!moonsEl.contains(e.target)) moonsMenu.hidden = true; });
+document.addEventListener('click', (e) => {
+  for (const m of menus) if (!m.wrap.contains(e.target)) m.list.hidden = true;
+});
 
 window.addEventListener('keydown', (e) => {
   if (shouldIgnoreGlobalKeys(e.target.tagName, e.target.isContentEditable)) return;
   const level = levelFromShortcut(e.key, ALL_LEVELS);
-  if (e.key === 'Escape') moonsMenu.hidden = true;
+  if (e.key === 'Escape') closeMenus();
   else if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 0.8);
   else if (e.key === '-' || e.key === '_') zoomAt(w / 2, h / 2, 1.25);
   else if (level) { stopTour(); goTo(level); }

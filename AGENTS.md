@@ -69,7 +69,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   drops automatically once the view is wider than a fraction of an AU.
   Every body with moons gets a `MOON_LEVELS` entry (built by `moonLevels`
   in `util.js`), listed in the Moons menu and reached by clicking the planet
-  or by `#uranus` and the like. A level with `clickName` is reached by
+  or by `#uranus` and the like. The level bar is laid out by `BAR`: plain
+  levels and drop-up menus (Moons, Solar system, Milky Way), each menu
+  listing its stops widest first and showing the active stop's name. A level with `clickName` is reached by
   clicking that label, which is how the galactic center and Sgr A* stops
   work. The guided tour walks
   the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
