@@ -659,6 +659,8 @@ const GC = skyToPlane(0, MILKY_WAY.sunDistance);
 // lies at positive longitude. The arms are the Reid et al. 2019 fits, with
 // faint extrapolations beyond the measured azimuth ranges.
 // A radial glow whose brightness falls as exp(-r / scale), for the disk.
+const ARM_PASSES = 8;
+
 function expGlow(ctx, x, y, rMax, scale, rgb, peak, alpha) {
   const g = ctx.createRadialGradient(x, y, 0, x, y, rMax);
   for (let i = 0; i <= 10; i++) g.addColorStop(i / 10, `rgba(${rgb},${peak * Math.exp(-i / 10 * rMax / scale)})`);
@@ -684,8 +686,25 @@ const milkyWay = (() => {
   const bulge = makeBlob(mw.seed + 2, mw.bulgeRadius * 0.45, mw.bulgeRadius * 0.45, 3000);
   const bar = makeBlob(mw.seed + 3, mw.barHalfLength * 0.5, mw.bulgeRadius * 0.22, 3500, 180 - mw.barAngle);
   const fade = (r) => Math.exp(-(r - 3000 * PC) / (8000 * PC));
-  const arms = SPIRAL_ARMS.map((arm, k) => ({ ...arm, ...makeArm(arm, mw.sunDistance, mw.seed + 10 + k, 50, fade) }));
-  // Star-forming knots beaded along the arms, denser where the fit is.
+  const arms = SPIRAL_ARMS.map((arm, k) => {
+    const made = makeArm(arm, mw.sunDistance, mw.seed + 10 + k, 50, fade);
+    // A few percent of arm stars are young and bright.
+    const rand = mulberry32(mw.seed + 40 + k);
+    const bright = [];
+    for (let i = 0; i < made.fitted.length; i += 2) if (rand() < 0.05) bright.push(made.fitted[i], made.fitted[i + 1]);
+    // A denser set that fades in up close, so arms stay textured.
+    const close = makeArm(arm, mw.sunDistance, mw.seed + 30 + k, 200, fade);
+    // The dust lane runs along the inner, concave edge of the fitted arm.
+    const dust = made.fittedSpine.map((p) => {
+      const dx = GC.x - p.x;
+      const dy = GC.y - p.y;
+      const d = Math.hypot(dx, dy);
+      return { x: p.x + dx / d * made.width * 0.7, y: p.y + dy / d * made.width * 0.7 };
+    });
+    return { ...arm, ...made, bright: Float64Array.from(bright), close: Float64Array.from([...close.fitted, ...close.extra]), dust };
+  });
+  // Star-forming knots beaded along the arms, denser where the fit is; some
+  // glow pink like the nebulae around young clusters.
   const knots = (() => {
     const rand = mulberry32(mw.seed + 20);
     const out = [];
@@ -693,7 +712,7 @@ const milkyWay = (() => {
       const walk = (spine, p) => {
         for (const q of spine) {
           if (rand() < p * fade(Math.hypot(q.x - GC.x, q.y - GC.y))) {
-            out.push({ x: q.x + (rand() - 0.5) * arm.width, y: q.y + (rand() - 0.5) * arm.width, size: (300 + rand() * 500) * LY });
+            out.push({ x: q.x + (rand() - 0.5) * arm.width, y: q.y + (rand() - 0.5) * arm.width, size: (300 + rand() * 500) * LY, pink: rand() < 0.35 });
           }
         }
       };
@@ -712,22 +731,54 @@ const milkyWay = (() => {
       expGlow(ctx, gx, gy, px(mw.diskRadius), px(scale), '165,178,225', 0.75, alpha);
       drawPoints(ctx, view, diskOuter, GC.x, GC.y, '#b8c4e8', 0.22 * alpha);
       drawPoints(ctx, view, diskInner, GC.x, GC.y, '#f0dcc0', 0.25 * alpha);
+      // Arms: stacked strokes blended additively give each arm a bright core
+      // fading to soft edges, then a dark dust lane on its inner edge.
+      const trace = (spine) => {
+        ctx.beginPath();
+        spine.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
+      };
+      // Up close the bands would be hundreds of pixels wide; the stars
+      // carry the arm there, so the bands fade out as they widen.
+      const bandFade = (arm) => Math.min(1, Math.max(0, (60 - px(arm.width)) / 45));
       ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.globalCompositeOperation = 'lighter';
       for (const arm of arms) {
-        ctx.lineWidth = 2 * px(arm.width);
-        const band = (spine, a) => {
+        const fadeK = bandFade(arm);
+        if (fadeK <= 0) continue;
+        const band = (spine, k) => {
           if (spine.length < 2) return;
-          ctx.strokeStyle = `rgba(170,185,230,${a * alpha})`;
-          ctx.beginPath();
-          spine.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(p.x), view.sy(p.y)));
-          ctx.stroke();
+          trace(spine);
+          for (let i = 0; i < ARM_PASSES; i++) {
+            const t = i / (ARM_PASSES - 1);
+            ctx.lineWidth = (2.6 - 2.2 * t) * 2 * px(arm.width);
+            ctx.strokeStyle = `rgba(${Math.round(140 + 90 * t)},${Math.round(160 + 72 * t)},${Math.round(230 + 20 * t)},${0.017 * k * fadeK * alpha})`;
+            ctx.stroke();
+          }
         };
-        for (const spine of arm.extraSpines) band(spine, 0.04);
-        band(arm.fittedSpine, 0.07);
-        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.5 * alpha);
-        drawPoints(ctx, view, arm.fitted, 0, 0, '#e8eeff', 0.6 * alpha);
+        for (const spine of arm.extraSpines) band(spine, 0.55);
+        band(arm.fittedSpine, 1);
       }
+      ctx.globalCompositeOperation = 'source-over';
+      const lane = px(arms[0].width);
+      if (lane > 1.5) {
+        for (const arm of arms) {
+          if (arm.dust.length < 2) continue;
+          trace(arm.dust);
+          ctx.lineWidth = 0.45 * 2 * px(arm.width);
+          ctx.strokeStyle = `rgba(4,5,10,${0.35 * alpha * bandFade(arm) * Math.min(1, (lane - 1.5) / 3)})`;
+          ctx.stroke();
+        }
+      }
+      ctx.lineCap = 'butt';
       ctx.lineJoin = 'miter';
+      const closeAlpha = alpha * Math.min(1, Math.max(0, Math.log(80e3 * LY / view.radius) / Math.log(8)));
+      for (const arm of arms) {
+        drawPoints(ctx, view, arm.extra, 0, 0, '#dfe6ff', 0.4 * alpha);
+        drawPoints(ctx, view, arm.fitted, 0, 0, '#e8eeff', 0.45 * alpha);
+        if (closeAlpha > 0.02) drawPoints(ctx, view, arm.close, 0, 0, '#dfe6ff', 0.4 * closeAlpha);
+        drawPoints(ctx, view, arm.bright, 0, 0, '#cfe0ff', 0.85 * alpha, 2);
+      }
       // Knots are texture at galaxy scale, not objects: they fade out once
       // they would be more than a few pixels across.
       const knotAlpha = alpha * Math.min(1, Math.max(0, (10 - px(500 * LY)) / 5));
@@ -736,7 +787,7 @@ const milkyWay = (() => {
           const x = view.sx(k.x);
           const y = view.sy(k.y);
           if (!onScreen(view, x, y)) continue;
-          glow(ctx, x, y, Math.max(2.5, 1.4 * px(k.size)), 'rgba(205,225,255,0.8)', knotAlpha);
+          glow(ctx, x, y, Math.max(2.5, 1.4 * px(k.size)), k.pink ? 'rgba(255,150,185,0.8)' : 'rgba(205,225,255,0.8)', knotAlpha);
         }
       }
       // The bar: an elliptical glow along its axis, plus its points.

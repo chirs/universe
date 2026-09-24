@@ -78,7 +78,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   kept separate so the extrapolation can draw fainter. `makeExpDisk` scatters an
   exponential disk. The Milky Way layer's knots along the arms are texture,
   not catalogued objects, and fade out once they would be more than a few
-  pixels across.
+  pixels across. Arms draw as stacked additive strokes (a soft core) with a
+  dust lane on the inner edge; the strokes fade out as they widen past a
+  few dozen pixels, and a denser star set fades in, so up close the stars
+  carry the arm.
 - `www/js/scenes.js` — one draw function per layer. Each layer has a
   `[minScale, maxScale]` range in meters per pixel and fades at the edges, so
   zooming between levels is continuous rather than a scene cut. The galactic
