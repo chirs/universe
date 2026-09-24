@@ -2,6 +2,7 @@ import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
   SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
+  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import {
@@ -12,7 +13,7 @@ import {
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, trojanPoints,
-  greatCircleToSky, quadraticThrough,
+  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -1125,6 +1126,87 @@ const superclusterWalls = (() => {
   };
 })();
 
+// Great walls: points along the great circles between waypoints, at the
+// interpolated distance, dropped into the plane by longitude. Walls that
+// cross high galactic latitude sweep round in longitude here, as the
+// Magellanic Stream does.
+const greatWalls = (() => {
+  const rand = mulberry32(88);
+  const items = GREAT_WALLS.map((wall) => {
+    // A fine polyline in the plane, then points spread evenly along it, so
+    // the stretch near the galactic pole is not left sparse.
+    const line = [];
+    for (let k = 0; k + 1 < wall.waypoints.length; k++) {
+      const [a, b] = [wall.waypoints[k], wall.waypoints[k + 1]];
+      for (let i = 0; i <= 200; i++) {
+        const t = i / 200;
+        line.push(skyToPlane(slerpSky(a, b, t).l, (a[2] + (b[2] - a[2]) * t) * 1e6 * LY));
+      }
+    }
+    const cum = [0];
+    for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + Math.hypot(line[i].x - line[i - 1].x, line[i].y - line[i - 1].y));
+    const pts = [];
+    for (let i = 0; i < 1500; i++) {
+      const target = rand() * cum[cum.length - 1];
+      let j = 1;
+      while (cum[j] < target) j++;
+      const f = (target - cum[j - 1]) / (cum[j] - cum[j - 1] || 1);
+      const x = line[j - 1].x + (line[j].x - line[j - 1].x) * f;
+      const y = line[j - 1].y + (line[j].y - line[j - 1].y) * f;
+      pts.push(x + gaussian(rand) * wall.width * 1e6 * LY / 2, y + gaussian(rand) * wall.width * 1e6 * LY / 2);
+    }
+    const mid = wall.waypoints[1];
+    return { ...wall, pts: Float64Array.from(pts), mid: skyToPlane(mid[0], mid[2] * 1e6 * LY) };
+  });
+  return {
+    name: 'great walls',
+    range: [80e6 * LY, 12e9 * LY],
+    draw(ctx, view, alpha) {
+      for (const wall of items) {
+        drawPoints(ctx, view, wall.pts, 0, 0, '#ffd8a0', 0.5 * alpha, 1.5);
+        const x = view.sx(wall.mid.x);
+        const y = view.sy(wall.mid.y);
+        label(view, x, y, wall.name, alpha, 1);
+        hit(view, x, y, wall.name, alpha, wallSummary(wall));
+      }
+    },
+  };
+})();
+
+// The farthest things with names, near the edge, and the disputed
+// Hercules-Corona Borealis wall as a dashed outline.
+const distantObjects = (() => {
+  const items = DISTANT_OBJECTS.map((o) => ({ ...o, ...skyToPlane(o.l, o.dist * 1e6 * LY) }));
+  const hcb = { ...HERCULES_CORONA_BOREALIS, ...skyToPlane(HERCULES_CORONA_BOREALIS.l, HERCULES_CORONA_BOREALIS.dist * 1e6 * LY) };
+  return {
+    name: 'distant objects',
+    range: [3e9 * LY, INF],
+    draw(ctx, view, alpha) {
+      for (const o of items) {
+        const x = view.sx(o.x);
+        const y = view.sy(o.y);
+        if (!onScreen(view, x, y)) continue;
+        glow(ctx, x, y, 7, o.kind === 'Quasar' ? 'rgba(170,200,255,0.6)' : 'rgba(255,190,150,0.6)', alpha);
+        dot(ctx, x, y, 2, '#ffffff', alpha);
+        label(view, x, y, o.name, alpha, 1);
+        hit(view, x, y, o.name, alpha, distantSummary(o));
+      }
+      const x = view.sx(hcb.x);
+      const y = view.sy(hcb.y);
+      const r = hcb.size / 2 * 1e6 * LY / view.mpp;
+      ctx.strokeStyle = `rgba(255,200,140,${0.6 * alpha})`;
+      ctx.setLineDash([4, 5]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      label(view, x, y, `${hcb.name} (disputed)`, 0.8 * alpha, 0);
+      ringHit(view, x, y, r, hcb.name, alpha, herculesSummary(hcb));
+    },
+  };
+})();
+
 // ---------------------------------------------------------------- cosmic web
 
 function webLayer(name, seed, radius, nCells, nPoints, range, hole = 0) {
@@ -1238,7 +1320,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, nuclearCluster,
+  cosmicWeb, superclusters, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, nuclearCluster,
   nucleus, fieldStars, localBubble, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, comets, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];

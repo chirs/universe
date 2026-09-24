@@ -187,6 +187,26 @@ export function quadraticThrough([a, b, c], t) {
   return [la * a[0] + lb * b[0] + lc * c[0], la * a[1] + lb * b[1] + lc * c[1]];
 }
 
+// A point a fraction t along the great circle from sky position a to b
+// (galactic l, b in degrees).
+export function slerpSky(a, b, t) {
+  const u = skyVector(...a);
+  const v = skyVector(...b);
+  const omega = Math.acos(Math.max(-1, Math.min(1, u[0] * v[0] + u[1] * v[1] + u[2] * v[2])));
+  if (omega < 1e-9) return vectorSky(u);
+  const wa = Math.sin((1 - t) * omega) / Math.sin(omega);
+  const wb = Math.sin(t * omega) / Math.sin(omega);
+  return vectorSky([0, 1, 2].map((i) => wa * u[i] + wb * v[i]));
+}
+
+export function wallSummary(wall) {
+  return `Great wall · about ${formatDistance(wall.waypoints[1][2] * 1e6 * LY)} away · ${wall.note} · high galactic latitude, so dropping latitude stretches it into an arc here`;
+}
+
+export function distantSummary(o) {
+  return `${o.kind} · redshift ${o.z} · ${formatDistance(o.dist * 1e6 * LY)} away now; its light left ${o.lookback.toFixed(1)} billion years ago · ${o.note}`;
+}
+
 export function galacticObjectSummary(o) {
   return `${o.kind} · ${formatDistance(o.dist * LY)} from the Sun · ${o.note}`;
 }
@@ -263,6 +283,10 @@ export function makeExpDisk(seed, scaleLength, maxRadius, count) {
     pts[2 * i + 1] = r * Math.sin(t);
   }
   return pts;
+}
+
+export function herculesSummary(h) {
+  return `Structure · redshift ${h.z[0]} to ${h.z[1]}, about ${formatDistance(h.dist * 1e6 * LY)} away now · ${h.note}`;
 }
 
 export function landmarkSummary(landmark) {

@@ -9,16 +9,17 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
+  SPACECRAFT, COMETS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
+import { cosmologyAt } from '../v2/model.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -738,4 +739,22 @@ test('Radcliffe Wave runs 2.7 kpc from Canis Major to Cygnus through its anchors
   assert.ok(Math.abs(length - 2700) < 250, `length ${length}`);
   const l = (p) => ((Math.atan2(p[1], p[0]) * 180 / Math.PI) + 360) % 360;
   assert.ok(Math.abs(l(anchors[0]) - 224) < 5 && Math.abs(l(anchors[2]) - 80) < 5);
+});
+
+test('distant objects sit at the comoving distance for their redshift and inside the horizon', () => {
+  for (const o of DISTANT_OBJECTS) {
+    const c = cosmologyAt(o.z, 'z');
+    assert.ok(Math.abs(c.distance - o.dist) / o.dist < 0.005, o.name);
+    assert.ok(Math.abs(c.lookback - o.lookback) < 0.02, o.name);
+    assert.ok(o.dist * 1e6 * LY < UNIVERSE.radius, o.name);
+  }
+  const zs = DISTANT_OBJECTS.map((o) => o.z);
+  assert.deepEqual(zs, [...zs].sort((a, b) => a - b));
+});
+
+test('slerpSky follows the great circle between two points', () => {
+  const mid = slerpSky([0, 0], [90, 0], 0.5);
+  assert.ok(Math.abs(mid.l - 45) < 1e-9 && Math.abs(mid.b) < 1e-9);
+  const pole = slerpSky([0, 60], [180, 60], 0.5);
+  assert.ok(Math.abs(pole.b - 90) < 1e-6);
 });

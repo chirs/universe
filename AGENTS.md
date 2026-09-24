@@ -54,7 +54,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `HELIOSPHERE` holds the Voyagers' boundary crossings. `RADCLIFFE_WAVE` is
   the Alves et al. 2020 centerline fit (its vertical wave is out of the
   plane and not drawn); `MAGELLANIC_STREAM` is placed in Nidever's stream
-  coordinates with a schematic distance model, noted in data.js. A craft with
+  coordinates with a schematic distance model, noted in data.js.
+  `GREAT_WALLS` are waypoint chains drawn along great circles (high-latitude
+  walls stretch into arcs when latitude is dropped); `DISTANT_OBJECTS` and
+  `HERCULES_CORONA_BOREALIS` sit at comoving distances precomputed with the
+  v2 cosmology (`cosmologyAt` in `www/v2/model.js`), which a test rechecks. A craft with
   `center: 399` (JWST) is tracked relative to Earth and drawn in a frame
   turning with Earth, so its halo orbit stays beyond L2. The ISS and JWST
   stops (`EARTH_LEVELS` in main.js) follow Earth and are reached by clicking.

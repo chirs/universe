@@ -696,7 +696,50 @@ export const SUPERCLUSTERS = [
 export const VOIDS = [
   { name: 'Local Void', dist: 106, l: 91.3, b: -11.6, size: 200,
     note: 'begins at the edge of the Local Group; bounded by the Perseus-Pisces and Norma-Pavo-Indus filaments' },
+  // Kirshner et al. 1981; center RA 14h50m, Dec +46 converted to galactic.
+  // Distance and diameter are the usual round values; quoted sizes vary with
+  // how the edge is defined.
+  { name: 'Bo\u00f6tes Void', dist: 700, l: 79.7, b: 59.9, size: 330,
+    note: 'the \u201cGreat Nothing\u201d, one of the largest known voids, holding only a few dozen galaxies' },
 ];
+
+// Great walls, as chains of waypoints (galactic l, b in degrees, distance in
+// Mly) converted from equatorial positions, and drawn width in Mly. The CfA2
+// wall follows Geller & Huchra's 1989 slice (Dec 26.5 to 32.5, RA 9h to
+// 16.5h, through Coma, at about Coma's distance); the Sloan wall follows
+// Gott et al. 2005 (RA 9.8h to 14.5h near the celestial equator, z 0.07 to
+// 0.08). Waypoints are from memory of those papers and approximate.
+export const GREAT_WALLS = [
+  { name: 'CfA2 Great Wall', width: 12, length: 500, waypoints: [[195.8, 39.5, 300], [58.1, 88.0, 300], [49.3, 42.3, 300]],
+    note: 'the first great wall found, in 1989: a sheet of galaxies 500 million ly long, passing through the Coma Cluster' },
+  { name: 'Sloan Great Wall', width: 25, length: 1370, waypoints: [[238.8, 37.1, 1000], [288.5, 57.0, 1030], [346.7, 52.1, 1060]],
+    note: 'a chain of superclusters 1.37 billion ly long, found in the Sloan Digital Sky Survey in 2003' },
+];
+
+// Distant landmarks, placed at their present (comoving) distance for the
+// redshift given, with the Planck cosmology of www/v2/model.js (H0 = 67.4,
+// Omega_m = 0.315); lookback in billions of years. Positions from J2000
+// RA/Dec (Wikipedia infoboxes), redshifts from the discovery papers.
+// Hercules-Corona Borealis is a clustering of gamma-ray bursts at z 1.6 to
+// 2.1 (Horv\u00e1th et al. 2014); size is its major axis, and its reality
+// is disputed.
+export const DISTANT_OBJECTS = [
+  { name: '3C 273', kind: 'Quasar', z: 0.158, l: 290.0, b: 64.4, dist: 2204, lookback: 2.05,
+    note: 'the first quasar identified, and the brightest in our sky' },
+  { name: 'TON 618', kind: 'Quasar', z: 2.219, l: 170.6, b: 83.4, dist: 18320, lookback: 10.84,
+    note: 'powered by one of the most massive black holes known, around 40 billion solar masses' },
+  { name: 'J0313\u22121806', kind: 'Quasar', z: 7.64, l: 205.1, b: -56.1, dist: 29411, lookback: 13.12,
+    note: 'the most distant quasar known, its black hole already 1.6 billion solar masses' },
+  { name: 'GN-z11', kind: 'Galaxy', z: 10.603, l: 126.0, b: 54.8, dist: 31816, lookback: 13.36,
+    note: 'the record-holder from 2016 until JWST, found by Hubble' },
+  { name: 'JADES-GS-z14-0', kind: 'Galaxy', z: 14.18, l: 223.6, b: -54.5, dist: 33719, lookback: 13.50,
+    note: 'found by JWST in 2024, its redshift confirmed by ALMA' },
+  { name: 'MoM-z14', kind: 'Galaxy', z: 14.44, l: 236.7, b: 42.1, dist: 33831, lookback: 13.51,
+    note: 'the most distant galaxy confirmed, seen 280 million years after the Big Bang' },
+];
+
+export const HERCULES_CORONA_BOREALIS = { name: 'Hercules\u2013Corona Borealis Great Wall', z: [1.6, 2.1], l: 49.0, b: 35.5, dist: 16579, size: 10000,
+  note: 'a clustering of gamma-ray bursts about 10 billion ly across, the largest structure claimed; disputed' };
 
 // Notes shown while the view radius is inside an otherwise empty stretch,
 // so the emptiness reads as real space rather than a rendering gap.
