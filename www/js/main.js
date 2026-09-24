@@ -269,18 +269,15 @@ function nearestLevel() {
 }
 
 function drawLabels(view) {
-  const placed = [];
   shownLabels = [];
   ctx.font = '12px system-ui, -apple-system, sans-serif';
   ctx.textBaseline = 'middle';
   const sorted = view.labels.sort((a, b) => b.priority - a.priority);
   for (const l of sorted) {
+    if (l.x < 0 || l.x > w || l.y < 0 || l.y > h) continue;
     const isHover = hover && hover.name === l.text;
     const tw = ctx.measureText(l.text).width;
-    let rect = placeLabel(l.x, l.y, tw + 4, 16, placed, { w, h });
-    if (!rect && isHover) rect = { x: l.x + 8, y: l.y - 8, w: tw + 4, h: 16 };
-    if (!rect) continue;
-    placed.push(rect);
+    const rect = placeLabel(l.x, l.y, tw + 4, 16, { w, h });
     shownLabels.push({ rect, text: l.text, x: l.x, y: l.y });
     ctx.globalAlpha = l.alpha * (isHover ? 1 : 0.8);
     ctx.fillStyle = isHover ? '#ffffff' : '#cfd3dc';

@@ -359,29 +359,12 @@ test('star and galaxy coordinates are in range', () => {
   }
 });
 
-test('placeLabel tries right, left, above, below, then gives up', () => {
+test('placeLabel always sits to the right, pushed inside the bounds', () => {
   const bounds = { w: 800, h: 600 };
-  const placed = [];
-  const spots = [];
-  for (let i = 0; i < 5; i++) {
-    const r = placeLabel(400, 300, 60, 16, placed, bounds);
-    spots.push(r);
-    if (r) placed.push(r);
-  }
-  assert.deepEqual(spots[0], { x: 408, y: 292, w: 60, h: 16 });
-  assert.deepEqual(spots[1], { x: 332, y: 292, w: 60, h: 16 });
-  assert.deepEqual(spots[2], { x: 370, y: 276, w: 60, h: 16 });
-  assert.deepEqual(spots[3], { x: 370, y: 308, w: 60, h: 16 });
-  assert.equal(spots[4], null);
-});
-
-test('placeLabel keeps labels inside the bounds', () => {
-  const bounds = { w: 800, h: 600 };
-  const nearRight = placeLabel(790, 300, 60, 16, [], bounds);
-  assert.deepEqual(nearRight, { x: 722, y: 292, w: 60, h: 16 });
-  const nearTop = placeLabel(5, 40, 60, 16, [], bounds);
-  assert.deepEqual(nearTop, { x: 13, y: 32, w: 60, h: 16 });
-  assert.equal(placeLabel(5, 5, 60, 16, [], bounds), null);
+  assert.deepEqual(placeLabel(400, 300, 60, 16, bounds), { x: 408, y: 292, w: 60, h: 16 });
+  assert.deepEqual(placeLabel(400, 300, 60, 16, bounds), placeLabel(400, 300, 60, 16, bounds));
+  assert.deepEqual(placeLabel(790, 300, 60, 16, bounds), { x: 740, y: 292, w: 60, h: 16 });
+  assert.deepEqual(placeLabel(5, 3, 60, 16, bounds), { x: 13, y: 0, w: 60, h: 16 });
 });
 
 test('signposts have ordered, non-overlapping ranges', () => {

@@ -88,7 +88,7 @@ function glow(ctx, x, y, r, color, alpha = 1) {
   ctx.globalAlpha = 1;
 }
 
-// Queue a label; main.js draws them last, skipping overlaps.
+// Queue a label; main.js draws them last, each to the right of its point.
 function label(view, x, y, text, alpha, priority = 0) {
   if (alpha <= 0.05) return;
   view.labels.push({ x, y, text, alpha, priority });

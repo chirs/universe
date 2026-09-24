@@ -678,23 +678,16 @@ export function shouldIgnoreGlobalKeys(tagName, isContentEditable = false) {
   return isContentEditable || ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(tagName);
 }
 
-// Find a spot for a w x h label beside the point (x, y): to the right, then
-// left, above, below. Returns the rect, or null if every spot collides with a
-// placed rect or leaves the bounds.
-export function placeLabel(x, y, w, h, placed, bounds, gap = 8) {
-  const candidates = [
-    { x: x + gap, y: y - h / 2 },
-    { x: x - gap - w, y: y - h / 2 },
-    { x: x - w / 2, y: y - gap - h },
-    { x: x - w / 2, y: y + gap },
-  ];
-  for (const c of candidates) {
-    const rect = { x: c.x, y: c.y, w, h };
-    if (rect.x < 0 || rect.y < 0 || rect.x + w > bounds.w || rect.y + h > bounds.h) continue;
-    const clash = placed.some((r) => rect.x < r.x + r.w && rect.x + w > r.x && rect.y < r.y + r.h && rect.y + h > r.y);
-    if (!clash) return rect;
-  }
-  return null;
+// A w x h label to the right of the point (x, y), pushed back inside the
+// bounds. Always the same side, so a label never jumps around as things
+// move; labels may overlap where objects crowd.
+export function placeLabel(x, y, w, h, bounds, gap = 8) {
+  return {
+    x: Math.max(0, Math.min(x + gap, bounds.w - w)),
+    y: Math.max(0, Math.min(y - h / 2, bounds.h - h)),
+    w,
+    h,
+  };
 }
 
 // Stops of the guided tour, in order, and how long a leg between two zooms
