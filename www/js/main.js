@@ -6,6 +6,7 @@ import {
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
+import { createAmbient } from './audio.js';
 
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
 const VIRGO = skyToPlane(284, 54e6 * LY);
@@ -88,6 +89,7 @@ const barLabel = document.querySelector('#scalebar .label');
 const scalebarEl = document.getElementById('scalebar');
 const overviewBtn = document.getElementById('overview');
 const tourBtn = document.getElementById('tour');
+const soundBtn = document.getElementById('sound');
 const captionEl = document.getElementById('caption');
 const hoverInfoEl = document.getElementById('hover-info');
 const hoverNameEl = hoverInfoEl.querySelector('.name');
@@ -107,6 +109,9 @@ let hover = null;
 let overview = false;
 let lastLevelId = ALL_LEVELS[0].id;
 let tour = null;
+let sound = null;
+let soundOn = false;
+try { soundOn = localStorage.getItem('sound') === 'on'; } catch {}
 
 function halfMin() {
   return Math.min(w, h) / 2;
@@ -143,6 +148,18 @@ function trackFollow() {
   cam.cx += p.x - cam.followPos.x;
   cam.cy += p.y - cam.followPos.y;
   cam.followPos = p;
+}
+
+function setSound(on) {
+  soundOn = on;
+  try { localStorage.setItem('sound', on ? 'on' : 'off'); } catch {}
+  if (on && !sound) sound = createAmbient();
+  if (sound) sound.setEnabled(on);
+}
+
+// Browsers only start audio from a user gesture, so a stored "on" waits for one.
+function resumeSound() {
+  if (soundOn && !sound) setSound(true);
 }
 
 function setOverview(on) {
@@ -287,6 +304,7 @@ function updateHud() {
   }
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
   overviewBtn.classList.toggle('active', overview);
+  soundBtn.classList.toggle('active', soundOn);
   tourBtn.textContent = tour ? 'Stop tour' : 'Tour';
   tourBtn.classList.toggle('active', !!tour);
   scalebarEl.hidden = overview;
@@ -328,6 +346,7 @@ function frame(now) {
       if (alpha > 0) layer.draw(ctx, view, alpha, days);
     }
   }
+  if (sound && !overview) sound.update(view.radius);
   updateHover(view);
   drawLabels(view);
   updateHud();
@@ -438,7 +457,10 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === ' ') { e.preventDefault(); speed = speed.perSec ? SPEEDS[0] : SPEEDS[1]; }
   else if (e.key === 'o') { stopTour(); setOverview(!overview); }
   else if (e.key === 'p') { if (tour) stopTour(); else startTour(); }
+  else if (e.key === 'm') setSound(!soundOn);
 });
+window.addEventListener('keydown', resumeSound, { once: true });
+window.addEventListener('pointerdown', resumeSound, { once: true });
 
 window.addEventListener('hashchange', () => {
   if (location.hash === '#overview') setOverview(true);
@@ -446,6 +468,7 @@ window.addEventListener('hashchange', () => {
 });
 overviewBtn.addEventListener('click', () => { stopTour(); setOverview(!overview); });
 tourBtn.addEventListener('click', () => { if (tour) stopTour(); else startTour(); });
+soundBtn.addEventListener('click', () => setSound(!soundOn));
 window.addEventListener('resize', () => {
   const level = nearestLevel();
   const ratio = cam.mpp / mppFor(level);

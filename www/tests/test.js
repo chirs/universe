@@ -12,6 +12,7 @@ import {
   diskToSky, galaxyLevels,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
+import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
@@ -651,4 +652,17 @@ test('galaxy disks rotate like orbits and the Local Group stops are centered on 
   const m31pos = skyToPlane(m31.l, m31.dist * LY);
   assert.ok(Math.hypot(andromeda.cx - m31pos.x, andromeda.cy - m31pos.y) < andromeda.radius / 2);
   for (const g of LOCAL_GROUP) if (g.inclination !== undefined) assert.ok(g.ra !== undefined && g.pa !== undefined && g.spiral, g.name);
+});
+
+test('soundParams deepens and thins out as the view widens', () => {
+  let prev = soundParams(R_MIN);
+  for (let r = R_MIN * 10; r < R_MAX; r *= 10) {
+    const p = soundParams(r);
+    assert.ok(p.root < prev.root && p.cutoff < prev.cutoff && p.wet > prev.wet && p.chimeRate < prev.chimeRate);
+    prev = p;
+  }
+  assert.deepEqual(soundParams(R_MIN / 1e6), soundParams(R_MIN));
+  assert.deepEqual(soundParams(R_MAX * 1e6), soundParams(R_MAX));
+  assert.deepEqual(soundParams(LY), soundParams(LY));
+  assert.ok(Math.abs(soundParams(R_MAX).root - 41.2) < 1e-9);
 });

@@ -74,6 +74,11 @@ playbooks, which clone the repo and serve `www/` as the document root.
   (`logY`, `angleX`, `frame`) and `drawOverview`, which fills the same
   `labels` and `hits` arrays as the layers so hover and label placement are
   shared. Toggled with the Overview button, `o`, or `#overview`.
+- `www/js/audio.js` — opt-in generative ambient sound (Web Audio, no files).
+  `soundParams` maps the view radius, on the overview's log span, to drone
+  pitch, filter cutoff, reverb mix and chime rate; `createAmbient` builds the
+  graph on the first user gesture. Toggled with the Sound button or `m`; the
+  preference is kept in `localStorage`.
 - `www/js/main.js` — camera state `{center, metersPerPixel}`, the animation
   loop, level stops, and input (buttons, wheel, keys, hash). A level with
   `follow` keeps the camera pinned to that planet as it moves; following
