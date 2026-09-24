@@ -204,7 +204,8 @@ html, body {
 }
 #time .menu-list { left: auto; right: 0; min-width: 120px; }
 #date { margin-right: 6px; color: #8a90a0; font-variant-numeric: tabular-nums; }
-#play { min-width: 32px; }
+#play, #reverse { min-width: 32px; }
+#reverse { margin-right: 6px; }
 
 #scalebar {
   min-width: 0;

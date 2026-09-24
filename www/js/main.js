@@ -46,6 +46,7 @@ const menus = [];
 const speedsEl = document.getElementById('speeds');
 const dateEl = document.getElementById('date');
 const playBtn = document.getElementById('play');
+const reverseBtn = document.getElementById('reverse');
 const speedToggle = document.getElementById('speed-toggle');
 const helpEl = document.getElementById('help');
 const barEl = document.querySelector('#scalebar .bar');
@@ -70,6 +71,7 @@ let dpr = 1;
 let simMs = Date.now();
 let speed = SPEEDS[2];
 let runSpeed = speed;
+let dir = 1;
 let lastFrame = performance.now();
 let mouse = null;
 let hover = null;
@@ -216,7 +218,8 @@ function zoomAt(sx, sy, factor) {
   closeMenus();
   anim = null;
   const minMpp = Math.min(...ALL_LEVELS.map(mppFor)) / 4;
-  const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
+  // Wide enough that the observable universe shrinks to a bubble in the rest.
+  const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 8;
   const next = Math.min(maxMpp, Math.max(minMpp, cam.mpp * factor));
   const wx = cam.cx + (sx - w / 2) * cam.mpp;
   const wy = cam.cy - (sy - h / 2) * cam.mpp;
@@ -333,7 +336,8 @@ function updateHud() {
     m.toggle.classList.toggle('active', open);
   }
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === runSpeed.label);
-  playBtn.textContent = speed.perSec ? '⏸' : '▶';
+  playBtn.textContent = speed.perSec && dir > 0 ? '⏸' : '▶';
+  reverseBtn.textContent = speed.perSec && dir < 0 ? '⏸' : '◀';
   speedToggle.textContent = `${runSpeed.label} ▾`;
   overviewBtn.classList.toggle('active', overview);
   soundBtn.classList.toggle('active', soundOn);
@@ -360,7 +364,7 @@ function updateHud() {
 function frame(now) {
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
-  simMs += speed.perSec * dt * 1000;
+  simMs += dir * speed.perSec * dt * 1000;
   stepAnim(now);
   trackFollow();
   if (cam.follow && cam.mpp * halfMin() > 0.2 * AU) setFollow(null);
@@ -437,9 +441,10 @@ function closeMenus() {
 }
 
 // Once the clock runs, a linked time no longer holds, so it leaves the hash.
-function setSpeed(s) {
+function setSpeed(s, d = dir) {
   speed = s;
   if (!s.perSec) return;
+  dir = d;
   runSpeed = s;
   moment = null;
   if (location.hash.includes('?')) history.replaceState(null, '', hashForView(overview, lastLevelId));
@@ -577,6 +582,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === ' ') { e.preventDefault(); setSpeed(speed.perSec ? SPEEDS[0] : runSpeed); }
   else if (e.key === '?') { const wasOpen = !helpEl.hidden; closeMenus(); helpEl.hidden = wasOpen; }
   else if (e.key === 'o') setOverview(!overview);
+  else if (e.key === 'r') setSpeed(runSpeed, -dir);
   else if (e.key === '[' || e.key === ']') {
     const m = momentAround(MOMENTS, simMs, e.key === ']' ? 1 : -1);
     if (m) goToMoment(m);
@@ -604,7 +610,12 @@ window.addEventListener('hashchange', () => {
   else goTo(levelFromHash(hash, ALL_LEVELS));
   applyHashTime(hash);
 });
-playBtn.addEventListener('click', () => setSpeed(speed.perSec ? SPEEDS[0] : runSpeed));
+// Each button runs the clock its way, and pauses it if it already runs that way.
+function toggleClock(d) {
+  setSpeed(speed.perSec && dir === d ? SPEEDS[0] : runSpeed, d);
+}
+playBtn.addEventListener('click', () => toggleClock(1));
+reverseBtn.addEventListener('click', () => toggleClock(-1));
 overviewBtn.addEventListener('click', () => setOverview(!overview));
 soundBtn.addEventListener('click', () => setSound(!soundOn));
 volumeEl.addEventListener('input', () => {
