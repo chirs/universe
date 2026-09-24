@@ -315,15 +315,20 @@ test('the modeled Oort cloud begins at the annotated distance', () => {
   assert.ok(BELTS.oort.outer > BELTS.oort.inner);
 });
 
-test('Saturn\'s rings sit outside the planet and inside the moons', () => {
-  const saturn = PLANETS.find((p) => p.name === 'Saturn');
-  let last = saturn.radius;
-  for (const ring of saturn.rings) {
-    assert.ok(ring.inner >= last && ring.outer > ring.inner, ring.name);
-    assert.ok(ring.alpha > 0 && ring.alpha <= 1, ring.name);
-    last = ring.outer;
+test('ring systems sit outside their planet, in order and without overlap', () => {
+  const ringed = PLANETS.filter((p) => p.rings);
+  assert.deepEqual(ringed.map((p) => p.name), ['Jupiter', 'Saturn', 'Uranus', 'Neptune']);
+  for (const planet of ringed) {
+    let last = planet.radius;
+    for (const ring of planet.rings) {
+      assert.ok(ring.inner >= last && ring.outer > ring.inner, `${planet.name} ${ring.name}`);
+      assert.ok(ring.alpha > 0 && ring.alpha <= 1, ring.name);
+      last = ring.outer;
+    }
   }
-  assert.ok(last < saturn.moons[0].a);
+  // The Encke gap, where Pan orbits, falls between two pieces of the A ring.
+  const a = PLANETS.find((p) => p.name === 'Saturn').rings.filter((r) => r.name === 'A ring');
+  assert.ok(a[0].outer < 133584 * 1000 && a[1].inner > 133584 * 1000);
 });
 
 test('clusters are ordered outward with sane sizes', () => {

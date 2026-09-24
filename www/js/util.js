@@ -56,6 +56,14 @@ export function moonSummary(moon, parentName) {
   return `Moon of ${parentName} · radius ${formatDistance(moon.radius)} · orbit ${formatDistance(moon.a)} · period ${formatPeriod(moon.period)}`;
 }
 
+export function ringSummary(ring, planetName) {
+  const width = ring.outer - ring.inner;
+  const where = width < 0.02 * ring.outer
+    ? `${formatDistance((ring.inner + ring.outer) / 2)} from the center, ${formatDistance(width)} wide`
+    : `${formatDistance(ring.inner)} to ${formatDistance(ring.outer)} from the center`;
+  return `Ring of ${planetName} · ${where}`;
+}
+
 export function starSummary(star) {
   const parts = ['Star'];
   if (star.radius) parts.push(`radius ${formatDistance(star.radius)}`);

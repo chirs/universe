@@ -5,6 +5,10 @@
 // sheets. Nearest stars: RECONS 10 pc list; galactic coordinates rounded to
 // a tenth of a degree. Local Group members: McConnachie (2012). Galaxy and
 // supercluster sizes are round numbers from the usual encyclopedia values.
+// Ring radii are from NASA's planetary ring fact sheets; narrow rings are
+// given their mean radius plus or minus half their width, and gaps (Encke,
+// Keeler) are left between pieces of the ring they cut. Alpha is a rough
+// opacity for drawing, not a measured optical depth.
 // Moon orbits and radii are from JPL's planetary-satellite tables and the
 // published mutual-orbit solutions for trans-Neptunian binaries. L0 is the
 // mean longitude at J2000 where an epoch phase is available. For distant
@@ -66,6 +70,13 @@ export const PLANETS = [
     ] },
   { name: 'Ceres', a: 2.7665 * AU, period: 1680.7, radius: 469.7 * KM, L0: 160.594, e: 0.07838, varpi: 154.417, color: '#a09a90', dwarf: true },
   { name: 'Jupiter', a: 5.2044 * AU, period: 4332.59, radius: 69911 * KM, L0: 34.404, e: 0.04838624, varpi: 14.728, color: '#d9b48a',
+    ringColor: '#b8a58c',
+    rings: [
+      { name: 'Halo ring', inner: 92000 * KM, outer: 122500 * KM, alpha: 0.06 },
+      { name: 'Main ring', inner: 122500 * KM, outer: 129000 * KM, alpha: 0.25 },
+      { name: 'Amalthea gossamer ring', inner: 129000 * KM, outer: 182000 * KM, alpha: 0.04 },
+      { name: 'Thebe gossamer ring', inner: 182000 * KM, outer: 226000 * KM, alpha: 0.03 },
+    ],
     moons: [
       { name: 'Amalthea', a: 181400 * KM, period: 0.499918, radius: 83.5 * KM, L0: 53.6, e: 0.003, varpi: 103.0, color: '#b86f54' },
       { name: 'Io', a: 421800 * KM, period: 1.769138, radius: 1821.6 * KM, L0: 18.171, color: '#e0c66a' },
@@ -75,9 +86,15 @@ export const PLANETS = [
     ] },
   { name: 'Saturn', a: 9.5826 * AU, period: 10759.22, radius: 58232 * KM, L0: 49.944, e: 0.05386179, varpi: 92.599, color: '#e6d2a0',
     rings: [
-      { name: 'C ring', inner: 74500 * KM, outer: 92000 * KM, alpha: 0.25 },
+      { name: 'D ring', inner: 66900 * KM, outer: 74510 * KM, alpha: 0.08 },
+      { name: 'C ring', inner: 74658 * KM, outer: 92000 * KM, alpha: 0.25 },
       { name: 'B ring', inner: 92000 * KM, outer: 117580 * KM, alpha: 0.7 },
-      { name: 'A ring', inner: 122170 * KM, outer: 136775 * KM, alpha: 0.5 },
+      { name: 'A ring', inner: 122170 * KM, outer: 133423 * KM, alpha: 0.5 },
+      { name: 'A ring', inner: 133745 * KM, outer: 136485 * KM, alpha: 0.5 },
+      { name: 'A ring', inner: 136530 * KM, outer: 136775 * KM, alpha: 0.5 },
+      { name: 'F ring', inner: 140155 * KM, outer: 140205 * KM, alpha: 0.45 },
+      { name: 'G ring', inner: 166000 * KM, outer: 175000 * KM, alpha: 0.06 },
+      { name: 'E ring', inner: 180000 * KM, outer: 480000 * KM, alpha: 0.035 },
     ],
     moons: [
       { name: 'Mimas', a: 185539 * KM, period: 0.942, radius: 198.2 * KM, L0: 318.18, color: '#cfcac0' },
@@ -90,6 +107,21 @@ export const PLANETS = [
       { name: 'Iapetus', a: 3560820 * KM, period: 79.32, radius: 734.5 * KM, L0: 217.368, color: '#9a9088' },
     ] },
   { name: 'Uranus', a: 19.2184 * AU, period: 30688.5, radius: 25362 * KM, L0: 313.232, e: 0.04725744, varpi: 170.954, color: '#9fd6dc',
+    ringColor: '#9a9ca4',
+    rings: [
+      { name: '6 ring', inner: 41836.2 * KM, outer: 41837.8 * KM, alpha: 0.35 },
+      { name: '5 ring', inner: 42233 * KM, outer: 42235 * KM, alpha: 0.35 },
+      { name: '4 ring', inner: 42570 * KM, outer: 42572 * KM, alpha: 0.35 },
+      { name: 'Alpha ring', inner: 44714.5 * KM, outer: 44721.5 * KM, alpha: 0.4 },
+      { name: 'Beta ring', inner: 45657 * KM, outer: 45665 * KM, alpha: 0.4 },
+      { name: 'Eta ring', inner: 47175.2 * KM, outer: 47176.8 * KM, alpha: 0.3 },
+      { name: 'Gamma ring', inner: 47625.5 * KM, outer: 47628.5 * KM, alpha: 0.4 },
+      { name: 'Delta ring', inner: 48297.5 * KM, outer: 48302.5 * KM, alpha: 0.4 },
+      { name: 'Lambda ring', inner: 50022 * KM, outer: 50024 * KM, alpha: 0.25 },
+      { name: 'Epsilon ring', inner: 51120 * KM, outer: 51178 * KM, alpha: 0.6 },
+      { name: 'Nu ring', inner: 66100 * KM, outer: 69900 * KM, alpha: 0.04 },
+      { name: 'Mu ring', inner: 86000 * KM, outer: 103000 * KM, alpha: 0.03 },
+    ],
     moons: [
       { name: 'Puck', a: 86004 * KM, period: 0.761833, radius: 81 * KM, L0: 266.2, retrograde: true, color: '#9298a0' },
       { name: 'Miranda', a: 129900 * KM, period: 1.413, radius: 235.8 * KM, L0: 209.004, retrograde: true, color: '#c4c8d0' },
@@ -99,6 +131,14 @@ export const PLANETS = [
       { name: 'Oberon', a: 583500 * KM, period: 13.463, radius: 761.4 * KM, L0: 180.253, retrograde: true, color: '#a8acb4' },
     ] },
   { name: 'Neptune', a: 30.11 * AU, period: 60182, radius: 24622 * KM, L0: 304.880, e: 0.00859048, varpi: 44.965, color: '#5a7fd6',
+    ringColor: '#9a9ca4',
+    rings: [
+      { name: 'Galle ring', inner: 40900 * KM, outer: 42900 * KM, alpha: 0.05 },
+      { name: 'Le Verrier ring', inner: 53144 * KM, outer: 53256 * KM, alpha: 0.3 },
+      { name: 'Lassell ring', inner: 53256 * KM, outer: 57200 * KM, alpha: 0.04 },
+      { name: 'Arago ring', inner: 57200 * KM, outer: 57300 * KM, alpha: 0.15 },
+      { name: 'Adams ring', inner: 62915 * KM, outer: 62950 * KM, alpha: 0.4 },
+    ],
     moons: [
       { name: 'Proteus', a: 117647 * KM, period: 1.122, radius: 210.0 * KM, L0: 298.707, color: '#8890a0' },
       { name: 'Triton', a: 354760 * KM, period: 5.877, radius: 1353.4 * KM, L0: 141.227, retrograde: true, color: '#d8c8c0' },

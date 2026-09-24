@@ -8,7 +8,7 @@ import { TRACKS } from './spacecraft.js';
 import { GLOBULAR_CLUSTERS } from './globulars.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
-  planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
+  planetSummary, moonSummary, ringSummary, starSummary, galaxySummary, clusterSummary,
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
@@ -165,13 +165,22 @@ const moons = {
       for (const ring of p.rings || []) {
         const ro = ring.outer / view.mpp;
         if (ro < 6) continue;
+        const ri = ring.inner / view.mpp;
         ctx.globalAlpha = ring.alpha * alpha;
-        ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.arc(px, py, ro, 0, TAU);
-        ctx.arc(px, py, ring.inner / view.mpp, 0, TAU, true);
-        ctx.fill();
+        // Narrow rings keep a hairline, as small bodies keep a dot.
+        if (ro - ri < 1) {
+          ctx.strokeStyle = p.ringColor || p.color;
+          ctx.arc(px, py, (ro + ri) / 2, 0, TAU);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = p.ringColor || p.color;
+          ctx.arc(px, py, ro, 0, TAU);
+          ctx.arc(px, py, ri, 0, TAU, true);
+          ctx.fill();
+        }
         ctx.globalAlpha = 1;
+        ringHit(view, px, py, (ro + ri) / 2, `${p.name}\u2019s ${ring.name}`, alpha, ringSummary(ring, p.name));
       }
       for (const m of p.moons) {
         const a = m.a / view.mpp;
