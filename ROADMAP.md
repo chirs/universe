@@ -73,7 +73,7 @@ when. Build the atlas of moments first, with provenance underneath.
 
 - Converting the original explorer to 3D. It retains its 2D view and no
   dependencies; the separate `/v2/` atlas explores 3D instead.
-- Further tour work or narration. Prioritize direct exploration and spatial
-  relationships; the existing tour did not prove useful.
+- A guided space tour or narration. One was built, did not prove useful,
+  and was removed in September 2026; prefer direct exploration.
 - Zooming inward past the Earth to cells and atoms, as Boeke and the Eameses
   did. A different site; this one is about the universe.

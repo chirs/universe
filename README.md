@@ -56,9 +56,7 @@ planet zooms to it, with its satellite system where it has one. For remote satel
 without a published J2000 phase, the displayed phase is illustrative while
 the modeled orbit size, period, and eccentricity remain measured values.
 
-The Tour button (or `p`) pulls back from the Earth and Moon to the observable
-universe at a steady rate, pausing at each level, after Powers of Ten. The
-Overview button (or `o`) switches to a log-radius map after Gott and
+The Overview button (or `o`) switches to a log-radius map after Gott and
 Jurić: direction across, distance from the Sun up on a log scale, everything
 on one screen.
 

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha, niceScaleBar, mulberry32,
   skyToPlane, levelFromHash, daysSinceJ2000, placeLabel, levelFromShortcut, hashForView, moonSystemRadius,
-  planetLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs, formatDistance, formatPeriod, makeZeldovichWeb,
+  planetLevels, shouldIgnoreGlobalKeys, formatDistance, formatPeriod, makeZeldovichWeb,
   schwarzschildRadius, skyOrbitPosition, skyOrbitPath, galacticPlanePositionAngle, skyOffsetToPlane,
   pickLevel, armRadius, galactocentricToPlane, makeArm, starStyle, makeExpDisk, habitableZone, systemLevels,
   diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough,
@@ -524,21 +524,6 @@ test('overview maps log distance and longitude into the frame', () => {
   assert.ok(Math.abs(angleX(180, fr) - fr.left) < 1e-9);
   assert.ok(Math.abs(angleX(-180, fr) - fr.left) < 1e-9);
   assert.ok(angleX(90, fr) > angleX(0, fr) && angleX(270, fr) < angleX(0, fr));
-});
-
-test('tour legs take longer over more decades and never go to zero', () => {
-  assert.ok(tourLegMs(1, 1) >= 900);
-  assert.ok(tourLegMs(1, 100) > tourLegMs(1, 10));
-  assert.equal(tourLegMs(1, 1000), tourLegMs(1000, 1));
-  assert.equal(new Set(TOUR).size, TOUR.length);
-  assert.equal(TOUR[0], 'earth');
-  assert.equal(TOUR[TOUR.length - 1], 'universe');
-  assert.ok(TOUR.indexOf('outer') < TOUR.indexOf('trans-neptunian'));
-  assert.ok(TOUR.indexOf('trans-neptunian') < TOUR.indexOf('stars'));
-  assert.ok(TOUR.indexOf('stars') < TOUR.indexOf('local-bubble') && TOUR.indexOf('local-bubble') < TOUR.indexOf('local-arm'));
-  assert.ok(TOUR.indexOf('local-arm') < TOUR.indexOf('milky-way'));
-  assert.ok(TOUR.indexOf('milky-way') < TOUR.indexOf('milky-way-halo'));
-  assert.ok(TOUR.indexOf('milky-way-halo') < TOUR.indexOf('local-group'));
 });
 
 test('Sgr A* has the right Schwarzschild radius and sits at the galactic center', () => {

@@ -182,9 +182,9 @@ playbooks, which clone the repo and serve `www/` as the document root.
   listing its stops widest first and showing the active stop's name. A level with `clickName` is reached by
   clicking that label (or any of `clickNames`), which is how the galactic
   center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the
-  Local Group stops (built from `LOCAL_GROUP_STOPS`) work. The guided tour walks
-  the `TOUR` stops from `util.js` with `goTo` legs timed by `tourLegMs`;
-  any user input stops it. Layers queue labels and `drawLabels` draws them
+  Local Group stops (built from `LOCAL_GROUP_STOPS`) work. The stops
+  themselves live in `levels.js`, pure data that tests can import.
+  Layers queue labels and `drawLabels` draws them
   last, highest priority first: each sits to the right of its point, or on
   the first free side of left, above and below (`placeLabel` in util.js),
   keeping last frame's side while there is room, and is hidden when boxed

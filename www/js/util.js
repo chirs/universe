@@ -752,15 +752,3 @@ export function placeLabel(x, y, w, h, bounds, gap = 8, taken = [], first = 0) {
   return null;
 }
 
-// Stops of the guided tour, in order, and how long a leg between two zooms
-// should take: a fixed rate of about a second per decade, plus a floor.
-export const TOUR = [
-  'earth', 'inner', 'outer', 'trans-neptunian', 'stars', 'local-bubble', 'local-arm',
-  'milky-way', 'milky-way-halo', 'local-group', 'virgo', 'universe',
-];
-export const TOUR_HOLD_MS = 2500;
-
-export function tourLegMs(fromMpp, toMpp) {
-  const decades = Math.abs(Math.log10(toMpp / fromMpp));
-  return 900 + 1000 * decades;
-}
