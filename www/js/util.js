@@ -91,11 +91,25 @@ export function starSystemSummary(system) {
 }
 
 export function componentSummary(star, partner, period) {
-  return `Star · ${star.type} · ${compactNumber(star.mass)} solar masses · radius ${formatDistance(star.radius)} · orbits ${partner} every ${formatPeriod(period)}`;
+  const { kind } = starStyle(star.type);
+  const what = kind[0].toUpperCase() + kind.slice(1);
+  const parts = [what, star.type, `${compactNumber(star.mass)} solar masses`, `radius ${formatDistance(star.radius)}`];
+  if (partner) parts.push(`orbits ${partner} every ${formatPeriod(period)}`);
+  return parts.join(' · ');
 }
 
 export function exoplanetSummary(planet, hostName) {
-  return `Planet of ${hostName} · ${compactNumber(planet.massEarth)} Earth masses · orbit ${formatDistance(planet.a)} · period ${formatPeriod(planet.period)}`;
+  const mass = planet.massEarth >= 100 ? `${compactNumber(planet.massEarth / 317.8)} Jupiter masses` : `${compactNumber(planet.massEarth)} Earth masses`;
+  const parts = [`${planet.candidate ? 'Candidate planet' : 'Planet'} of ${hostName}`, mass, `orbit ${formatDistance(planet.a)}`, `period ${formatPeriod(planet.period)}`];
+  if (planet.candidate) parts.push('detection disputed');
+  return parts.join(' · ');
+}
+
+// A rough habitable zone for a star of the given luminosity (solar units):
+// the conservative Kopparapu et al. 2013 limits scale as the square root.
+export function habitableZone(luminosity) {
+  const s = Math.sqrt(luminosity);
+  return { inner: 0.95 * s * AU, outer: 1.67 * s * AU };
 }
 
 export function cloudSummary(cloud) {
@@ -494,6 +508,16 @@ export function moonLevels(planets) {
     radius: moonSystemRadius(p),
     follow: p,
   }));
+}
+
+// One camera stop per close-up star system, centered on its star in the
+// neighbourhood list and reached by clicking that star's label.
+export function systemLevels(systems, stars) {
+  return systems.map((sys) => {
+    const star = stars.find((st) => st.name === sys.star);
+    const { x, y } = skyToPlane(star.l, star.dist * LY);
+    return { id: sys.id, name: sys.name, radius: sys.radius, cx: x, cy: y, clickName: sys.star, caption: sys.caption };
+  });
 }
 
 export function formatDate(ms) {

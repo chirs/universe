@@ -212,34 +212,94 @@ export const STARS = [
   { name: 'AD Leonis', dist: 16.19, l: 216.5, b: 54.6, types: ['M3V'] },
   { name: 'Gliese 832', dist: 16.2, l: 349.2, b: -46.3, types: ['M1.5V'], planets: 1 },
   { name: 'Gliese 682', dist: 16.33, l: 346.0, b: -6.6, types: ['M4V'] },
-  { name: 'Omicron2 Eridani', dist: 16.33, l: 200.8, b: -38.0, types: ['K0.5V', 'DA4', 'M4V'] },
+  { name: '40 Eridani', dist: 16.33, l: 200.8, b: -38.0, types: ['K0.5V', 'DA4', 'M4V'] },
   { name: 'EV Lacertae', dist: 16.48, l: 100.6, b: -13.1, types: ['M3.5V'] },
   { name: '70 Ophiuchi', dist: 16.71, l: 29.9, b: 11.4, types: ['K0V', 'K5V'] },
   { name: 'Altair', dist: 16.73, l: 47.7, b: -8.9, types: ['A7IV-V'] },
 ];
 
-// Alpha Centauri. The A-B orbit is in the visual-binary convention used for
-// S_STARS, transcribed from the Wikipedia article's orbit table (Akeson et
-// al. 2021); Proxima's planets are from the NASA Exoplanet Archive
-// (pscomppars), drawn face-on with an arbitrary display phase because their
-// tilts are unknown. Masses in solar masses; planet masses in Earth masses.
-export const ALPHA_CENTAURI = {
-  ra: 219.90206,
-  dec: -60.83399,
-  A: { name: 'Alpha Centauri A', mass: 1.0788, radius: 1.223 * SUN.radius, type: 'G2V' },
-  B: { name: 'Alpha Centauri B', mass: 0.9092, radius: 0.864 * SUN.radius, type: 'K1V' },
-  orbit: { a: 23.299 * AU, e: 0.51947, i: 79.243, Omega: 205.073, omega: 231.519, tP: (1875.66 - 2000) * YEAR_D, period: 79.762 * YEAR_D },
-  proxima: {
-    name: 'Proxima Centauri',
-    mass: 0.1221,
-    radius: 0.141 * SUN.radius,
-    type: 'M5.5V',
+// Close-up star systems, reached by clicking the star in the neighbourhood.
+// Binary orbits are in the visual-binary convention used for S_STARS,
+// transcribed from the Wikipedia orbit tables (which follow the published
+// solutions); planets are from the NASA Exoplanet Archive (pscomppars),
+// drawn face-on with an arbitrary display phase L0 because their tilts
+// are unknown, and flagged `candidate` where the archive marks them
+// controversial. Stellar masses and luminosities in solar units, planet
+// masses in Earth masses, radii in meters. Epsilon Eridani's belts and the
+// 40 Eridani A-BC separation are round numbers from memory.
+const SOL = SUN.radius;
+const MJ = 0.000954;   // Jupiter masses in solar masses
+export const STAR_SYSTEMS = [
+  { id: 'proxima-centauri', name: 'Proxima Centauri', star: 'Proxima Centauri', radius: 0.07 * AU,
+    host: { name: 'Proxima Centauri', mass: 0.1221, radius: 0.141 * SOL, type: 'M5.5V', luminosity: 0.00151 },
     planets: [
-      { name: 'Proxima d', a: 0.02881 * AU, period: 5.12338, L0: 40, massEarth: 0.26, color: '#c9b8a8' },
-      { name: 'Proxima b', a: 0.04848 * AU, period: 11.18465, L0: 200, massEarth: 1.055, color: '#8fb0d8' },
+      { name: 'Proxima d', a: 0.02881 * AU, period: 5.12338, L0: 40, massEarth: 0.26 },
+      { name: 'Proxima b', a: 0.04848 * AU, period: 11.18465, L0: 200, massEarth: 1.055 },
     ],
-  },
-};
+    caption: 'Proxima b and d on their measured orbit sizes and periods, drawn face-on; their tilts are unknown. The green band is a rough habitable zone.' },
+  { id: 'alpha-centauri', name: 'Alpha Centauri', star: 'Alpha Centauri', radius: 40 * AU,
+    binary: { ra: 219.90206, dec: -60.83399,
+      primary: { name: 'Alpha Centauri A', mass: 1.0788, radius: 1.223 * SOL, type: 'G2V', luminosity: 1.52 },
+      secondary: { name: 'Alpha Centauri B', mass: 0.9092, radius: 0.864 * SOL, type: 'K1V' },
+      orbit: { a: 23.299 * AU, e: 0.51947, i: 79.243, Omega: 205.073, omega: 231.519, tP: (1875.66 - 2000) * YEAR_D, period: 79.762 * YEAR_D } },
+    caption: 'A and B circle each other every 80 years on an orbit tilted 79° to the sky, projected here onto the galactic plane. Proxima lies 13,000 AU away.' },
+  { id: 'luhman-16', name: 'Luhman 16', star: 'Luhman 16', radius: 6 * AU,
+    binary: { ra: 162.32821, dec: -53.31941,
+      primary: { name: 'Luhman 16A', mass: 35.4 * MJ, radius: 0.1 * SOL, type: 'L7.5' },
+      secondary: { name: 'Luhman 16B', mass: 29.4 * MJ, radius: 0.1 * SOL, type: 'T0.5' },
+      orbit: { a: 3.52 * AU, e: 0.344, i: 79.92, Omega: 130.02, omega: 136.67, tP: (2018.060 - 2000) * YEAR_D, period: 26.55 * YEAR_D } },
+    caption: 'Two brown dwarfs, 35 and 29 Jupiter masses, orbiting each other every 27 years. The third-nearest system to the Sun.' },
+  { id: 'sirius', name: 'Sirius', star: 'Sirius', radius: 35 * AU,
+    binary: { ra: 101.28716, dec: -16.71612,
+      primary: { name: 'Sirius A', mass: 2.063, radius: 1.7144 * SOL, type: 'A1V', luminosity: 24.74 },
+      secondary: { name: 'Sirius B', mass: 1.018, radius: 0.008098 * SOL, type: 'DA2' },
+      orbit: { a: 19.8 * AU, e: 0.59142, i: 136.336, Omega: 45.400, omega: 149.161, tP: (1994.5715 - 2000) * YEAR_D, period: 50.1284 * YEAR_D } },
+    caption: 'The brightest star in the night sky and its white dwarf companion, a Sun’s mass packed into an Earth-sized body, on a 50-year orbit. Bessel predicted it from the wobble in 1844.' },
+  { id: 'epsilon-eridani', name: 'Epsilon Eridani', star: 'Epsilon Eridani', radius: 12 * AU,
+    host: { name: 'Epsilon Eridani', mass: 0.82, radius: 0.759 * SOL, type: 'K2V', luminosity: 0.381 },
+    planets: [{ name: 'Epsilon Eridani b', a: 3.53 * AU, period: 2680, e: 0.06, L0: 120, massEarth: 317.8 }],
+    belts: [{ name: 'inner belt', inner: 2.5 * AU, outer: 3.5 * AU }, { name: 'outer ring', inner: 35 * AU, outer: 90 * AU }],
+    caption: 'A young Sun-like star with a Jupiter-mass planet at 3.5 AU, an asteroid belt beside it, and a Kuiper-like ring at 35 to 90 AU, out beyond this view.' },
+  { id: 'procyon', name: 'Procyon', star: 'Procyon', radius: 25 * AU,
+    binary: { ra: 114.82550, dec: 5.22499,
+      primary: { name: 'Procyon A', mass: 1.478, radius: 2.043 * SOL, type: 'F5IV-V', luminosity: 7.049 },
+      secondary: { name: 'Procyon B', mass: 0.592, radius: 0.01234 * SOL, type: 'DQZ' },
+      orbit: { a: 15.137 * AU, e: 0.39785, i: 31.408, Omega: 100.683, omega: 89.23, tP: (1968.076 - 2000) * YEAR_D, period: 40.840 * YEAR_D } },
+    caption: 'A subgiant and its white dwarf companion on a 41-year orbit, the second such pair within a dozen light-years.' },
+  { id: 'tau-ceti', name: 'Tau Ceti', star: 'Tau Ceti', radius: 2 * AU,
+    host: { name: 'Tau Ceti', mass: 0.783, radius: 0.83 * SOL, type: 'G8.5V', luminosity: 0.495 },
+    planets: [
+      { name: 'Tau Ceti g', a: 0.133 * AU, period: 20.0, e: 0.06, L0: 10, massEarth: 1.75, candidate: true },
+      { name: 'Tau Ceti h', a: 0.243 * AU, period: 49.41, e: 0.23, L0: 150, massEarth: 1.83, candidate: true },
+      { name: 'Tau Ceti f', a: 1.334 * AU, period: 636.13, e: 0.16, L0: 260, massEarth: 3.93, candidate: true },
+    ],
+    caption: 'A Sun-like star with three candidate planets from radial velocities, still disputed, so their orbits are dashed. f sits at the outer edge of the habitable zone.' },
+  { id: 'teegardens-star', name: "Teegarden's Star", star: "Teegarden's Star", radius: 0.12 * AU,
+    host: { name: "Teegarden's Star", mass: 0.097, radius: 0.12 * SOL, type: 'M6.5V', luminosity: 0.00072 },
+    planets: [
+      { name: "Teegarden's Star b", a: 0.0259 * AU, period: 4.90634, e: 0.03, L0: 0, massEarth: 1.16 },
+      { name: "Teegarden's Star c", a: 0.0455 * AU, period: 11.416, e: 0.04, L0: 130, massEarth: 1.05 },
+      { name: "Teegarden's Star d", a: 0.0791 * AU, period: 26.13, e: 0.07, L0: 250, massEarth: 0.82 },
+    ],
+    caption: 'Three Earth-mass planets around an ultra-cool dwarf, the inner two inside a habitable zone only a few million kilometres across.' },
+  { id: 'gliese-876', name: 'Gliese 876', star: 'Gliese 876', radius: 0.5 * AU,
+    host: { name: 'Gliese 876', mass: 0.32, radius: 0.30 * SOL, type: 'M3.5V', luminosity: 0.0124 },
+    planets: [
+      { name: 'Gliese 876 d', a: 0.02080665 * AU, period: 1.93778, e: 0.207, L0: 0, massEarth: 6.83 },
+      { name: 'Gliese 876 c', a: 0.12959 * AU, period: 30.0881, e: 0.25591, L0: 0, massEarth: 226.98 },
+      { name: 'Gliese 876 b', a: 0.208317 * AU, period: 61.1166, e: 0.0324, L0: 0, massEarth: 723.22 },
+      { name: 'Gliese 876 e', a: 0.3343 * AU, period: 124.26, e: 0.055, L0: 0, massEarth: 14.6 },
+    ],
+    caption: 'Four planets; c, b and e are locked in a 1:2:4 resonance with periods of 30, 61 and 124 days. Run the clock at a day per second to watch it.' },
+  { id: '40-eridani', name: '40 Eridani', star: '40 Eridani', radius: 550 * AU,
+    host: { name: '40 Eridani A', mass: 0.78, radius: 0.804 * SOL, type: 'K0.5V', luminosity: 0.4 },
+    binary: { ra: 63.81800, dec: -7.65287,
+      primary: { name: '40 Eridani B', mass: 0.558, radius: 0.01308 * SOL, type: 'DA4' },
+      secondary: { name: '40 Eridani C', mass: 0.198, radius: 0.274 * SOL, type: 'M4.5V' },
+      orbit: { a: 34.5 * AU, e: 0.4141, i: 107.98, Omega: 151.58, omega: 321.2, tP: (1848.7888 - 2000) * YEAR_D, period: 233.20 * YEAR_D },
+      around: { a: 400 * AU, period: 8000 * YEAR_D, L0: 210 } },
+    caption: 'Three kinds of star in one system: an orange dwarf, and 400 AU out a white dwarf and a red dwarf circling each other every 233 years. The A-BC orbit is a display circle; only its size and period are known.' },
+];
 
 // The Local Bubble: the cavity of hot thin gas the Sun sits in, swept out
 // by supernovae over the last 14 million years (Zucker et al. 2022). The

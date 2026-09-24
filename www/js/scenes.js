@@ -1,6 +1,6 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, ALPHA_CENTAURI,
+  SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
 } from './data.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
@@ -8,7 +8,7 @@ import {
   landmarkSummary, observableUniverseSummary, makeZeldovichWeb, superclusterSummary, voidSummary,
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
-  componentSummary, exoplanetSummary,
+  componentSummary, exoplanetSummary, habitableZone,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -257,66 +257,123 @@ const nearestStars = {
   },
 };
 
-// Alpha Centauri up close: A and B about their barycenter on the real orbit
-// projected onto the galactic plane, and Proxima with its planets face-on.
-const alphaCentauri = (() => {
-  const ac = ALPHA_CENTAURI;
-  const center = starPositions.find((s) => s.name === 'Alpha Centauri');
-  const prox = starPositions.find((s) => s.name === 'Proxima Centauri');
-  const planePA = galacticPlanePositionAngle(ac.ra, ac.dec);
-  const toPlane = (p) => skyOffsetToPlane(p, planePA);
-  const path = skyOrbitPath(ac.orbit).map(toPlane);
-  const total = ac.A.mass + ac.B.mass;
-  const pair = [[ac.A, -ac.B.mass / total, 'B'], [ac.B, ac.A.mass / total, 'A']];
+// Close-up star systems: a host star with planets, belts and a habitable
+// zone, and/or a binary on its real orbit projected onto the galactic
+// plane, its barycenter at the system's position or circling the host.
+const starSystems = (() => {
+  const systems = STAR_SYSTEMS.map((sys) => {
+    const pos = starPositions.find((st) => st.name === sys.star);
+    const out = { ...sys, x: pos.x, y: pos.y, summary: starSystemSummary(pos) };
+    if (sys.binary) {
+      const b = sys.binary;
+      const planePA = galacticPlanePositionAngle(b.ra, b.dec);
+      const toPlane = (p) => skyOffsetToPlane(p, planePA);
+      const total = b.primary.mass + b.secondary.mass;
+      out.toPlane = toPlane;
+      out.path = skyOrbitPath(b.orbit).map(toPlane);
+      out.pair = [[b.primary, -b.secondary.mass / total, b.secondary.name], [b.secondary, b.primary.mass / total, b.primary.name]];
+    }
+    return out;
+  });
+  const planetColor = (p) => (p.massEarth >= 100 ? '#d9b48a' : p.massEarth >= 5 ? '#8fb8d8' : '#c9b8a8');
   const star = (ctx, view, x, y, s, alpha) => {
     const { color } = starStyle(s.type);
     const r = Math.max(s.radius / view.mpp, 3);
     glow(ctx, x, y, r * 4, color, 0.35 * alpha);
     dot(ctx, x, y, r, color, alpha);
   };
+  const zone = (ctx, view, x, y, luminosity, alpha) => {
+    const hz = habitableZone(luminosity);
+    if (hz.outer / view.mpp < 6) return;
+    ctx.globalAlpha = 0.12 * alpha;
+    ctx.fillStyle = '#7fd8a0';
+    ctx.beginPath();
+    ctx.arc(x, y, hz.outer / view.mpp, 0, TAU);
+    ctx.arc(x, y, hz.inner / view.mpp, 0, TAU, true);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ringHit(view, x, y, hz.outer / view.mpp, 'Habitable zone', alpha,
+      `Rough habitable zone · ${formatDistance(hz.inner)} to ${formatDistance(hz.outer)} from the star · where liquid water could last on a rocky planet`);
+  };
   return {
-    name: 'alpha centauri',
+    name: 'star systems',
     range: [0, 0.05 * LY],
     draw(ctx, view, alpha, days) {
-      const cx = view.sx(center.x);
-      const cy = view.sy(center.y);
-      if (onScreen(view, cx, cy, 5000)) {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
-        const rel = toPlane(skyOrbitPosition(ac.orbit, days));
-        for (const [s, f, partner] of pair) {
-          ctx.beginPath();
-          path.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(center.x + f * p.x), view.sy(center.y + f * p.y)));
-          ctx.closePath();
-          ctx.stroke();
-          const x = view.sx(center.x + f * rel.x);
-          const y = view.sy(center.y + f * rel.y);
-          star(ctx, view, x, y, s, alpha);
-          label(view, x, y, s.name, alpha, 1);
-          hit(view, x, y, s.name, alpha, componentSummary(s, `Alpha Centauri ${partner}`, ac.orbit.period));
+      ctx.lineWidth = 1;
+      for (const sys of systems) {
+        const sx = view.sx(sys.x);
+        const sy = view.sy(sys.y);
+        if (!onScreen(view, sx, sy, 5000)) continue;
+        if (sys.host) {
+          for (const belt of sys.belts || []) {
+            ctx.globalAlpha = 0.1 * alpha;
+            ctx.fillStyle = '#c8c0b0';
+            ctx.beginPath();
+            ctx.arc(sx, sy, belt.outer / view.mpp, 0, TAU);
+            ctx.arc(sx, sy, belt.inner / view.mpp, 0, TAU, true);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ringHit(view, sx, sy, (belt.inner + belt.outer) / 2 / view.mpp, `${sys.host.name} ${belt.name}`, alpha,
+              `Debris belt · ${formatDistance(belt.inner)} to ${formatDistance(belt.outer)} from the star`);
+          }
+          if (sys.host.luminosity) zone(ctx, view, sx, sy, sys.host.luminosity, alpha);
+          for (const p of sys.planets || []) {
+            const a = p.a / view.mpp;
+            const e = p.e || 0;
+            ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+            ctx.setLineDash(p.candidate ? [4, 4] : []);
+            ctx.beginPath();
+            ctx.ellipse(sx - a * e, sy, a, a * Math.sqrt(1 - e * e), 0, 0, TAU);
+            ctx.stroke();
+          }
+          ctx.setLineDash([]);
+          star(ctx, view, sx, sy, sys.host, alpha);
+          label(view, sx, sy, sys.host.name, alpha, 1);
+          hit(view, sx, sy, sys.host.name, alpha, sys.binary ? componentSummary(sys.host) : sys.summary);
+          for (const p of sys.planets || []) {
+            const pos = orbitalPosition(p, days);
+            const x = view.sx(sys.x + pos.x);
+            const y = view.sy(sys.y + pos.y);
+            if (!onScreen(view, x, y)) continue;
+            dot(ctx, x, y, 2.5, planetColor(p), alpha);
+            const far = Math.hypot(x - sx, y - sy) > 14;
+            label(view, x, y, p.name, far ? alpha : 0, 0);
+            hit(view, x, y, p.name, far ? alpha : 0, exoplanetSummary(p, sys.host.name));
+          }
         }
-      }
-      const px = view.sx(prox.x);
-      const py = view.sy(prox.y);
-      if (onScreen(view, px, py, 5000)) {
-        for (const p of ac.proxima.planets) {
+        if (sys.binary) {
+          const b = sys.binary;
+          let bx = sys.x;
+          let by = sys.y;
+          if (b.around) {
+            const o = orbitalPosition(b.around, days);
+            bx += o.x;
+            by += o.y;
+            ctx.strokeStyle = `rgba(255,255,255,${0.1 * alpha})`;
+            ctx.setLineDash([3, 6]);
+            ctx.beginPath();
+            ctx.arc(sx, sy, b.around.a / view.mpp, 0, TAU);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          const rel = sys.toPlane(skyOrbitPosition(b.orbit, days));
+          if (b.primary.luminosity) {
+            const f = sys.pair[0][1];
+            zone(ctx, view, view.sx(bx + f * rel.x), view.sy(by + f * rel.y), b.primary.luminosity, alpha);
+          }
           ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
-          ctx.beginPath();
-          ctx.arc(px, py, p.a / view.mpp, 0, TAU);
-          ctx.stroke();
-        }
-        star(ctx, view, px, py, ac.proxima, alpha);
-        label(view, px, py, ac.proxima.name, alpha, 1);
-        hit(view, px, py, ac.proxima.name, alpha, starSystemSummary(prox));
-        for (const p of ac.proxima.planets) {
-          const pos = orbitalPosition(p, days);
-          const x = view.sx(prox.x + pos.x);
-          const y = view.sy(prox.y + pos.y);
-          if (!onScreen(view, x, y)) continue;
-          dot(ctx, x, y, 2.5, p.color, alpha);
-          const far = Math.hypot(x - px, y - py) > 14;
-          label(view, x, y, p.name, far ? alpha : 0, 0);
-          hit(view, x, y, p.name, far ? alpha : 0, exoplanetSummary(p, ac.proxima.name));
+          for (const [s, f, partner] of sys.pair) {
+            ctx.beginPath();
+            sys.path.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(bx + f * p.x), view.sy(by + f * p.y)));
+            ctx.closePath();
+            ctx.stroke();
+            const x = view.sx(bx + f * rel.x);
+            const y = view.sy(by + f * rel.y);
+            star(ctx, view, x, y, s, alpha);
+            const far = Math.hypot(x - sx, y - sy) > 14 || !sys.host;
+            label(view, x, y, s.name, far ? alpha : 0, 1);
+            hit(view, x, y, s.name, far ? alpha : 0, componentSummary(s, partner, b.orbit.period));
+          }
         }
       }
     },
@@ -911,10 +968,13 @@ const horizon = {
   },
 };
 
+// Signposts describe the emptiness around the Sun, so they stay home:
+// nothing shows once the camera is a few view widths away from it.
 const signposts = SIGNPOSTS.map((sp) => ({
   name: 'signpost',
   range: sp.range,
   draw(ctx, view, alpha) {
+    if (Math.hypot(view.cx, view.cy) > 3 * view.radius) return;
     ctx.font = 'italic 13px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -928,7 +988,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, alphaCentauri, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

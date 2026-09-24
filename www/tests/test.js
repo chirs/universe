@@ -8,12 +8,12 @@ import {
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
-  starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary,
+  starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
-  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, ALPHA_CENTAURI,
+  SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS,
 } from '../js/data.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
@@ -590,16 +590,37 @@ test('makeExpDisk follows an exponential surface density', () => {
   assert.ok(Math.abs(inside / 20000 - (1 - 2 / Math.E)) < 0.02);
 });
 
-test('Alpha Centauri orbits obey Kepler with the transcribed masses', () => {
-  const ac = ALPHA_CENTAURI;
+test('star systems obey Kepler with the transcribed masses and are wired to the neighbourhood', () => {
   const kepler = (aAU, periodYears, mass) => (aAU ** 3) / (periodYears ** 2) / mass;
-  assert.ok(Math.abs(kepler(ac.orbit.a / AU, ac.orbit.period / YEAR_D, ac.A.mass + ac.B.mass) - 1) < 0.01, 'A-B');
-  for (const p of ac.proxima.planets) {
-    assert.ok(Math.abs(kepler(p.a / AU, p.period / YEAR_D, ac.proxima.mass) - 1) < 0.02, p.name);
+  assert.equal(new Set(STAR_SYSTEMS.map((s) => s.id)).size, STAR_SYSTEMS.length);
+  for (const sys of STAR_SYSTEMS) {
+    assert.ok(STARS.some((st) => st.name === sys.star), sys.star);
+    assert.ok(sys.host || sys.binary, sys.id);
+    if (sys.binary) {
+      const b = sys.binary;
+      assert.ok(Math.abs(kepler(b.orbit.a / AU, b.orbit.period / YEAR_D, b.primary.mass + b.secondary.mass) - 1) < 0.02, sys.id);
+      const rs = skyOrbitPath(b.orbit, 64).map((p) => Math.hypot(p.east, p.north, p.depth));
+      assert.ok(Math.abs(Math.min(...rs) - b.orbit.a * (1 - b.orbit.e)) < 1e-3 * b.orbit.a, sys.id);
+    }
+    for (const p of sys.planets || []) {
+      assert.ok(Math.abs(kepler(p.a / AU, p.period / YEAR_D, sys.host.mass) - 1) < 0.03, p.name);
+      assert.ok(p.a * (1 + (p.e || 0)) < sys.radius * 1.6, `${p.name} fits its stop`);
+    }
   }
-  const rs = skyOrbitPath(ac.orbit, 64).map((p) => Math.hypot(p.east, p.north, p.depth) / AU);
-  assert.ok(Math.abs(Math.min(...rs) - 23.299 * (1 - 0.51947)) < 0.05);
-  assert.ok(Math.abs(Math.max(...rs) - 23.299 * (1 + 0.51947)) < 0.05);
-  assert.match(componentSummary(ac.A, 'Alpha Centauri B', ac.orbit.period), /^Star · G2V · 1.08 solar masses · radius [\d.,]+ .* · orbits Alpha Centauri B every 79.8 years$/);
-  assert.match(exoplanetSummary(ac.proxima.planets[1], 'Proxima Centauri'), /^Planet of Proxima Centauri · 1.05 Earth masses · orbit 7.25 million km · period 11.2 days$/);
+  const ac = STAR_SYSTEMS.find((s) => s.id === 'alpha-centauri').binary;
+  assert.match(componentSummary(ac.primary, 'Alpha Centauri B', ac.orbit.period), /^Star · G2V · 1.08 solar masses · radius [\d.,]+ .* · orbits Alpha Centauri B every 79.8 years$/);
+  const sirius = STAR_SYSTEMS.find((s) => s.id === 'sirius').binary;
+  assert.match(componentSummary(sirius.secondary, 'Sirius A', sirius.orbit.period), /^White dwarf · DA2 · 1.02 solar masses · radius 5,634 km · orbits Sirius A every 50.1 years$/);
+  const prox = STAR_SYSTEMS.find((s) => s.id === 'proxima-centauri');
+  assert.match(exoplanetSummary(prox.planets[1], 'Proxima Centauri'), /^Planet of Proxima Centauri · 1.05 Earth masses · orbit 7.25 million km · period 11.2 days$/);
+  const tau = STAR_SYSTEMS.find((s) => s.id === 'tau-ceti');
+  assert.match(exoplanetSummary(tau.planets[0], 'Tau Ceti'), /^Candidate planet of Tau Ceti · .* · detection disputed$/);
+  const eri = STAR_SYSTEMS.find((s) => s.id === 'epsilon-eridani');
+  assert.match(exoplanetSummary(eri.planets[0], 'Epsilon Eridani'), /^Planet of Epsilon Eridani · 1 Jupiter masses · /);
+  for (const lv of systemLevels(STAR_SYSTEMS, STARS)) {
+    assert.ok(Number.isFinite(lv.cx) && Number.isFinite(lv.cy) && lv.radius > 0 && lv.clickName && lv.caption, lv.id);
+  }
+  const hz = habitableZone(1);
+  assert.ok(Math.abs(hz.inner / AU - 0.95) < 1e-9 && Math.abs(hz.outer / AU - 1.67) < 1e-9);
+  assert.ok(habitableZone(0.00072).outer < 0.05 * AU);
 });

@@ -9,9 +9,11 @@ from J2000 elements.
 The `k` key jumps to the trans-Neptunian view; `h` jumps to the Milky Way halo.
 The stellar neighborhood shows every known system within 16 light-years,
 drawn by spectral type, with rings on systems that have known planets.
-Clicking Alpha Centauri zooms to A and B on their 80-year orbit, projected
-onto the galactic plane; clicking Proxima Centauri shows its two planets,
-drawn face-on with their measured periods. `u`
+Ten systems open up when clicked: Alpha Centauri, Sirius, Procyon, Luhman
+16 and 40 Eridani with their companions on their real orbits projected onto
+the galactic plane, and Proxima, Epsilon Eridani, Tau Ceti, Teegarden's
+Star and Gliese 876 with their planets drawn face-on at their measured
+periods, a rough habitable zone in green. `u`
 jumps to the Local Bubble, the supernova-blown cavity the Sun sits in, with
 the star-forming clouds that lie on its shell.
 `l` jumps to the Local arm, with nearby nebulae, clusters and black holes at
