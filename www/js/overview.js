@@ -4,11 +4,11 @@
 // top of their planets here.
 import {
   AU, LY, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
-  UNIVERSE, SUN, MILKY_WAY_OBJECTS, LOCAL_BUBBLE,
+  UNIVERSE, SUN, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, GALAXIES,
 } from './data.js';
 import {
   orbitalPosition, skyToPlane, formatDistance, planetSummary, starSummary,
-  galaxySummary, clusterSummary, landmarkSummary, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
+  galaxySummary, clusterSummary, landmarkSummary, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary, notableGalaxySummary,
 } from './util.js';
 
 export const R_MIN = 0.05 * AU;
@@ -66,6 +66,7 @@ function pointsFor(days) {
   pts.push({ name: 'Galactic center', l: 0, r: MILKY_WAY.sunDistance, color: '#fff0cc', size: 4, priority: 3, detail: `Milky Way center · ${formatDistance(MILKY_WAY.sunDistance)} from the Sun` });
   for (const g of LOCAL_GROUP) if (g.dist > 0) pts.push({ name: g.name, l: g.l, r: g.dist * LY, color: g.spiral ? '#e4e9ff' : '#e6dcc8', size: g.spiral ? 3.2 : 1.8, priority: g.spiral ? 2 : 0, detail: galaxySummary(g) });
   for (const c of CLUSTERS) if (c.dist > 0) pts.push({ name: c.name, l: c.l, r: c.dist * 1e6 * LY, color: '#e8e4f4', size: c.n >= 200 ? 3.4 : 2.2, priority: c.n >= 200 ? 2 : c.n >= 100 ? 1 : 0, detail: clusterSummary(c) });
+  for (const g of GALAXIES) pts.push({ name: g.name, l: g.l, r: g.dist * LY, color: g.spiral ? '#e4e9ff' : '#f0e6d2', size: 2.2, priority: 1, detail: notableGalaxySummary(g) });
   for (const m of UNIVERSE.landmarks) pts.push({ name: m.name, l: m.l, r: m.dist, color: '#ffc88c', size: 3, priority: 2, ring: m.size / 2, detail: landmarkSummary(m) });
   return pts;
 }

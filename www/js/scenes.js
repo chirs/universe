@@ -3,6 +3,7 @@ import {
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
   SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
   GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS, RADIO, J2000_MS, DAY_S, YEAR_D, SYSTEM_STARS, WR_140, INTERSTELLAR, S5_HVS1,
+  GALAXIES, ARECIBO_MESSAGE,
 } from './data.js';
 import { SGR_STREAM } from './sgrstream.js';
 import { TRACKS } from './spacecraft.js';
@@ -18,6 +19,7 @@ import {
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, rankineNose, rankineRadius, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary, hiiSummary, yearsAgo, lookbackPowerSummary,
+  notableGalaxySummary, messageSummary,
   coorbitalState, coorbitalSummary, wr140Summary, dustShellSummary,
   hyperbolicPosition, interstellarSummary, companionSummary, binaryShares, binaryOffset, hypervelocitySummary,
 } from './util.js';
@@ -862,6 +864,45 @@ const radioSphere = (() => {
   };
 })();
 
+// The Arecibo message: a pulse moving at light speed toward M13 with the
+// clock, with the rest of its path dashed ahead of it.
+const areciboMessage = (() => {
+  const m = ARECIBO_MESSAGE;
+  const dir = skyToPlane(m.l, 1);
+  return {
+    name: 'arecibo message',
+    range: [1 * LY, 100e3 * LY],
+    draw(ctx, view, alpha, days) {
+      const r = radioRadius({ start: m.sent }, J2000_MS + days * DAY_S * 1000);
+      if (r <= 0) return;
+      const x = view.sx(dir.x * r);
+      const y = view.sy(dir.y * r);
+      if (Math.hypot(x - view.sx(0), y - view.sy(0)) < 14) return;
+      if (!onScreen(view, x, y, 1e6)) return;
+      ctx.lineWidth = 1;
+      if (r < m.targetDist) {
+        ctx.strokeStyle = `rgba(140,235,205,${0.25 * alpha})`;
+        ctx.setLineDash([2, 6]);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(view.sx(dir.x * m.targetDist), view.sy(dir.y * m.targetDist));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.strokeStyle = `rgba(140,235,205,${0.6 * alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(view.sx(dir.x * (r - 10 * view.mpp)), view.sy(dir.y * (r - 10 * view.mpp)));
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      glow(ctx, x, y, 8, 'rgba(140,235,205,0.6)', alpha);
+      dot(ctx, x, y, 2, '#d8fff2', alpha);
+      label(view, x, y, m.name, alpha, 1);
+      hit(view, x, y, m.name, alpha, messageSummary(m, r));
+    },
+  };
+})();
+
 const HUES = { b: '#c8d8ff', w: '#f4f4ff', y: '#fff0c0', o: '#ffb884' };
 
 const brightPositions = BRIGHT_STARS.map((s) => ({ ...s, ...skyToPlane(s.l, s.dist * LY) }));
@@ -1342,29 +1383,75 @@ const globularClusters = (() => {
 // the dot threshold the black hole is a dot; resolved, it shows the horizon,
 // the shadow an observer would see and the innermost stable circular orbit,
 // all to scale, ringed by a schematic glow like the EHT image.
-const nucleus = (() => {
-  const bh = SGR_A_STAR;
+// A supermassive black hole at screen (gx, gy): a dot until its shadow
+// resolves, then horizon, shadow and innermost stable orbit to scale.
+function drawBlackHole(ctx, view, alpha, bh, gx, gy) {
   const rs = schwarzschildRadius(bh.mass);
   const shadowR = Math.sqrt(27) / 2 * rs;
   const iscoR = 3 * rs;
-  const planePA = galacticPlanePositionAngle(bh.ra, bh.dec);
-  const toPlane = (p) => skyOffsetToPlane(p, planePA);
-  const stars = S_STARS.map((s) => ({ ...s, path: skyOrbitPath(s).map(toPlane) }));
-  const ring = (ctx, x, y, r, style, width, dash) => {
+  const ring = (r, style, width, dash) => {
     ctx.strokeStyle = style;
     ctx.lineWidth = width;
     ctx.setLineDash(dash);
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, TAU);
+    ctx.arc(gx, gy, r, 0, TAU);
     ctx.stroke();
     ctx.setLineDash([]);
   };
+  const shadowPx = shadowR / view.mpp;
+  if (shadowPx < 3) {
+    glow(ctx, gx, gy, 10, 'rgba(255,170,90,0.5)', alpha);
+    dot(ctx, gx, gy, 3, '#ffc890', alpha);
+  } else {
+    // Emission peaks in a ring just outside the shadow, as in the Event
+    // Horizon Telescope image, and fades outward. Its brightness is
+    // schematic; the photon ring is its thin bright inner edge.
+    const g = ctx.createRadialGradient(gx, gy, shadowPx, gx, gy, 3.2 * shadowPx);
+    g.addColorStop(0, 'rgba(255,205,150,0.95)');
+    g.addColorStop(0.06, 'rgba(255,160,80,0.7)');
+    g.addColorStop(0.3, 'rgba(225,105,45,0.28)');
+    g.addColorStop(1, 'rgba(160,60,30,0)');
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(gx, gy, 3.2 * shadowPx, 0, TAU);
+    ctx.arc(gx, gy, shadowPx, 0, TAU, true);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    dot(ctx, gx, gy, shadowPx, '#000000', alpha);
+    ring(shadowPx + 1, `rgba(255,190,130,${0.3 * alpha})`, 5, []);
+    ring(shadowPx, `rgba(255,240,220,${0.95 * alpha})`, 1.5, []);
+    ring(rs / view.mpp, `rgba(140,140,160,${0.7 * alpha})`, 1, [4, 4]);
+    ring(iscoR / view.mpp, `rgba(255,255,255,${0.25 * alpha})`, 1, [2, 6]);
+    if (shadowPx > 30) {
+      const d = Math.SQRT1_2 * iscoR / view.mpp;
+      label(view, gx - rs / view.mpp, gy, 'Event horizon', alpha, 0);
+      label(view, gx + shadowPx, gy, 'Shadow', alpha, 0);
+      label(view, gx + d, gy + d, 'Innermost stable orbit', alpha, 0);
+    }
+    ringHit(view, gx, gy, rs / view.mpp, 'Event horizon', alpha,
+      `Schwarzschild radius ${formatDistance(rs)} · nothing inside can be seen`);
+    ringHit(view, gx, gy, shadowPx, 'Shadow', alpha,
+      `Apparent dark disc, radius ${formatDistance(shadowR)} (2.6 Schwarzschild radii) · light rays at its edge circle the hole`);
+    ringHit(view, gx, gy, iscoR / view.mpp, 'Innermost stable orbit', alpha,
+      `Radius ${formatDistance(iscoR)} (3 Schwarzschild radii) · matter closer in spirals through the horizon`);
+  }
+  label(view, gx, gy, bh.name, alpha, 2);
+  hit(view, gx, gy, bh.name, alpha, blackHoleSummary(bh));
+}
+
+const nucleus = (() => {
+  const bh = SGR_A_STAR;
+  const planePA = galacticPlanePositionAngle(bh.ra, bh.dec);
+  const toPlane = (p) => skyOffsetToPlane(p, planePA);
+  const stars = S_STARS.map((s) => ({ ...s, path: skyOrbitPath(s).map(toPlane) }));
   return {
     name: 'galactic nucleus',
     range: [0, 1 * LY],
     draw(ctx, view, alpha, days) {
       const gx = view.sx(GC.x);
       const gy = view.sy(GC.y);
+      if (!onScreen(view, gx, gy, 1e6)) return;
       ctx.lineWidth = 1;
       ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
       for (const s of stars) {
@@ -1373,46 +1460,7 @@ const nucleus = (() => {
         ctx.closePath();
         ctx.stroke();
       }
-      const shadowPx = shadowR / view.mpp;
-      if (shadowPx < 3) {
-        glow(ctx, gx, gy, 10, 'rgba(255,170,90,0.5)', alpha);
-        dot(ctx, gx, gy, 3, '#ffc890', alpha);
-      } else {
-        // Emission peaks in a ring just outside the shadow, as in the Event
-        // Horizon Telescope image, and fades outward. Its brightness is
-        // schematic; the photon ring is its thin bright inner edge.
-        const g = ctx.createRadialGradient(gx, gy, shadowPx, gx, gy, 3.2 * shadowPx);
-        g.addColorStop(0, 'rgba(255,205,150,0.95)');
-        g.addColorStop(0.06, 'rgba(255,160,80,0.7)');
-        g.addColorStop(0.3, 'rgba(225,105,45,0.28)');
-        g.addColorStop(1, 'rgba(160,60,30,0)');
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(gx, gy, 3.2 * shadowPx, 0, TAU);
-        ctx.arc(gx, gy, shadowPx, 0, TAU, true);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        dot(ctx, gx, gy, shadowPx, '#000000', alpha);
-        ring(ctx, gx, gy, shadowPx + 1, `rgba(255,190,130,${0.3 * alpha})`, 5, []);
-        ring(ctx, gx, gy, shadowPx, `rgba(255,240,220,${0.95 * alpha})`, 1.5, []);
-        ring(ctx, gx, gy, rs / view.mpp, `rgba(140,140,160,${0.7 * alpha})`, 1, [4, 4]);
-        ring(ctx, gx, gy, iscoR / view.mpp, `rgba(255,255,255,${0.25 * alpha})`, 1, [2, 6]);
-        if (shadowPx > 30) {
-          const d = Math.SQRT1_2 * iscoR / view.mpp;
-          label(view, gx - rs / view.mpp, gy, 'Event horizon', alpha, 0);
-          label(view, gx + shadowPx, gy, 'Shadow', alpha, 0);
-          label(view, gx + d, gy + d, 'Innermost stable orbit', alpha, 0);
-        }
-        ringHit(view, gx, gy, rs / view.mpp, 'Event horizon', alpha,
-          `Schwarzschild radius ${formatDistance(rs)} · nothing inside can be seen`);
-        ringHit(view, gx, gy, shadowPx, 'Shadow', alpha,
-          `Apparent dark disc, radius ${formatDistance(shadowR)} (2.6 Schwarzschild radii) · light rays at its edge circle the hole`);
-        ringHit(view, gx, gy, iscoR / view.mpp, 'Innermost stable orbit', alpha,
-          `Radius ${formatDistance(iscoR)} (3 Schwarzschild radii) · matter closer in spirals through the horizon`);
-      }
-      label(view, gx, gy, bh.name, alpha, 2);
-      hit(view, gx, gy, bh.name, alpha, blackHoleSummary(bh));
+      drawBlackHole(ctx, view, alpha, bh, gx, gy);
       for (const s of stars) {
         const p = toPlane(skyOrbitPosition(s, days));
         const x = view.sx(GC.x + p.x);
@@ -1793,6 +1841,43 @@ const greatWalls = (() => {
 })();
 
 // The farthest things with names, near the edge, and the disputed
+// Notable galaxies beyond the Local Group, and M87's black hole up close.
+const M87 = GALAXIES.find((g) => g.name === 'M87');
+const notableGalaxies = (() => {
+  const items = GALAXIES.map((g) => ({ ...g, ...skyToPlane(g.l, g.dist * LY) }));
+  return {
+    name: 'notable galaxies',
+    range: [1e6 * LY, 1.2e9 * LY],
+    draw(ctx, view, alpha) {
+      for (const g of items) {
+        const x = view.sx(g.x);
+        const y = view.sy(g.y);
+        if (!onScreen(view, x, y)) continue;
+        const r = Math.max(2.5, g.size * LY / view.mpp);
+        glow(ctx, x, y, Math.max(8, 2.5 * r), g.spiral ? 'rgba(200,215,255,0.5)' : 'rgba(240,225,200,0.5)', alpha);
+        dot(ctx, x, y, r, g.spiral ? '#e4e9ff' : '#f0e6d2', alpha);
+        label(view, x, y, g.name, alpha, 1);
+        hit(view, x, y, g.name, alpha, notableGalaxySummary(g));
+      }
+    },
+  };
+})();
+
+const m87Nucleus = (() => {
+  const at = skyToPlane(M87.l, M87.dist * LY);
+  return {
+    name: 'M87 nucleus',
+    range: [0, 1 * LY],
+    draw(ctx, view, alpha) {
+      const x = view.sx(at.x);
+      const y = view.sy(at.y);
+      if (!onScreen(view, x, y, 1e6)) return;
+      drawBlackHole(ctx, view, alpha, M87.blackHole, x, y);
+    },
+  };
+})();
+export const M87_POSITION = skyToPlane(M87.l, M87.dist * LY);
+
 // Hercules-Corona Borealis wall as a dashed outline.
 const distantObjects = (() => {
   const items = DISTANT_OBJECTS.map((o) => ({ ...o, ...skyToPlane(o.l, o.dist * 1e6 * LY) }));
@@ -2108,8 +2193,8 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, sgrStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
-  nucleus, hypervelocityStar, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, interstellar, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
+  cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, notableGalaxies, m87Nucleus, magellanicStream, sgrStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
+  nucleus, hypervelocityStar, fieldStars, localBubble, radioSphere, areciboMessage, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, interstellar, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

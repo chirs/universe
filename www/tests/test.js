@@ -11,6 +11,7 @@ import {
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
   diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary, horseshoe, coorbitalState, hyperbolicPosition, interstellarSummary, binaryOffset,
+  messageSummary, notableGalaxySummary,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
@@ -18,6 +19,7 @@ import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
   SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO, SYSTEM_STARS, WR_140, DAY_S, INTERSTELLAR, S5_HVS1,
+  GALAXIES, ARECIBO_MESSAGE,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
@@ -787,6 +789,37 @@ test('sampled tracks interpolate, stop, and extrapolate escaping craft', () => {
   const beyond = sampledPosition(track, 30, true);
   assert.ok(Math.abs(beyond.y - 3 * AU) < 1 && Math.abs(beyond.x) < 1);
   assert.equal(trackPath(track, 0, 15).length, 6);
+});
+
+test('notable galaxies sit beyond the Local Group in distance order, and M87 carries its black hole', () => {
+  let last = 0;
+  for (const g of GALAXIES) {
+    assert.ok(g.dist > last && g.dist > 3e6 && g.l >= 0 && g.l < 360 && g.size > 0 && g.note, g.name);
+    last = g.dist;
+  }
+  const m87 = GALAXIES.find((g) => g.name === 'M87');
+  assert.ok(m87.blackHole.mass > 1e9 * SOLAR_MASS && m87.blackHole.mass > 1000 * SGR_A_STAR.mass);
+  assert.match(blackHoleSummary(m87.blackHole), /^Supermassive black hole · 6.5 billion solar masses/);
+  assert.match(blackHoleSummary(SGR_A_STAR), /4.3 million solar masses/);
+  assert.match(notableGalaxySummary(m87), /^Giant elliptical galaxy · 54.8 Mly/);
+});
+
+test('the Arecibo message is 52 light-years out in late 2026 with most of its way to M13 to go', () => {
+  const m = ARECIBO_MESSAGE;
+  const r = radioRadius({ start: m.sent }, Date.UTC(2026, 10, 16));
+  assert.ok(Math.abs(r / LY - 52) < 0.01);
+  assert.equal(radioRadius({ start: m.sent }, Date.UTC(1974, 0, 1)), 0);
+  assert.match(messageSummary(m, r), /52 ly out, 23.1 kly still to go, arriving in about 23,100 years/);
+  assert.match(messageSummary(m, m.targetDist + 10 * LY), /passed M13 10 years ago/);
+  assert.ok(GLOBULAR_CLUSTERS.some(([, name, l, b, kpc]) => name === 'M 13' && l === m.l && b === m.b && kpc * 1000 * PC === m.targetDist));
+});
+
+test('the historical supernovae are remnants in date order of their light’s arrival', () => {
+  const names = ['SN 1006', 'Crab Nebula', 'Tycho’s supernova', 'Kepler’s supernova', 'Cassiopeia A'];
+  for (const n of names) {
+    const o = MILKY_WAY_OBJECTS.find((x) => x.name === n);
+    assert.ok(o && o.kind === 'Supernova remnant' && o.dist > 5000 && o.dist < 20000, n);
+  }
 });
 
 test('spacecraft tracks cover every listed craft and put Voyager 1 near 170 AU in 2026', () => {

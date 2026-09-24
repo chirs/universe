@@ -418,6 +418,15 @@ export const STAR_SYSTEMS = [
       { name: 'Proxima b', a: 0.04848 * AU, period: 11.18465, L0: 200, massEarth: 1.055 },
     ],
     caption: 'Proxima b and d on their measured orbit sizes and periods, drawn face-on; their tilts are unknown. The green band is a rough habitable zone.' },
+  { id: 'barnards-star', name: "Barnard's Star", star: "Barnard's Star", radius: 0.06 * AU,
+    host: { name: "Barnard's Star", mass: 0.162, radius: 0.185 * SOL, type: 'M4V', luminosity: 0.00355 },
+    planets: [
+      { name: 'Barnard d', a: 0.0188 * AU, period: 2.3402, e: 0.04, L0: 0, massEarth: 0.263 },
+      { name: 'Barnard b', a: 0.0229 * AU, period: 3.1542, e: 0.03, L0: 100, massEarth: 0.299 },
+      { name: 'Barnard c', a: 0.0274 * AU, period: 4.1244, e: 0.08, L0: 200, massEarth: 0.335 },
+      { name: 'Barnard e', a: 0.0381 * AU, period: 6.7392, e: 0.04, L0: 300, massEarth: 0.193 },
+    ],
+    caption: 'Four planets lighter than Earth, all inside a tenth of Mercury’s orbit, found by radial velocity in 2024 and 2025 after a century of false alarms. Too close in for liquid water.' },
   { id: 'alpha-centauri', name: 'Alpha Centauri', star: 'Alpha Centauri', radius: 40 * AU,
     binary: { ra: 219.90206, dec: -60.83399,
       primary: { name: 'Alpha Centauri A', mass: 1.0788, radius: 1.223 * SOL, type: 'G2V', luminosity: 1.52 },
@@ -687,9 +696,20 @@ export const MILKY_WAY_OBJECTS = [
   { name: 'Eagle Nebula', dist: 5700, l: 16.9, b: 0.8, kind: 'Emission nebula', note: 'home of the Pillars of Creation' },
   { name: 'Crab Nebula', dist: 6500, l: 184.6, b: -5.8, kind: 'Supernova remnant', note: 'remnant of the supernova seen in 1054' },
   { name: 'Cygnus X-1', dist: 7200, l: 71.3, b: 3.1, kind: 'Black hole', note: '21 solar masses, the first black hole identified, in 1971' },
+  // The historical supernovae: positions from SIMBAD, distances from memory
+  // of the remnant literature (each uncertain by a quarter or so).
+  { name: 'SN 1006', dist: 7200, l: 327.4, b: 14.5, kind: 'Supernova remnant', note: 'remnant of the brightest supernova in recorded history, seen in 1006 from Egypt to Japan' },
   { name: 'Carina Nebula', dist: 7500, l: 287.7, b: -0.8, kind: 'Emission nebula', note: 'home of Eta Carinae' },
+  { name: 'Tycho’s supernova', dist: 8500, l: 120.1, b: 1.4, kind: 'Supernova remnant', note: 'the new star of 1572, which Tycho Brahe showed lay beyond the Moon' },
+  { name: 'Cassiopeia A', dist: 11000, l: 111.7, b: -2.1, kind: 'Supernova remnant', note: 'the youngest known remnant in the galaxy; its light reached Earth around 1680 and was hardly noticed' },
   { name: 'Westerlund 1', dist: 13000, l: 339.5, b: -0.4, kind: 'Super star cluster', note: 'the most massive young cluster known in the galaxy' },
+  { name: 'Kepler’s supernova', dist: 16000, l: 4.5, b: 6.8, kind: 'Supernova remnant', note: 'the new star of 1604, the last supernova seen in the Milky Way' },
 ];
+
+// The Arecibo message, sent toward M13 on 16 November 1974, travels at the
+// speed of light with the clock. M13's position is the Harris catalog's.
+export const ARECIBO_MESSAGE = { name: 'Arecibo message', sent: Date.UTC(1974, 10, 16), target: 'M 13', l: 59.01, b: 40.91, targetDist: 7100 * PC,
+  note: '1,679 bits from the Arecibo telescope: our numbers, DNA, a figure, the solar system and the dish' };
 
 // The Radcliffe Wave (Alves et al. 2020, Nature 578, 237; Extended Data
 // Table 2): the centerline is the quadratic through three anchor points in
@@ -745,6 +765,29 @@ export const LOCAL_GROUP = [
   { name: 'NGC 185', dist: 2000000, l: 120.8, b: -14.5, size: 2000 },
   { name: 'NGC 147', dist: 2200000, l: 119.8, b: -14.3, size: 2000 },
   { name: 'WLM', dist: 3000000, l: 75.9, b: -73.6, size: 3000 },
+];
+
+// Notable galaxies beyond the Local Group, each with a story. Positions from
+// SIMBAD; distances (ly) and sizes (radius, ly) from memory of the usual
+// estimates. M87 carries the black hole the Event Horizon Telescope imaged.
+export const GALAXIES = [
+  { name: 'M82', dist: 11.5e6, l: 141.41, b: 40.57, size: 18000, kind: 'Starburst galaxy',
+    note: 'the Cigar Galaxy, forming stars ten times faster than the Milky Way after a close pass by M81' },
+  { name: 'M51', dist: 28e6, l: 104.85, b: 68.56, size: 38000, kind: 'Spiral galaxy', spiral: true,
+    note: 'the Whirlpool, tugged by its companion NGC 5195; the first spiral structure ever seen, by Lord Rosse in 1845' },
+  { name: 'M104', dist: 31e6, l: 298.46, b: 51.15, size: 25000, kind: 'Spiral galaxy', spiral: true,
+    note: 'the Sombrero, a spiral seen almost edge-on through its dust lane, with a bulge and halo out of proportion to its disk' },
+  { name: 'Antennae', dist: 45e6, l: 286.96, b: 42.46, size: 30000, kind: 'Colliding galaxies',
+    note: 'NGC 4038 and 4039 in mid-collision, with tidal tails 500,000 ly long; distance estimates run from 45 to 70 million ly' },
+  { name: 'M87', dist: 54.8e6, l: 283.78, b: 74.49, size: 60000, kind: 'Giant elliptical galaxy',
+    note: 'the heart of the Virgo Cluster, with a 5,000 ly jet; home of the first black hole ever imaged. Click to see it',
+    blackHole: { name: 'M87*', mass: 6.5e9 * SOLAR_MASS, distance: 16.8e6 * PC } },
+  { name: 'NGC 4993', dist: 130e6, l: 308.38, b: 39.29, size: 12000, kind: 'Lenticular galaxy',
+    note: 'where two neutron stars merged in 2017, GW170817, the first event seen in both gravitational waves and light' },
+  { name: 'Stephan’s Quintet', dist: 290e6, l: 93.26, b: -20.99, size: 40000, kind: 'Galaxy group',
+    note: 'four galaxies colliding, the fifth a foreground galaxy 40 million ly away; among the first images from JWST' },
+  { name: 'Cygnus A', dist: 760e6, l: 76.19, b: 5.76, size: 40000, kind: 'Radio galaxy',
+    note: 'the brightest radio galaxy in the sky, its twin jets ending in lobes 500,000 ly apart' },
 ];
 
 // Close-up stops in the Local Group: centered on the mean position of the
@@ -911,6 +954,8 @@ export const DISTANT_OBJECTS = [
     note: 'the first quasar identified, and the brightest in our sky' },
   { name: 'TON 618', kind: 'Quasar', z: 2.219, l: 170.6, b: 83.4, dist: 18320, lookback: 10.84,
     note: 'powered by one of the most massive black holes known, around 40 billion solar masses' },
+  { name: 'Earendel', kind: 'Star', z: 6.2, l: 155.3, b: -68.4, dist: 27738, lookback: 12.90,
+    note: 'the most distant single star known, magnified thousands of times by a galaxy cluster in front of it; found by Hubble in 2022 in the Sunrise Arc' },
   { name: 'J0313\u22121806', kind: 'Quasar', z: 7.64, l: 205.1, b: -56.1, dist: 29411, lookback: 13.12,
     note: 'the most distant quasar known, its black hole already 1.6 billion solar masses' },
   { name: 'GN-z11', kind: 'Galaxy', z: 10.603, l: 126.0, b: 54.8, dist: 31816, lookback: 13.36,

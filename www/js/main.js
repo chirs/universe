@@ -4,7 +4,7 @@ import {
   levelFromHash, levelFromShortcut, hashForView, planetLevels, formatDate, shouldIgnoreGlobalKeys,
   skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, galaxyLevels, TOUR, TOUR_HOLD_MS, tourLegMs, coorbitalState,
 } from './util.js';
-import { LAYERS, GALACTIC_CENTER } from './scenes.js';
+import { LAYERS, GALACTIC_CENTER, M87_POSITION } from './scenes.js';
 import { drawOverview } from './overview.js';
 import { createAmbient } from './audio.js';
 
@@ -46,6 +46,8 @@ export const LEVELS = [
   { id: 'sgr-a', name: 'Sgr A*', shortcut: 'b', radius: 1 * AU, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
     clickName: 'Sgr A*',
     caption: 'Horizon, shadow and innermost stable orbit to scale. The glow is schematic, ringing the shadow as in the Event Horizon Telescope image.' },
+  { id: 'm87', name: 'M87*', radius: 2500 * AU, cx: M87_POSITION.x, cy: M87_POSITION.y, clickNames: ['M87', 'M87*'],
+    caption: 'The black hole the Event Horizon Telescope imaged in 2019, 6.5 billion solar masses: its shadow alone is wider than Pluto’s orbit, 1,500 times Sgr A*’s. Horizon, shadow and innermost stable orbit to scale.' },
   { id: 'milky-way-halo', name: 'MW halo', shortcut: 'h', radius: 500e3 * LY, cx: 0, cy: 0,
     caption: 'Schematic top-down projection. Radial distances are to scale; galactic latitude is omitted and galaxy sizes are approximate.' },
   { id: 'local-group', name: 'Local Group', shortcut: '8', radius: 3e6 * LY, cx: M31.x / 2, cy: M31.y / 2 },

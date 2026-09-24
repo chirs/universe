@@ -159,7 +159,22 @@ export function schwarzschildRadius(massKg) {
 }
 
 export function blackHoleSummary(bh) {
-  return `Supermassive black hole · ${compactNumber(bh.mass / SOLAR_MASS / 1e6)} million solar masses · Schwarzschild radius ${formatDistance(schwarzschildRadius(bh.mass))} · ${formatDistance(bh.distance)} from the Sun`;
+  const suns = bh.mass / SOLAR_MASS;
+  const mass = suns >= 1e9 ? `${compactNumber(suns / 1e9)} billion` : `${compactNumber(suns / 1e6)} million`;
+  return `Supermassive black hole · ${mass} solar masses · Schwarzschild radius ${formatDistance(schwarzschildRadius(bh.mass))} · ${formatDistance(bh.distance)} from the Sun`;
+}
+
+export function notableGalaxySummary(g) {
+  return `${g.kind} · ${formatDistance(g.dist * LY)} from the Milky Way · ${g.note}`;
+}
+
+// The Arecibo message, `traveled` meters out along its path to M13.
+export function messageSummary(m, traveled) {
+  const left = m.targetDist - traveled;
+  const when = left > 0
+    ? `${formatDistance(left)} still to go, arriving in about ${compactNumber(Math.round(left / LY / 100) * 100)} years`
+    : `passed M13 ${compactNumber(Math.round(-left / LY))} years ago`;
+  return `Radio message sent from Arecibo toward M13 on 16 November 1974 · ${formatDistance(traveled)} out, ${when} · ${m.note}`;
 }
 
 export function sStarSummary(star) {
