@@ -2,7 +2,7 @@ import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
   SPACECRAFT, HELIOSPHERE, ISS, TROJANS, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM,
-  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS, RADIO, J2000_MS, DAY_S,
+  GREAT_WALLS, DISTANT_OBJECTS, HERCULES_CORONA_BOREALIS, RADIO, J2000_MS, DAY_S, YEAR_D, SYSTEM_STARS, WR_140,
 } from './data.js';
 import { TRACKS } from './spacecraft.js';
 import { GLOBULAR_CLUSTERS } from './globulars.js';
@@ -17,6 +17,7 @@ import {
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, rankineNose, rankineRadius, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary, hiiSummary, yearsAgo, lookbackPowerSummary,
+  coorbitalState, coorbitalSummary, wr140Summary, dustShellSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -204,6 +205,62 @@ const moons = {
     }
   },
 };
+
+// Janus and Epimetheus on their shared orbit. In the frame that turns with
+// the pair (main.js), each trails the last four years of its horseshoe:
+// past positions turned forward by the pair's motion since.
+const coorbitals = (() => {
+  const saturn = PLANETS.find((p) => p.name === 'Saturn');
+  const pair = saturn.coorbitals;
+  return {
+    name: 'co-orbital moons',
+    range: [0, 0.08 * AU],
+    draw(ctx, view, alpha, days) {
+      const pos = orbitalPosition(saturn, days);
+      const px = view.sx(pos.x);
+      const py = view.sy(pos.y);
+      if (!onScreen(view, px, py, 2000)) return;
+      const now = coorbitalState(pair, days);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+      ctx.beginPath();
+      ctx.arc(px, py, pair.a / view.mpp, 0, TAU);
+      ctx.stroke();
+      if (view.spinning) {
+        const span = pair.swapInterval;
+        const step = 4;
+        pair.moons.forEach((m, i) => {
+          let last = null;
+          for (let d = days - span; d <= days; d += step) {
+            const st = coorbitalState(pair, d);
+            const b = st.bodies[i];
+            const lon = b.lon - st.center + now.center;
+            const x = view.sx(pos.x + b.r * Math.cos(lon));
+            const y = view.sy(pos.y + b.r * Math.sin(lon));
+            if (last) {
+              ctx.strokeStyle = `rgba(200,220,255,${0.5 * alpha * (d - days + span) / span})`;
+              ctx.beginPath();
+              ctx.moveTo(last[0], last[1]);
+              ctx.lineTo(x, y);
+              ctx.stroke();
+            }
+            last = [x, y];
+          }
+        });
+      }
+      pair.moons.forEach((m, i) => {
+        const b = now.bodies[i];
+        const x = view.sx(pos.x + b.x);
+        const y = view.sy(pos.y + b.y);
+        if (!onScreen(view, x, y)) return;
+        dot(ctx, x, y, Math.max(m.radius / view.mpp, 2), m.color, alpha);
+        const far = Math.hypot(x - px, y - py) > 14;
+        label(view, x, y, m.name, far ? alpha : 0, 0);
+        hit(view, x, y, m.name, far ? alpha : 0, coorbitalSummary(pair, i, now));
+      });
+    },
+  };
+})();
 
 function belt(name, cfg, range, color, log = false) {
   const pts = annulus(cfg.seed, cfg.count, cfg.inner, cfg.outer, log);
@@ -451,7 +508,7 @@ const sunDot = {
 
 // Each system is drawn by its primary's spectral type; a ring marks systems
 // with known planets.
-const starPositions = STARS.map((s) => ({ ...s, ...skyToPlane(s.l, s.dist * LY), style: starStyle(s.types[0]) }));
+const starPositions = [...STARS, ...SYSTEM_STARS].map((s) => ({ ...s, ...skyToPlane(s.l, s.dist * LY), style: starStyle(s.types[0]) }));
 
 const nearestStars = {
   name: 'nearest stars',
@@ -1005,6 +1062,76 @@ const hiiRegions = (() => {
         hit(view, x, y, h.name || 'HII region', alpha, hiiSummary(h));
       }
       ctx.globalAlpha = 1;
+    },
+  };
+})();
+
+// WR 140: a dot among the galactic objects; closer, its dust shells, one
+// per periastron, growing with the clock; closer still, the two stars on
+// their orbit, projected onto the galactic plane.
+const wr140 = (() => {
+  const wr = WR_140;
+  const at = skyToPlane(wr.l, wr.dist);
+  const planePA = galacticPlanePositionAngle(wr.ra, wr.dec);
+  const toPlane = (p) => skyOffsetToPlane(p, planePA, wr.l);
+  const path = skyOrbitPath(wr.orbit).map(toPlane);
+  const total = wr.primary.mass + wr.secondary.mass;
+  const pair = [[wr.primary, -wr.secondary.mass / total], [wr.secondary, wr.primary.mass / total]];
+  const detail = wr140Summary(wr);
+  return {
+    name: 'wr 140',
+    range: [0, 15e3 * LY],
+    draw(ctx, view, alpha, days) {
+      const x = view.sx(at.x);
+      const y = view.sy(at.y);
+      if (!onScreen(view, x, y, 200e3 * AU / view.mpp)) return;
+      const o = wr.orbit;
+      const newest = Math.floor((days - o.tP) / o.period);
+      const oldest = wr.shellStart + wr.shellSpeed * wr.shellsShown * o.period;
+      if (oldest / view.mpp > 6) {
+        for (let k = newest; k > newest - wr.shellsShown; k--) {
+          const age = days - (o.tP + k * o.period);
+          const r = wr.shellStart + wr.shellSpeed * age;
+          const rp = r / view.mpp;
+          if (rp < 2) continue;
+          // Older shells are cooler and fainter.
+          const a = alpha * (1 - age / (wr.shellsShown * o.period)) ** 1.5;
+          // Dust forms for a few months around periastron, so each shell
+          // has a thickness.
+          ctx.strokeStyle = `rgba(255,150,90,${0.25 * a})`;
+          ctx.lineWidth = Math.max(1, wr.shellSpeed * 0.3 * YEAR_D / view.mpp);
+          ctx.beginPath();
+          ctx.arc(x, y, rp, 0, TAU);
+          ctx.stroke();
+          ctx.strokeStyle = `rgba(255,205,160,${0.55 * a})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          const year = new Date(J2000_MS + (o.tP + k * o.period) * DAY_S * 1000).getUTCFullYear();
+          ringHit(view, x, y, rp, `Dust shell of ${year}`, alpha, dustShellSummary(year, r));
+        }
+      }
+      if (o.a / view.mpp > 4) {
+        const rel = toPlane(skyOrbitPosition(o, days));
+        ctx.strokeStyle = `rgba(255,255,255,${0.14 * alpha})`;
+        ctx.lineWidth = 1;
+        for (const [star, f] of pair) {
+          ctx.beginPath();
+          path.forEach((p, k) => ctx[k ? 'lineTo' : 'moveTo'](view.sx(at.x + f * p.x), view.sy(at.y + f * p.y)));
+          ctx.closePath();
+          ctx.stroke();
+          const sx = view.sx(at.x + f * rel.x);
+          const sy = view.sy(at.y + f * rel.y);
+          glow(ctx, sx, sy, 12, star.color, 0.4 * alpha);
+          dot(ctx, sx, sy, 3, star.color, alpha);
+          label(view, sx, sy, star.name, alpha, 1);
+          hit(view, sx, sy, star.name, alpha, `${star.type} · ${star.mass} solar masses`);
+        }
+      } else {
+        glow(ctx, x, y, 9, 'rgba(255,170,110,0.5)', alpha);
+        dot(ctx, x, y, 2.5, '#d8e0ff', alpha);
+        label(view, x, y, wr.name, alpha, 1);
+        hit(view, x, y, wr.name, alpha, detail);
+      }
     },
   };
 })();
@@ -1799,7 +1926,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
-  nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
+  nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

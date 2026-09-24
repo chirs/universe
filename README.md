@@ -9,11 +9,15 @@ from J2000 elements.
 The `k` key jumps to the trans-Neptunian view; `h` jumps to the Milky Way halo.
 The stellar neighborhood shows every known system within 16 light-years,
 drawn by spectral type, with rings on systems that have known planets.
-Ten systems open up when clicked: Alpha Centauri, Sirius, Procyon, Luhman
+Eleven systems open up when clicked: Alpha Centauri, Sirius, Procyon, Luhman
 16 and 40 Eridani with their companions on their real orbits projected onto
 the galactic plane, and Proxima, Epsilon Eridani, Tau Ceti, Teegarden's
-Star and Gliese 876 with their planets drawn face-on at their measured
-periods, a rough habitable zone in green. In the Local Group, Andromeda,
+Star, Gliese 876 and, farther out, TRAPPIST-1 with their planets drawn
+face-on at their measured periods, a rough habitable zone in green.
+Clicking Janus or Epimetheus at Saturn shows the two moons that share an
+orbit and swap places every four years, in a frame turning with them. In
+the Milky Way menu, WR 140 throws off a shell of dust at each close pass of
+its two stars. In the Local Group, Andromeda,
 Triangulum and the Magellanic Clouds open the same way, the spirals drawn
 at their real inclinations rotated into the galactic plane. `u`
 jumps to the Local Bubble, the supernova-blown cavity the Sun sits in, with

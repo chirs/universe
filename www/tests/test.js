@@ -10,14 +10,14 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, radioSummary, horseshoe, coorbitalState,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
-  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO,
+  SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO, SYSTEM_STARS, WR_140, DAY_S,
 } from '../js/data.js';
 import { TRACKS } from '../js/spacecraft.js';
 import { GLOBULAR_CLUSTERS } from '../js/globulars.js';
@@ -371,6 +371,41 @@ test('HII regions sit in the disk at catalog distances', () => {
   assert.ok(HII_REGIONS.some(([name]) => name === 'Orion A'));
 });
 
+test('Janus and Epimetheus swap orbits on schedule, about 50 km apart', () => {
+  const pair = PLANETS.find((p) => p.name === 'Saturn').coorbitals;
+  const leg = horseshoe(pair);
+  // Fitted to the four-year swaps, the model lands on the measured orbit
+  // difference and the observed closest approach of about 10,000 km or more.
+  const gap = Math.sqrt(leg.K * (leg.C - 1.5)) * pair.a / 1000;
+  assert.ok(gap > 40 && gap < 60, `${gap}`);
+  const closest = 2 * pair.a * Math.sin(leg.pmin / 2) / 1000;
+  assert.ok(closest > 10000 && closest < 16000, `${closest}`);
+  const at = (year) => coorbitalState(pair, (Date.UTC(year, 6, 1) - J2000_MS) / (DAY_S * 1000));
+  // Janus inside in 2006-2010, outside 2010-2014 and again since 2026.
+  assert.ok(at(2008).delta > 0 && at(2012).delta < 0 && at(2016).delta > 0 && at(2027).delta < 0);
+  // Continuous across a swap.
+  const before = coorbitalState(pair, pair.swapEpoch - 0.01);
+  const after = coorbitalState(pair, pair.swapEpoch + 0.01);
+  assert.ok(Math.abs(before.phi - after.phi) < 1e-3 && Math.abs(before.delta) < 1e-4 && Math.abs(after.delta) < 1e-4);
+});
+
+test('TRAPPIST-1 is wired in beyond the nearest-star list and WR 140 obeys Kepler', () => {
+  const t1 = STAR_SYSTEMS.find((s) => s.id === 'trappist-1');
+  assert.equal(t1.planets.length, 7);
+  // At a transit time the planet sits between its star and the Sun (to
+  // within twice its small eccentricity, the gap between mean and true).
+  const b = t1.planets[0];
+  const days = 2457322.514193 - 2451545.0;
+  const p = orbitalPosition(b, days);
+  const toSun = (69.715 + 180) * Math.PI / 180;
+  assert.ok(Math.abs(Math.atan2(p.y, p.x) - Math.atan2(Math.sin(toSun), Math.cos(toSun))) < 2 * b.e + 1e-6);
+  const o = WR_140.orbit;
+  const k = (o.a / AU) ** 3 / (o.period / YEAR_D) ** 2 / (WR_140.primary.mass + WR_140.secondary.mass);
+  assert.ok(Math.abs(k - 1) < 0.01);
+  // The 17th shell back reaches about 70,000 AU.
+  assert.ok(Math.abs(WR_140.shellSpeed * 17 * o.period / AU - 70000) < 1);
+});
+
 test('clusters are ordered outward with sane sizes', () => {
   let last = -1;
   for (const c of CLUSTERS) {
@@ -630,7 +665,7 @@ test('star systems obey Kepler with the transcribed masses and are wired to the 
   const kepler = (aAU, periodYears, mass) => (aAU ** 3) / (periodYears ** 2) / mass;
   assert.equal(new Set(STAR_SYSTEMS.map((s) => s.id)).size, STAR_SYSTEMS.length);
   for (const sys of STAR_SYSTEMS) {
-    assert.ok(STARS.some((st) => st.name === sys.star), sys.star);
+    assert.ok([...STARS, ...SYSTEM_STARS].some((st) => st.name === sys.star), sys.star);
     assert.ok(sys.host || sys.binary, sys.id);
     if (sys.binary) {
       const b = sys.binary;
@@ -653,7 +688,7 @@ test('star systems obey Kepler with the transcribed masses and are wired to the 
   assert.match(exoplanetSummary(tau.planets[0], 'Tau Ceti'), /^Candidate planet of Tau Ceti · .* · detection disputed$/);
   const eri = STAR_SYSTEMS.find((s) => s.id === 'epsilon-eridani');
   assert.match(exoplanetSummary(eri.planets[0], 'Epsilon Eridani'), /^Planet of Epsilon Eridani · 1 Jupiter masses · /);
-  for (const lv of systemLevels(STAR_SYSTEMS, STARS)) {
+  for (const lv of systemLevels(STAR_SYSTEMS, [...STARS, ...SYSTEM_STARS])) {
     assert.ok(Number.isFinite(lv.cx) && Number.isFinite(lv.cy) && lv.radius > 0 && lv.clickName && lv.caption, lv.id);
   }
   const hz = habitableZone(1);

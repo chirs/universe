@@ -1,8 +1,8 @@
-import { AU, LY, SCALE_UNITS, DAY_S, PLANETS, STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS } from './data.js';
+import { AU, LY, KM, SCALE_UNITS, DAY_S, PLANETS, STARS, SYSTEM_STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS, WR_140 } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
   levelFromHash, levelFromShortcut, hashForView, planetLevels, formatDate, shouldIgnoreGlobalKeys,
-  skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, galaxyLevels, TOUR, TOUR_HOLD_MS, tourLegMs,
+  skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, galaxyLevels, TOUR, TOUR_HOLD_MS, tourLegMs, coorbitalState,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
 import { drawOverview } from './overview.js';
@@ -17,7 +17,8 @@ const VIRGO = skyToPlane(284, 54e6 * LY);
 export const PLANET_LEVELS = planetLevels(PLANETS);
 for (const lv of PLANET_LEVELS) lv.shortcut = { earth: '1', jupiter: '2', saturn: '3' }[lv.id];
 
-const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, STARS);
+const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, [...STARS, ...SYSTEM_STARS]);
+const WR140 = skyToPlane(WR_140.l, WR_140.dist);
 const GALAXY_LEVELS = galaxyLevels(LOCAL_GROUP_STOPS, LOCAL_GROUP);
 
 export const LEVELS = [
@@ -37,6 +38,8 @@ export const LEVELS = [
     caption: 'The Sun sits in the Local arm, between the Sagittarius–Carina arm toward the center and the Perseus arm away from it. Arm positions are from maser parallaxes; faint stretches are extrapolated.' },
   { id: 'milky-way', name: 'Milky Way', shortcut: '7', radius: 60e3 * LY, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
     caption: 'Arms fitted to maser parallaxes (Reid et al. 2019), faint where extrapolated. Disk, bulge and bar are schematic.' },
+  { id: 'wr-140', name: 'WR 140', radius: 1.3 * LY, cx: WR140.x, cy: WR140.y, clickName: 'WR 140',
+    caption: 'Two massive stars on an 8-year orbit. At each close pass their winds collide and make dust, which flies out as a shell: 17 are seen, over 130 years. Run the clock at a year per second.' },
   { id: 'galactic-center', name: 'Galactic center', shortcut: 'g', radius: 4000 * AU, cx: GALACTIC_CENTER.x, cy: GALACTIC_CENTER.y,
     clickName: 'Galactic center',
     caption: 'Stars orbiting Sgr A*, on their measured orbits projected onto the galactic plane, moving with their real periods.' },
@@ -52,15 +55,21 @@ export const LEVELS = [
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];
 
-// Close-ups around Earth, reached by clicking the craft.
-const EARTH_LEVELS = [
+// Close-ups that follow a planet, reached by clicking what they show. A
+// level with `spin` is drawn in a frame turning by that angle (radians, a
+// function of days) about the planet.
+const SATURN = PLANETS.find((p) => p.name === 'Saturn');
+const CLOSE_UPS = [
   { id: 'iss', name: 'ISS', radius: 20000e3, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'ISS' },
   { id: 'jwst', name: 'JWST', radius: 2.2e9, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'JWST',
     caption: 'JWST loops around the Sun\u2013Earth L2 point, 1.5 million km beyond Earth, keeping the Sun, Earth and Moon behind its shield.' },
+  { id: 'janus-epimetheus', name: 'Janus and Epimetheus', radius: 190000 * KM, follow: SATURN, clickNames: ['Janus', 'Epimetheus'],
+    spin: (days) => coorbitalState(SATURN.coorbitals, days).center,
+    caption: 'Two moons on one orbit, 50 km apart. Every four years the inner one catches up, and they swap orbits before they meet. Drawn turning with the pair; run the clock at a year per second.' },
 ];
 
 // LEVELS first so the inner solar system is the default view.
-const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS, ...EARTH_LEVELS];
+const ALL_LEVELS = [...LEVELS, ...PLANET_LEVELS, ...CLOSE_UPS];
 
 // The level bar: a plain level id, or a menu of levels in sections, listed
 // widest at the top so a menu reads like the sky above the bar.
@@ -75,7 +84,7 @@ const BAR = [
     { levels: [byId('stars')] },
     { title: 'Star systems, farthest first', levels: [...SYSTEM_LEVELS].reverse() },
   ] },
-  { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'local-bubble', 'galactic-center', 'sgr-a'].map(byId) }] },
+  { label: 'Milky Way', sections: [{ levels: ['milky-way-halo', 'milky-way', 'local-arm', 'wr-140', 'local-bubble', 'galactic-center', 'sgr-a'].map(byId) }] },
   { label: 'Local Group', sections: [{ levels: ['local-group', 'andromeda', 'magellanic-clouds', 'triangulum'].map(byId) }] },
   'virgo', 'universe',
 ];
@@ -155,9 +164,25 @@ function levelCenter(level) {
   return { cx: p.x, cy: p.y };
 }
 
-function setFollow(body) {
+function setFollow(body, spin = null) {
+  const days = daysSinceJ2000(simMs);
   cam.follow = body;
-  cam.followPos = body ? orbitalPosition(body, daysSinceJ2000(simMs)) : null;
+  cam.followPos = body ? orbitalPosition(body, days) : null;
+  // The frame starts turning from where it is, so nothing jumps.
+  cam.spin = body && spin ? { fn: spin, ref: spin(days) } : null;
+}
+
+// The frame's turn now, and the screen point it turns about.
+let spinNow = null;
+
+// A screen point as it would be without the turn.
+function unspin(x, y) {
+  if (!spinNow) return { x, y };
+  const c = Math.cos(spinNow.rot);
+  const s = Math.sin(spinNow.rot);
+  const dx = x - spinNow.px;
+  const dy = y - spinNow.py;
+  return { x: spinNow.px + dx * c + dy * s, y: spinNow.py - dx * s + dy * c };
 }
 
 // Keep the camera pinned to the followed body as it moves.
@@ -193,7 +218,7 @@ function goTo(level, instant = false, dur = 1400) {
   const to = { ...levelCenter(level), mpp: mppFor(level) };
   if (instant) {
     Object.assign(cam, to);
-    setFollow(level.follow || null);
+    setFollow(level.follow || null, level.spin);
     anim = null;
   } else {
     anim = { from: { cx: cam.cx, cy: cam.cy, mpp: cam.mpp }, level, start: performance.now(), dur };
@@ -215,7 +240,7 @@ function stepAnim(now) {
   cam.cx = lerp(from.cx, to.cx, wgt);
   cam.cy = lerp(from.cy, to.cy, wgt);
   if (u >= 1) {
-    setFollow(anim.level.follow || null);
+    setFollow(anim.level.follow || null, anim.level.spin);
     anim = null;
   }
 }
@@ -249,6 +274,7 @@ function zoomAt(sx, sy, factor) {
   const minMpp = Math.min(...ALL_LEVELS.map(mppFor)) / 4;
   const maxMpp = mppFor(LEVELS[LEVELS.length - 1]) * 1.5;
   const next = Math.min(maxMpp, Math.max(minMpp, cam.mpp * factor));
+  ({ x: sx, y: sy } = unspin(sx, sy));
   const wx = cam.cx + (sx - w / 2) * cam.mpp;
   const wy = cam.cy - (sy - h / 2) * cam.mpp;
   cam.cx = wx - (sx - w / 2) * next;
@@ -262,7 +288,7 @@ function nearestLevel() {
   const body = anim ? anim.level.follow : cam.follow;
   if (body) {
     const mpp = anim ? mppFor(anim.level) : cam.mpp;
-    const stops = [...PLANET_LEVELS, ...EARTH_LEVELS].filter((lv) => lv.follow === body);
+    const stops = [...PLANET_LEVELS, ...CLOSE_UPS].filter((lv) => lv.follow === body);
     return stops.reduce((best, lv) => (Math.abs(Math.log(mppFor(lv) / mpp)) < Math.abs(Math.log(mppFor(best) / mpp)) ? lv : best));
   }
   return pickLevel(LEVELS, cam.cx, cam.cy, cam.mpp * halfMin());
@@ -336,7 +362,7 @@ function updateHud() {
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
   // The Earth close-ups are not in the bar; they show as Earth there.
-  const inBar = EARTH_LEVELS.includes(near) ? PLANET_LEVELS.find((lv) => lv.follow === near.follow) : near;
+  const inBar = CLOSE_UPS.includes(near) ? PLANET_LEVELS.find((lv) => lv.follow === near.follow) : near;
   for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === inBar.id);
   for (const m of menus) {
     const open = !overview && m.levels.includes(inBar);
@@ -387,14 +413,37 @@ function frame(now) {
     sy: (y) => h / 2 - (y - cam.cy) / cam.mpp,
     hits: [],
     labels: [],
+    spinning: !!cam.spin && !overview,
   };
   const days = daysSinceJ2000(simMs);
+  spinNow = view.spinning
+    ? { rot: cam.spin.fn(days) - cam.spin.ref, px: view.sx(cam.followPos.x), py: view.sy(cam.followPos.y) }
+    : null;
   if (overview) {
     drawOverview(ctx, view, days);
   } else {
+    if (spinNow) {
+      // The world turns counterclockwise on screen; turn it back.
+      ctx.save();
+      ctx.translate(spinNow.px, spinNow.py);
+      ctx.rotate(spinNow.rot);
+      ctx.translate(-spinNow.px, -spinNow.py);
+    }
     for (const layer of LAYERS) {
       const alpha = layerAlpha(view.radius, layer.range);
       if (alpha > 0) layer.draw(ctx, view, alpha, days);
+    }
+    if (spinNow) {
+      ctx.restore();
+      // Labels and hover targets were placed unturned; turn them to match.
+      const c = Math.cos(spinNow.rot);
+      const s = Math.sin(spinNow.rot);
+      for (const p of [...view.labels, ...view.hits]) {
+        const dx = p.x - spinNow.px;
+        const dy = p.y - spinNow.py;
+        p.x = spinNow.px + dx * c - dy * s;
+        p.y = spinNow.py + dx * s + dy * c;
+      }
     }
   }
   if (sound && !overview) sound.update(view.radius);
@@ -495,8 +544,11 @@ canvas.addEventListener('mousemove', (e) => {
   const dy = e.offsetY - drag.y;
   if (!drag.moved && Math.hypot(dx, dy) < 4) return;
   if (!drag.moved) { stopTour(); anim = null; canvas.classList.add('dragging'); drag.moved = true; }
-  cam.cx -= dx * cam.mpp;
-  cam.cy += dy * cam.mpp;
+  // In a turning frame, move along the unturned axes.
+  const o = unspin(0, 0);
+  const d = unspin(dx, dy);
+  cam.cx -= (d.x - o.x) * cam.mpp;
+  cam.cy += (d.y - o.y) * cam.mpp;
   drag.x = e.offsetX;
   drag.y = e.offsetY;
 });

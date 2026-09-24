@@ -76,7 +76,14 @@ playbooks, which clone the repo and serve `www/` as the document root.
   the opaque plasma out to the horizon. A craft with
   `center: 399` (JWST) is tracked relative to Earth and drawn in a frame
   turning with Earth, so its halo orbit stays beyond L2. The ISS and JWST
-  stops (`EARTH_LEVELS` in main.js) follow Earth and are reached by clicking.
+  stops (`CLOSE_UPS` in main.js) follow Earth and are reached by clicking.
+  A close-up with `spin` is drawn in a frame turning about its planet: the
+  Janus and Epimetheus stop turns with the pair, whose horseshoe between
+  swaps is modeled by `coorbitalState` in util.js (Saturn's `coorbitals`),
+  fitted to the four-year swap interval. `SYSTEM_STARS` holds hosts of
+  close-up systems beyond the 16.7 ly list (TRAPPIST-1, its planets placed
+  by transit times). `WR_140` is the colliding-wind binary: its orbit, and
+  dust shells born at each periastron and growing with the clock.
 - `www/js/util.js` — pure functions: orbital position, log interpolation,
   nice-number scale bar, seeded PRNG, galactic-plane projection, and the
   cosmic web generator `makeZeldovichWeb` (a lattice of particles pushed

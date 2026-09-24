@@ -105,7 +105,20 @@ export const PLANETS = [
       { name: 'Titan', a: 1221870 * KM, period: 15.945, radius: 2574.7 * KM, L0: 137.084, color: '#d9a85a' },
       { name: 'Hyperion', a: 1481500 * KM, period: 21.276658, radius: 135 * KM, L0: 64.0, e: 0.105, varpi: 301.1, color: '#a99b87' },
       { name: 'Iapetus', a: 3560820 * KM, period: 79.32, radius: 734.5 * KM, L0: 217.368, color: '#9a9088' },
-    ] },
+    ],
+    // Janus and Epimetheus share one orbit and trade places every four
+    // years (swaps in January 2006, 2010, ...; Janus took the inner orbit in
+    // 2006). Masses from Jacobson et al. 2008, radii and the pair's mean
+    // orbit from JPL's satellite tables; the pair's phase is a display
+    // phase. The horseshoe between swaps is modeled in util.js.
+    coorbitals: {
+      a: 151450 * KM, period: 0.6945, L0: 120, phaseApprox: true, planetMass: 5.6834e26,
+      swapEpoch: (Date.UTC(2006, 0, 21) - J2000_MS) / (DAY_S * 1000), swapInterval: 4 * YEAR_D,
+      moons: [
+        { name: 'Janus', mass: 1.8975e18, radius: 89.5 * KM, color: '#b8b0a4' },
+        { name: 'Epimetheus', mass: 5.266e17, radius: 58.1 * KM, color: '#a8a096' },
+      ],
+    } },
   { name: 'Uranus', a: 19.2184 * AU, period: 30688.5, radius: 25362 * KM, L0: 313.232, e: 0.04725744, varpi: 170.954, color: '#9fd6dc',
     ringColor: '#9a9ca4',
     rings: [
@@ -356,6 +369,13 @@ export const RADIO = { start: Date.UTC(1920, 10, 2), first: 'KDKA Pittsburgh', d
 // controversial. Stellar masses and luminosities in solar units, planet
 // masses in Earth masses, radii in meters. Epsilon Eridani's belts and the
 // 40 Eridani A-BC separation are round numbers from memory.
+// Mean longitude at J2000 of a transiting planet on a face-on circle about
+// a star at galactic longitude l: at mid-transit (a JD) it lies toward the
+// Sun, at l + 180 degrees.
+function transitPhase(l, tTransit, period) {
+  const L = l + 180 - 360 * (tTransit - 2451545.0) / period;
+  return ((L % 360) + 360) % 360;
+}
 const SOL = SUN.radius;
 const MJ = 0.000954;   // Jupiter masses in solar masses
 export const STAR_SYSTEMS = [
@@ -428,6 +448,48 @@ export const STAR_SYSTEMS = [
       orbit: { a: 34.5 * AU, e: 0.4141, i: 107.98, Omega: 151.58, omega: 321.2, tP: (1848.7888 - 2000) * YEAR_D, period: 233.20 * YEAR_D },
       around: { a: 400 * AU, period: 8000 * YEAR_D, L0: 210 } },
     caption: 'Three kinds of star in one system: an orange dwarf, and 400 AU out a white dwarf and a red dwarf circling each other every 233 years. The A-BC orbit is a display circle; only its size and period are known.' },
+  // Agol et al. 2021 via the NASA Exoplanet Archive. The planets transit,
+  // so their phases are real: each is placed by its transit time, when it
+  // lies between its star and the Sun.
+  { id: 'trappist-1', name: 'TRAPPIST-1', star: 'TRAPPIST-1', radius: 0.075 * AU,
+    host: { name: 'TRAPPIST-1', mass: 0.0898, radius: 0.1192 * SOL, type: 'M8V', luminosity: 10 ** -3.25727 },
+    planets: [
+      ['b', 1.510826, 0.01154, 1.374, 2457322.514193, 0.00622],
+      ['c', 2.421937, 0.01580, 1.308, 2457282.8113871, 0.00654],
+      ['d', 4.049219, 0.02227, 0.388, 2457670.1463014, 0.00837],
+      ['e', 6.101013, 0.02925, 0.692, 2457660.3676621, 0.0051],
+      ['f', 9.20754, 0.03849, 1.039, 2457671.3737299, 0.01007],
+      ['g', 12.352446, 0.04683, 1.321, 2457665.3628439, 0.00208],
+      ['h', 18.772866, 0.06189, 0.326, 2457662.5741486, 0.00567],
+    ].map(([k, period, a, massEarth, tTransit, e]) => ({
+      name: `TRAPPIST-1 ${k}`, a: a * AU, period, e, massEarth,
+      L0: transitPhase(69.715, tTransit, period),
+    })),
+    caption: 'Seven Earth-sized planets, all far closer to their star than Mercury is to the Sun, their periods locked in ratios of 8:5, 5:3, 3:2, 3:2, 4:3 and 3:2. Placed by their transit times; three sit in the habitable zone.' },
+];
+
+// Colliding-wind binary WR 140: a Wolf-Rayet star and an O supergiant on
+// an 8-year orbit (Thomas et al. 2021: period, eccentricity, angles,
+// periastron, masses, distance; a from Kepler's law). Near each periastron
+// the winds collide and make dust, which flies out as a shell; JWST saw 17
+// of them, out to about 70,000 AU (Lau et al. 2022). The shells here expand
+// at the one speed that puts the 17th there; the dust really starts slower
+// and accelerates (Han et al. 2022). Their shapes are schematic circles.
+export const WR_140 = {
+  name: 'WR 140', ra: 305.11657, dec: 43.85452, l: 80.930, b: 4.177, dist: 1518 * PC,
+  primary: { name: 'WR 140 O star', type: 'O5.5fc', mass: 29.27, color: '#b4c6ff' },
+  secondary: { name: 'WR 140 Wolf\u2013Rayet star', type: 'WC7pd', mass: 10.31, color: '#d8e0ff' },
+  orbit: { a: 13.548 * AU, e: 0.8993, i: 119.07, Omega: 353.87, omega: 227.44, tP: 60636.23 - 51544.5, period: 2895.00 },
+  shellSpeed: 70000 * AU / (17 * 2895.00),   // meters per day
+  shellStart: 50 * AU,
+  shellsShown: 20,
+};
+
+// Hosts of close-up systems beyond the 16.7 light-year list above, drawn
+// in the neighbourhood like its stars. TRAPPIST-1 from the NASA Exoplanet
+// Archive (Gaia distance, galactic l and b as listed there).
+export const SYSTEM_STARS = [
+  { name: 'TRAPPIST-1', dist: 40.54, l: 69.715, b: -56.649, types: ['M8V'], planets: 7 },
 ];
 
 // The Local Bubble: the cavity of hot thin gas the Sun sits in, swept out

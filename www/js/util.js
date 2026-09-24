@@ -488,6 +488,119 @@ export function orbitalPosition(body, days) {
   return { x: r * Math.cos(nu + varpi), y: r * Math.sin(nu + varpi) };
 }
 
+// Two moons sharing an orbit, as Janus and Epimetheus do. Between swaps
+// their relative longitude phi (Epimetheus minus Janus) sweeps a horseshoe
+// (Murray & Dermott 1999, section 3.10): the orbits differ by
+// da/a = +-sqrt(K (C - S(phi))), K = 8/3 of the pair's mass over the
+// planet's, S(phi) = 1 / (2 sin(phi/2)) - cos(phi), and phi drifts at
+// -3/2 n da/a. C is fitted so one leg, from one close approach to the next,
+// lasts the observed time between swaps.
+const horseshoeS = (phi) => 1 / (2 * Math.abs(Math.sin(phi / 2))) - Math.cos(phi);
+
+function horseshoeLeg(K, n, C, steps = 2000) {
+  let lo = 1e-9;
+  let hi = Math.PI;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (horseshoeS(mid) > C) lo = mid; else hi = mid;
+  }
+  const pmin = hi;
+  // phi = pi - (pi - pmin) cos(s) spreads samples toward the turning points,
+  // where the drift slows to nothing.
+  const phis = new Float64Array(steps + 1);
+  const times = new Float64Array(steps + 1);
+  for (let i = 0; i <= steps; i++) {
+    const sv = Math.PI * i / steps;
+    phis[i] = Math.PI - (Math.PI - pmin) * Math.cos(sv);
+    if (i === 0) continue;
+    const sm = Math.PI * (i - 0.5) / steps;
+    const phi = Math.PI - (Math.PI - pmin) * Math.cos(sm);
+    const rate = 1.5 * n * Math.sqrt(Math.max(1e-30, K * (C - horseshoeS(phi))));
+    times[i] = times[i - 1] + (Math.PI - pmin) * Math.sin(sm) * (Math.PI / steps) / rate;
+  }
+  return { C, pmin, phis, times };
+}
+
+export function horseshoe(pair) {
+  if (pair.leg) return pair.leg;
+  const [m1, m2] = pair.moons.map((m) => m.mass);
+  const K = 8 / 3 * (m1 + m2) / pair.planetMass;
+  const n = TAU / pair.period;
+  let lo = 1.5 + 1e-6;
+  let hi = 1e4;
+  for (let i = 0; i < 60; i++) {
+    const mid = Math.sqrt(lo * hi);
+    if (horseshoeLeg(K, n, mid, 400).times.at(-1) > pair.swapInterval) lo = mid; else hi = mid;
+  }
+  pair.leg = { ...horseshoeLeg(K, n, lo), K };
+  return pair.leg;
+}
+
+// Where the pair is at `days`: the mean longitude of their shared orbit
+// (radians), phi, the fractional orbit difference (Epimetheus minus Janus),
+// the swaps either side, and each moon's position about the planet.
+export function coorbitalState(pair, days) {
+  const leg = horseshoe(pair);
+  const t = days - pair.swapEpoch;
+  const k = Math.floor(t / pair.swapInterval);
+  const u = t - k * pair.swapInterval;
+  const { phis, times } = leg;
+  let lo = 0;
+  let hi = times.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (times[mid] <= u) lo = mid; else hi = mid;
+  }
+  const f = Math.min(1, (u - times[lo]) / (times[hi] - times[lo]));
+  const up = phis[lo] + (phis[hi] - phis[lo]) * f;
+  // Even legs follow a swap that put the first moon (Janus) inside: the
+  // second is then outside, slower, and phi falls.
+  const even = ((k % 2) + 2) % 2 === 0;
+  const phi = even ? TAU - up : up;
+  const delta = (even ? 1 : -1) * Math.sqrt(Math.max(0, leg.K * (leg.C - horseshoeS(phi))));
+  const center = (pair.L0 + 360 * days / pair.period) * D2R;
+  const [m1, m2] = pair.moons.map((m) => m.mass);
+  const f1 = m2 / (m1 + m2);
+  const f2 = m1 / (m1 + m2);
+  const at = (lon, r) => ({ lon, r, x: r * Math.cos(lon), y: r * Math.sin(lon) });
+  return {
+    center, phi, delta,
+    lastSwap: pair.swapEpoch + k * pair.swapInterval,
+    nextSwap: pair.swapEpoch + (k + 1) * pair.swapInterval,
+    bodies: [at(center - f1 * phi, pair.a * (1 - f1 * delta)), at(center + f2 * phi, pair.a * (1 + f2 * delta))],
+  };
+}
+
+export function coorbitalSummary(pair, i, state) {
+  const moon = pair.moons[i];
+  const other = pair.moons[1 - i].name;
+  const leg = horseshoe(pair);
+  const gap = Math.abs(state.delta) * pair.a;
+  const outer = (state.delta > 0) === (i === 1);
+  const closest = 2 * pair.a * Math.sin(leg.pmin / 2);
+  const when = new Date(J2000_MS + state.nextSwap * DAY_S * 1000).toISOString().slice(0, 7);
+  return [
+    `Moon of Saturn · radius ${formatDistance(moon.radius)}`,
+    `shares its orbit with ${other}; every ${formatPeriod(pair.swapInterval)} they swap orbits, never closer than ${formatDistance(closest)}`,
+    `now ${formatDistance(gap)} ${outer ? 'outside' : 'inside'} ${other}\u2019s orbit`,
+    `next swap ${when}`,
+  ].join(' · ');
+}
+
+export function wr140Summary(wr) {
+  const o = wr.orbit;
+  return [
+    `Colliding-wind binary · a ${wr.secondary.mass}-solar-mass Wolf\u2013Rayet star and a ${wr.primary.mass}-solar-mass O star`,
+    `${formatDistance(o.a * (1 - o.e))} to ${formatDistance(o.a * (1 + o.e))} apart every ${formatPeriod(o.period)}`,
+    `each close pass makes a shell of dust`,
+    `${formatDistance(wr.dist)} from the Sun · Thomas et al. 2021, Lau et al. 2022`,
+  ].join(' · ');
+}
+
+export function dustShellSummary(year, radius) {
+  return `Dust shell from the ${year} close pass · now ${formatDistance(radius)} out · its shape here is schematic`;
+}
+
 // Position on an orbit given in the visual-binary convention (see S_STARS in
 // data.js): offsets from the focus in meters, east and north on the sky and
 // depth positive away from the observer, so that a receding star has
