@@ -664,5 +664,5 @@ test('soundParams deepens and thins out as the view widens', () => {
   assert.deepEqual(soundParams(R_MIN / 1e6), soundParams(R_MIN));
   assert.deepEqual(soundParams(R_MAX * 1e6), soundParams(R_MAX));
   assert.deepEqual(soundParams(LY), soundParams(LY));
-  assert.ok(Math.abs(soundParams(R_MAX).root - 41.2) < 1e-9);
+  assert.ok(Math.abs(soundParams(R_MAX).root - 55) < 1e-9);
 });

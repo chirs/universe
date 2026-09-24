@@ -90,6 +90,7 @@ const scalebarEl = document.getElementById('scalebar');
 const overviewBtn = document.getElementById('overview');
 const tourBtn = document.getElementById('tour');
 const soundBtn = document.getElementById('sound');
+const volumeEl = document.getElementById('volume');
 const captionEl = document.getElementById('caption');
 const hoverInfoEl = document.getElementById('hover-info');
 const hoverNameEl = hoverInfoEl.querySelector('.name');
@@ -111,7 +112,10 @@ let lastLevelId = ALL_LEVELS[0].id;
 let tour = null;
 let sound = null;
 let soundOn = false;
-try { soundOn = localStorage.getItem('sound') === 'on'; } catch {}
+try {
+  soundOn = localStorage.getItem('sound') === 'on';
+  volumeEl.value = localStorage.getItem('volume') ?? volumeEl.value;
+} catch {}
 
 function halfMin() {
   return Math.min(w, h) / 2;
@@ -153,7 +157,7 @@ function trackFollow() {
 function setSound(on) {
   soundOn = on;
   try { localStorage.setItem('sound', on ? 'on' : 'off'); } catch {}
-  if (on && !sound) sound = createAmbient();
+  if (on && !sound) sound = createAmbient(Number(volumeEl.value));
   if (sound) sound.setEnabled(on);
 }
 
@@ -305,6 +309,7 @@ function updateHud() {
   for (const b of speedsEl.children) b.classList.toggle('active', b.dataset.label === speed.label);
   overviewBtn.classList.toggle('active', overview);
   soundBtn.classList.toggle('active', soundOn);
+  volumeEl.hidden = !soundOn;
   tourBtn.textContent = tour ? 'Stop tour' : 'Tour';
   tourBtn.classList.toggle('active', !!tour);
   scalebarEl.hidden = overview;
@@ -469,6 +474,10 @@ window.addEventListener('hashchange', () => {
 overviewBtn.addEventListener('click', () => { stopTour(); setOverview(!overview); });
 tourBtn.addEventListener('click', () => { if (tour) stopTour(); else startTour(); });
 soundBtn.addEventListener('click', () => setSound(!soundOn));
+volumeEl.addEventListener('input', () => {
+  try { localStorage.setItem('volume', volumeEl.value); } catch {}
+  if (sound) sound.setVolume(Number(volumeEl.value));
+});
 window.addEventListener('resize', () => {
   const level = nearestLevel();
   const ratio = cam.mpp / mppFor(level);

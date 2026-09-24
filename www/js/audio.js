@@ -6,10 +6,13 @@ import { R_MIN, R_MAX } from './overview.js';
 
 const DRONE = [1, 1.5, 2, 2.25];
 const DETUNE = [-4, 3, -2, 5];
+const DRONE_GAIN = [0.1, 0.06, 0.04, 0.03];
+const SWELL_HZ = [0.021, 0.034, 0.047, 0.029];
 const CHIMES = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
-const GLIDE_S = 1;
-const FADE_S = 1.5;
-const VOLUME = 0.18;
+const GLIDE_S = 1.5;
+const FADE_S = 3;
+const MAX_GAIN = 0.4;
+const CHIME_S = 7;
 
 function span(a, b, t) {
   return a * Math.pow(b / a, t);
@@ -19,11 +22,16 @@ export function soundParams(radius) {
   const t = Math.min(1, Math.max(0,
     (Math.log10(radius) - Math.log10(R_MIN)) / (Math.log10(R_MAX) - Math.log10(R_MIN))));
   return {
-    root: span(110, 41.2, t),
-    cutoff: span(2400, 300, t),
-    wet: 0.25 + 0.55 * t,
-    chimeRate: span(8, 1, t),
+    root: span(110, 55, t),
+    cutoff: span(1400, 350, t),
+    wet: 0.5 + 0.35 * t,
+    chimeRate: span(10, 2, t),
   };
+}
+
+// Squared so the slider feels even to the ear.
+function gainFor(volume) {
+  return MAX_GAIN * volume * volume;
 }
 
 function impulse(ctx, seconds, seed) {
@@ -37,11 +45,12 @@ function impulse(ctx, seconds, seed) {
   return buf;
 }
 
-export function createAmbient() {
+export function createAmbient(volume) {
   const ctx = new AudioContext();
   const rand = mulberry32(1977);
   let params = soundParams(R_MIN);
   let enabled = false;
+  let level = volume;
   let nextChime = 0;
 
   const master = ctx.createGain();
@@ -51,13 +60,13 @@ export function createAmbient() {
   const dry = ctx.createGain();
   const wet = ctx.createGain();
   const reverb = ctx.createConvolver();
-  reverb.buffer = impulse(ctx, 4, 42);
+  reverb.buffer = impulse(ctx, 7, 42);
   dry.connect(master);
   reverb.connect(wet).connect(master);
 
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.Q.value = 0.7;
+  filter.Q.value = 0.5;
   filter.connect(dry);
   filter.connect(reverb);
 
@@ -71,11 +80,16 @@ export function createAmbient() {
   const voices = DRONE.map((ratio, i) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = i === 0 ? 'triangle' : 'sine';
+    const swell = ctx.createOscillator();
+    const depth = ctx.createGain();
     osc.detune.value = DETUNE[i];
-    gain.gain.value = 0.25 / (i + 1);
+    gain.gain.value = DRONE_GAIN[i];
+    swell.frequency.value = SWELL_HZ[i];
+    depth.gain.value = DRONE_GAIN[i] * 0.8;
+    swell.connect(depth).connect(gain.gain);
     osc.connect(gain).connect(filter);
     osc.start();
+    swell.start();
     return { osc, ratio };
   });
 
@@ -88,13 +102,13 @@ export function createAmbient() {
     const env = ctx.createGain();
     osc.frequency.value = params.root * 4 * CHIMES[Math.floor(rand() * CHIMES.length)];
     env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(0.06, now + 0.02);
-    env.gain.exponentialRampToValueAtTime(0.0001, now + 5);
+    env.gain.linearRampToValueAtTime(0.12, now + 0.03);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + CHIME_S);
     osc.connect(env);
     env.connect(dry);
     env.connect(reverb);
     osc.start(now);
-    osc.stop(now + 5);
+    osc.stop(now + CHIME_S);
   }
 
   function apply() {
@@ -115,13 +129,17 @@ export function createAmbient() {
       if (nextChime) chime(now);
       nextChime = now - Math.log(1 - rand()) * 60 / params.chimeRate;
     },
+    setVolume(v) {
+      level = v;
+      if (enabled) set(master.gain, gainFor(level));
+    },
     setEnabled(on) {
       enabled = on;
       const now = ctx.currentTime;
       if (on) ctx.resume();
       master.gain.cancelScheduledValues(now);
       master.gain.setValueAtTime(master.gain.value, now);
-      master.gain.linearRampToValueAtTime(on ? VOLUME : 0, now + FADE_S);
+      master.gain.linearRampToValueAtTime(on ? gainFor(level) : 0, now + FADE_S);
       if (!on) setTimeout(() => { if (!enabled) ctx.suspend(); }, FADE_S * 1000 + 100);
     },
   };

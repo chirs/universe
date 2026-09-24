@@ -34,6 +34,9 @@ html, body {
 #hud button:hover { border-color: rgba(255, 255, 255, 0.4); }
 #hud button.active { background: #cfd3dc; color: #05060a; border-color: #cfd3dc; }
 
+#volume { pointer-events: auto; width: 90px; accent-color: #cfd3dc; }
+#volume[hidden] { display: none; }
+
 #title {
   top: 16px;
   left: 20px;
@@ -60,6 +63,7 @@ html, body {
   left: 20px;
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
 #hover-info {
