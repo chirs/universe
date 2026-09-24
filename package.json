@@ -1,7 +1,7 @@
 {
   "name": "universe",
   "version": "1.0.0",
-  "description": "A cosmic zoom from the inner solar system to the observable universe",
+  "description": "A to-scale map from the inner solar system to the observable universe",
   "type": "module",
   "scripts": {
     "test": "node --test www/tests/*.js"
