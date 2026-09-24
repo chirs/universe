@@ -14,7 +14,7 @@ import {
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
-  darkAgesSummary, cmbSummary, lookbackSummary,
+  darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
   greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary,
 } from './util.js';
 
@@ -286,7 +286,7 @@ const spacecraft = {
       const pos = sampledPosition(track, days, sc.escape);
       if (!pos) continue;
       const path = trackPath(track, days - sc.trail, days, sc.escape);
-      ctx.strokeStyle = `rgba(127,224,192,${0.3 * alpha})`;
+      ctx.strokeStyle = `rgba(127,224,192,${0.1 * alpha})`;
       ctx.beginPath();
       for (let i = 0; i < path.length; i += 2) ctx.lineTo(view.sx(path[i]), view.sy(path[i + 1]));
       ctx.stroke();
@@ -335,7 +335,7 @@ const earthOrbiters = {
       // Past positions turned by Earth's motion since, so the trail keeps
       // its place relative to the Sun-Earth line.
       const eAngle = Math.atan2(e.y, e.x);
-      ctx.strokeStyle = `rgba(127,224,192,${0.3 * alpha})`;
+      ctx.strokeStyle = `rgba(127,224,192,${0.1 * alpha})`;
       ctx.beginPath();
       for (let d = days - sc.trail; d <= days; d += sc.step) {
         const p = sampledPosition(track, d);
@@ -806,6 +806,28 @@ const milkyWay = (() => {
       glow(ctx, gx, gy, px(mw.bulgeRadius), 'rgba(255,235,195,0.7)', alpha);
       glow(ctx, gx, gy, px(mw.bulgeRadius) * 0.3, 'rgba(255,248,230,0.9)', alpha);
       for (const arm of arms) label(view, view.sx(arm.label.x), view.sy(arm.label.y), arm.name, 0.8 * alpha, 0);
+      // The Sun's orbit: a circle about the center through the Sun, with an
+      // arrow at the Sun pointing the way it moves (toward l = 90, +y).
+      const orbitR = px(mw.sunDistance);
+      ctx.strokeStyle = `rgba(255,215,106,${0.8 * alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath();
+      ctx.arc(gx, gy, orbitR, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const sx0 = view.sx(0);
+      const sy0 = view.sy(0);
+      const head = Math.min(10, Math.max(5, orbitR * 0.04));
+      ctx.fillStyle = `rgba(255,215,106,${0.8 * alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(sx0, sy0 - 3 * head);
+      ctx.lineTo(sx0 - head * 0.6, sy0 - 1.8 * head);
+      ctx.lineTo(sx0 + head * 0.6, sy0 - 1.8 * head);
+      ctx.fill();
+      const tag = [gx - orbitR * Math.cos(Math.PI / 4), gy + orbitR * Math.sin(Math.PI / 4)];
+      label(view, ...tag, 'Sun\u2019s orbit', 0.7 * alpha, 0);
+      ringHit(view, gx, gy, orbitR, 'Sun\u2019s orbit', alpha, sunOrbitSummary(mw));
     },
   };
 })();

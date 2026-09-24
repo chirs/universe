@@ -9,7 +9,7 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky,
+  diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough, slerpSky, sunOrbitPeriodMyr,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
@@ -708,6 +708,11 @@ test('the Harris globular clusters are all there, with Omega Centauri the bright
   }
   const brightest = GLOBULAR_CLUSTERS.filter((c) => c[5] !== null).sort((a, b) => a[5] - b[5])[0];
   assert.equal(brightest[1], 'omega Cen');
+});
+
+test('the Sun takes a bit over 200 million years to orbit the galaxy', () => {
+  const period = sunOrbitPeriodMyr(MILKY_WAY);
+  assert.ok(period > 200 && period < 240, `${period}`);
 });
 
 test('Trojan points sit 60 degrees either side of the body on its circle', () => {

@@ -207,6 +207,17 @@ export function distantSummary(o) {
   return `${o.kind} · redshift ${o.z} · ${formatDistance(o.dist * 1e6 * LY)} away now; its light left ${o.lookback.toFixed(1)} billion years ago · ${o.note}`;
 }
 
+// One lap of the Sun's orbit, in millions of years, for a circular orbit at
+// the galaxy's circular speed.
+export function sunOrbitPeriodMyr(mw) {
+  return TAU * mw.sunDistance / (mw.circularSpeed * 1000) / (365.25 * DAY_S) / 1e6;
+}
+
+export function sunOrbitSummary(mw) {
+  const period = sunOrbitPeriodMyr(mw);
+  return `The Sun\u2019s orbit · ${formatDistance(mw.sunDistance)} from the galactic center at about ${mw.circularSpeed} km/s · one lap every ${Math.round(period / 10) * 10} million years, about 20 laps since the Sun formed; one lap ago was the Late Triassic, when dinosaurs were new · drawn as a circle; the real path wanders slightly in and out and bobs through the disk`;
+}
+
 export function galacticObjectSummary(o) {
   return `${o.kind} · ${formatDistance(o.dist * LY)} from the Sun · ${o.note}`;
 }

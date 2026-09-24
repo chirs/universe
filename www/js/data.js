@@ -481,6 +481,7 @@ export const S_STARS = [
 
 export const MILKY_WAY = {
   sunDistance: SGR_A_STAR.distance,   // Sun to galactic center
+  circularSpeed: 236,                 // km/s at the Sun, Reid et al. 2019
   diskRadius: 50000 * LY,
   diskScaleLength: 8500 * LY,       // exponential disk, about 2.6 kpc
   bulgeRadius: 6000 * LY,
