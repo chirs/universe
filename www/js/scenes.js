@@ -6,7 +6,7 @@ import {
   spacecraft, moons, coorbitals, earthOrbiters, sunDot,
 } from './scenes/solar.js';
 import {
-  fieldStars, localBubble, radioSphere, areciboMessage, brightStars, nearestStars, starSystems,
+  fieldStars, localBubble, radioSphere, areciboMessage, brightStars, nearestStars, starSystems, scoCen,
 } from './scenes/stars.js';
 import {
   magellanicStream, sgrStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
@@ -21,7 +21,7 @@ import { M87_POSITION } from './scenes/cosmos.js';
 
 export const LAYERS = [
   cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, notableGalaxies, m87Nucleus, magellanicStream, sgrStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
-  nucleus, hypervelocityStar, fieldStars, localBubble, radioSphere, areciboMessage, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, interstellar, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
+  nucleus, hypervelocityStar, fieldStars, localBubble, scoCen, radioSphere, areciboMessage, radcliffeWave, galacticObjects, wr140, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, interstellar, spacecraft, moons, coorbitals, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

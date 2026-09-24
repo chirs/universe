@@ -1,5 +1,5 @@
 import {
-  LY, STARS, BRIGHT_STARS, LOCAL_BUBBLE, STAR_SYSTEMS, RADIO, J2000_MS, DAY_S, SYSTEM_STARS, ARECIBO_MESSAGE,
+  LY, PC, STARS, BRIGHT_STARS, LOCAL_BUBBLE, STAR_SYSTEMS, RADIO, J2000_MS, DAY_S, SYSTEM_STARS, ARECIBO_MESSAGE,
 } from '../data.js';
 import {
   orbitalPosition, skyToPlane, formatDistance, skyOrbitPosition, skyOrbitPath, galacticPlanePositionAngle,
@@ -10,8 +10,60 @@ import {
   messageSummary,
 } from '../summaries.js';
 import {
-  TAU, drawPoints, dot, glow, label, hit, ringHit, signal, onScreen,
+  TAU, makeBlob, drawPoints, dot, glow, label, hit, ringHit, signal, onScreen,
 } from '../draw.js';
+import { SCO_CEN } from '../scocen.js';
+
+// Scorpius-Centaurus, the nearest OB association: the 37 Gaia clusters of
+// Ratzenboeck et al. 2023 scattered at their distances, each spread by its
+// members' width along the sky and along the line of sight, with the
+// subregions labeled at their member-weighted centers.
+export const scoCen = (() => {
+  const REGIONS = {
+    US: ['Upper Scorpius', 1], UCL: ['Upper Centaurus–Lupus', 1], LCC: ['Lower Centaurus–Crux', 1],
+    Pipe: ['Pipe Nebula clusters', 0], CrA: ['Corona Australis clusters', 0], Cham: ['Chamaeleon clusters', 0], NE: ['Ophiuchus north-east', 0],
+  };
+  const clusters = SCO_CEN.map(([region, group, l, , distPc, halfLon, halfDist, n], i) => {
+    const dist = distPc * PC;
+    const across = halfLon * Math.PI / 180 * dist;
+    return {
+      region, group, n, dist, ...skyToPlane(l, dist),
+      pts: makeBlob(700 + i, halfDist * PC, across, Math.max(10, Math.round(n / 6)), l),
+    };
+  });
+  const regions = Object.entries(REGIONS).map(([key, [name, priority]]) => {
+    const own = clusters.filter((c) => c.region.trim() === key);
+    const total = own.reduce((s, c) => s + c.n, 0);
+    return {
+      name, priority, n: total,
+      x: own.reduce((s, c) => s + c.x * c.n, 0) / total,
+      y: own.reduce((s, c) => s + c.y * c.n, 0) / total,
+      groups: own.length,
+    };
+  });
+  const about = 'part of Scorpius–Centaurus, the nearest OB association: its massive stars were born over the last 20 million years, and the supernovae among them blew the Local Bubble';
+  return {
+    name: 'sco-cen',
+    range: [40 * LY, 3000 * LY],
+    draw(ctx, view, alpha) {
+      for (const c of clusters) {
+        const x = view.sx(c.x);
+        const y = view.sy(c.y);
+        if (!onScreen(view, x, y, 300)) continue;
+        drawPoints(ctx, view, c.pts, c.x, c.y, '#b8ccff', 0.55 * alpha, 1.3);
+        hit(view, x, y, `${c.group} cluster`, alpha,
+          `Young cluster in ${REGIONS[c.region.trim()][0]} · ${c.n} Gaia members · ${formatDistance(c.dist)} from the Sun · ${about} · Ratzenböck et al. 2023`);
+      }
+      for (const r of regions) {
+        const x = view.sx(r.x);
+        const y = view.sy(r.y);
+        if (!onScreen(view, x, y)) continue;
+        label(view, x, y, r.name, 0.9 * alpha, r.priority);
+        hit(view, x, y, r.name, alpha, `${r.groups} clusters, ${r.n} Gaia members · ${about} · Ratzenböck et al. 2023`);
+      }
+    },
+  };
+})();
 
 // Each system is drawn by its primary's spectral type; a ring marks systems
 // with known planets.
