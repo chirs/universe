@@ -25,6 +25,9 @@ export const LEVELS = [
   { id: 'outer', name: 'Outer solar system', shortcut: '5', radius: 50 * AU, cx: 0, cy: 0 },
   { id: 'trans-neptunian', name: 'TNOs', shortcut: 'k', radius: 120 * AU, cx: 0, cy: 0,
     caption: 'Official dwarf planets: Pluto, Haumea, Makemake, Eris. Other labeled TNOs are candidates.' },
+  { id: 'heliosphere', name: 'Heliosphere', radius: 240 * AU, cx: 0, cy: 0,
+    clickNames: ['Voyager 1', 'Voyager 2', 'Pioneer 10', 'Pioneer 11', 'Termination shock', 'Heliopause'],
+    caption: 'The Sun\u2019s wind gives way to interstellar gas at the heliopause, which both Voyagers have crossed. Spacecraft paths from JPL Horizons, laid into the ecliptic at their true distance.' },
   { id: 'stars', name: 'Stellar neighborhood', shortcut: '6', radius: 20 * LY, cx: 0, cy: 0,
     caption: 'Every known system within 16 light-years. Most are red dwarfs too faint for the eye; two of the nearest are brown dwarfs. Rings mark systems with known planets.' },
   ...SYSTEM_LEVELS,
@@ -60,7 +63,7 @@ const BAR = [
     { title: 'Dwarf planets', levels: PLANET_LEVELS.filter((lv) => lv.follow.dwarf).reverse() },
     { title: 'Planets', levels: PLANET_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
   ] },
-  { label: 'Solar system', sections: [{ levels: ['trans-neptunian', 'outer', 'inner'].map(byId) }] },
+  { label: 'Solar system', sections: [{ levels: ['heliosphere', 'trans-neptunian', 'outer', 'inner'].map(byId) }] },
   { label: 'Stellar neighborhood', sections: [
     { levels: [byId('stars')] },
     { title: 'Star systems, farthest first', levels: [...SYSTEM_LEVELS].reverse() },

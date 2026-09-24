@@ -9,14 +9,16 @@ import {
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, pickLevel, armRadius, galactocentricToPlane, makeArm, galacticObjectSummary,
   starStyle, starSystemSummary, cloudSummary, makeExpDisk, componentSummary, exoplanetSummary, habitableZone, systemLevels,
-  diskToSky, galaxyLevels,
+  diskToSky, galaxyLevels, sampledPosition, trackPath,
 } from '../js/util.js';
 import { frame, logY, angleX, TICKS, R_MIN, R_MAX } from '../js/overview.js';
 import { soundParams } from '../js/audio.js';
 import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
+  SPACECRAFT,
 } from '../js/data.js';
+import { TRACKS } from '../js/spacecraft.js';
 
 const earth = PLANETS.find((p) => p.name === 'Earth');
 
@@ -665,4 +667,26 @@ test('soundParams deepens and thins out as the view widens', () => {
   assert.deepEqual(soundParams(R_MAX * 1e6), soundParams(R_MAX));
   assert.deepEqual(soundParams(LY), soundParams(LY));
   assert.ok(Math.abs(soundParams(R_MAX).root - 55) < 1e-9);
+});
+
+test('sampled tracks interpolate, stop, and extrapolate escaping craft', () => {
+  const track = { start: 0, step: 10, lon: [0, 90, 90], r: [1, 1, 2] };
+  assert.equal(sampledPosition(track, -1), null);
+  const mid = sampledPosition(track, 5);
+  assert.ok(Math.abs(mid.x - 0.5 * AU) < 1 && Math.abs(mid.y - 0.5 * AU) < 1);
+  assert.equal(sampledPosition(track, 30), null);
+  const beyond = sampledPosition(track, 30, true);
+  assert.ok(Math.abs(beyond.y - 3 * AU) < 1 && Math.abs(beyond.x) < 1);
+  assert.equal(trackPath(track, 0, 15).length, 6);
+});
+
+test('spacecraft tracks cover every listed craft and put Voyager 1 near 170 AU in 2026', () => {
+  for (const sc of SPACECRAFT) {
+    const t = TRACKS[sc.name];
+    assert.ok(t && t.lon.length === t.r.length && t.r.length > 10, sc.name);
+  }
+  const days = daysSinceJ2000(Date.UTC(2026, 0, 1));
+  const v1 = sampledPosition(TRACKS['Voyager 1'], days, true);
+  const r = Math.hypot(v1.x, v1.y) / AU;
+  assert.ok(r > 165 && r < 175, `Voyager 1 at ${r} AU`);
 });

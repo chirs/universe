@@ -1,7 +1,9 @@
 import {
   AU, LY, PC, SUN, PLANETS, BELTS, STARS, BRIGHT_STARS, MILKY_WAY, LOCAL_GROUP, CLUSTERS,
   SUPERCLUSTERS, VOIDS, UNIVERSE, SIGNPOSTS, SGR_A_STAR, S_STARS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, LOCAL_BUBBLE, STAR_SYSTEMS,
+  SPACECRAFT, HELIOSPHERE,
 } from './data.js';
+import { TRACKS } from './spacecraft.js';
 import {
   orbitalPosition, mulberry32, skyToPlane, layerAlpha, formatDistance,
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary,
@@ -9,6 +11,7 @@ import {
   schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
   galacticPlanePositionAngle, skyOffsetToPlane, makeArm, makeExpDisk, galacticObjectSummary, starStyle, starSystemSummary, cloudSummary,
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
+  sampledPosition, trackPath, spacecraftSummary, heliosphereSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -212,6 +215,58 @@ const oortCloud = (() => {
     },
   };
 })();
+
+// Spacecraft on their Horizons tracks, with the recent path behind them.
+const SPACECRAFT_COLOR = '#7fe0c0';
+const spacecraft = {
+  name: 'spacecraft',
+  range: [0, 1500 * AU],
+  draw(ctx, view, alpha, days) {
+    ctx.lineWidth = 1;
+    for (const sc of SPACECRAFT) {
+      if (sc.center) continue;
+      const track = TRACKS[sc.name];
+      const pos = sampledPosition(track, days, sc.escape);
+      if (!pos) continue;
+      const path = trackPath(track, days - sc.trail, days, sc.escape);
+      ctx.strokeStyle = `rgba(127,224,192,${0.3 * alpha})`;
+      ctx.beginPath();
+      for (let i = 0; i < path.length; i += 2) ctx.lineTo(view.sx(path[i]), view.sy(path[i + 1]));
+      ctx.stroke();
+      const x = view.sx(pos.x);
+      const y = view.sy(pos.y);
+      if (!onScreen(view, x, y)) continue;
+      dot(ctx, x, y, 2, SPACECRAFT_COLOR, alpha);
+      const far = Math.hypot(x - view.sx(0), y - view.sy(0)) > 14;
+      label(view, x, y, sc.name, far ? alpha : 0, 0);
+      hit(view, x, y, sc.name, far ? alpha : 0, spacecraftSummary(sc, Math.hypot(pos.x, pos.y)));
+    }
+  },
+};
+
+// The termination shock and heliopause, at the Voyagers' mean crossings.
+const heliosphere = {
+  name: 'heliosphere',
+  range: [20 * AU, 3000 * AU],
+  draw(ctx, view, alpha) {
+    const x = view.sx(0);
+    const y = view.sy(0);
+    for (const b of [HELIOSPHERE.terminationShock, HELIOSPHERE.heliopause]) {
+      const radius = b.crossings.reduce((sum, c) => sum + c[2], 0) / b.crossings.length;
+      const r = radius / view.mpp;
+      if (r < 8) continue;
+      ctx.strokeStyle = `rgba(150,190,255,${(b === HELIOSPHERE.heliopause ? 0.35 : 0.2) * alpha})`;
+      ctx.setLineDash([3, 6]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      label(view, x, y - r, b.name, alpha, 1);
+      ringHit(view, x, y, r, b.name, alpha, heliosphereSummary(b));
+    }
+  },
+};
 
 // The Sun as a bare dot once the planets are sub-pixel.
 const sunDot = {
@@ -1012,7 +1067,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 
 export const LAYERS = [
   cosmicWeb, superclusters, landmarks, superclusterWalls, clusters, localGroup, milkyWay, nuclearCluster,
-  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, kuiperBelt, asteroidBelt, solarSystem, moons, sunDot,
+  nucleus, fieldStars, localBubble, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, solarSystem, spacecraft, moons, sunDot,
   youAreHere, horizon, ...signposts,
 ];
 

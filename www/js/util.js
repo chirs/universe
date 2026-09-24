@@ -238,6 +238,49 @@ export function observableUniverseSummary(radius) {
   return `Observable horizon · radius ${formatDistance(radius)} (comoving) · universe age about 13.8 billion years`;
 }
 
+// Position on a sampled track (see spacecraft.js) at `days` since J2000, in
+// meters in the map plane. Null before the first sample, and after the last
+// unless `escape`, when it carries on along the final sample's heading.
+export function sampledPosition(track, days, escape = false) {
+  const n = track.r.length;
+  const f = (days - track.start) / track.step;
+  if (f < 0 || (f > n - 1 && !escape)) return null;
+  const i = Math.min(Math.floor(f), n - 2);
+  const t = f - i;
+  const a = trackPoint(track, i);
+  const b = trackPoint(track, i + 1);
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+}
+
+function trackPoint(track, i) {
+  const lon = track.lon[i] * D2R;
+  return { x: track.r[i] * AU * Math.cos(lon), y: track.r[i] * AU * Math.sin(lon) };
+}
+
+// Flat [x, y, ...] of the samples between `from` and `to` days, ending at
+// the interpolated position at `to`.
+export function trackPath(track, from, to, escape = false) {
+  const out = [];
+  const first = Math.max(0, Math.ceil((from - track.start) / track.step));
+  const last = Math.min(track.r.length - 1, Math.floor((to - track.start) / track.step));
+  for (let i = first; i <= last; i++) {
+    const p = trackPoint(track, i);
+    out.push(p.x, p.y);
+  }
+  const end = sampledPosition(track, to, escape);
+  if (end) out.push(end.x, end.y);
+  return out;
+}
+
+export function spacecraftSummary(sc, distance, center = 'the Sun') {
+  return `Spacecraft · ${formatDistance(distance)} from ${center} · ${sc.note}`;
+}
+
+export function heliosphereSummary(boundary) {
+  const crossings = boundary.crossings.map(([craft, year, r]) => `${craft} at ${formatDistance(r)} in ${year}`).join(', ');
+  return `${boundary.name} · crossed by ${crossings} · drawn as a circle; the real surface is blunt ahead and trails behind`;
+}
+
 export function daysSinceJ2000(ms) {
   return (ms - J2000_MS) / (DAY_S * 1000);
 }

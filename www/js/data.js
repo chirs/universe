@@ -152,6 +152,55 @@ export const BELTS = {
   oort: { inner: 2000 * AU, outer: 1.6 * LY, count: 4000, seed: 3 },
 };
 
+// Spacecraft whose paths come from JPL Horizons: scripts/fetch-spacecraft.mjs
+// reads this list and writes the sampled tracks to spacecraft.js. `horizons`
+// is the Horizons id, `step` the sample spacing in days, `center` the body
+// the track is relative to (Sun unless given), `trail` how many days of past
+// path to draw. Escaping craft are extrapolated past the end of the
+// ephemeris; the rest disappear there. Launch dates are Horizons' first
+// ephemeris epoch; the notes are from memory.
+export const SPACECRAFT = [
+  { name: 'Voyager 1', horizons: -31, step: 30, escape: true, trail: Infinity,
+    note: 'flew past Jupiter and Saturn; crossed the heliopause in August 2012, the first craft in interstellar space' },
+  { name: 'Voyager 2', horizons: -32, step: 30, escape: true, trail: Infinity,
+    note: 'the only craft to visit Uranus and Neptune; crossed the heliopause in November 2018' },
+  { name: 'Pioneer 10', horizons: -23, step: 30, escape: true, trail: Infinity,
+    note: 'the first craft through the asteroid belt and past Jupiter; silent since 2003' },
+  { name: 'Pioneer 11', horizons: -24, step: 30, escape: true, trail: Infinity,
+    note: 'flew past Jupiter and Saturn; silent since 1995' },
+  { name: 'New Horizons', horizons: -98, step: 30, escape: true, trail: Infinity,
+    note: 'flew past Pluto in 2015 and Arrokoth in 2019' },
+  { name: 'Europa Clipper', horizons: -159, step: 10, trail: 180,
+    note: 'bound for Jupiter and Europa, arriving 2030' },
+  { name: 'JUICE', horizons: -28, step: 10, trail: 180,
+    note: 'bound for Jupiter and Ganymede, arriving 2031' },
+  { name: 'Psyche', horizons: -255, step: 10, trail: 180,
+    note: 'bound for the metal-rich asteroid 16 Psyche, arriving 2029' },
+  { name: 'Lucy', horizons: -49, step: 10, trail: 180,
+    note: 'touring Jupiter\u2019s Trojan asteroids from 2027 to 2033' },
+  { name: 'Hera', horizons: -91, step: 5, trail: 180,
+    note: 'bound for Didymos and Dimorphos, the asteroid pair DART struck in 2022' },
+  { name: 'BepiColombo', horizons: -121, step: 5, trail: 180,
+    note: 'bound for orbit around Mercury, arriving November 2026' },
+  { name: 'Parker Solar Probe', horizons: -96, step: 2, trail: 88,
+    note: 'has passed about 6 million km from the Sun\u2019s surface, closer than anything else' },
+  { name: 'Solar Orbiter', horizons: -144, step: 5, trail: 180,
+    note: 'the first craft to image the Sun\u2019s poles' },
+  { name: 'OSIRIS-APEX', horizons: -64, step: 10, trail: 180,
+    note: 'returned samples of Bennu in 2023; now bound for Apophis, arriving 2029' },
+  { name: 'JWST', horizons: -170, step: 2, center: 399, trail: 182,
+    note: 'infrared telescope in a halo orbit around the Sun\u2013Earth L2 point' },
+];
+
+// Where the Voyagers crossed the heliosphere's boundaries (NASA mission
+// reports, from memory). The real surface is blunt toward the Sun's motion
+// through the local cloud and stretched into a tail of unknown length
+// behind; the map draws each boundary as a circle at the mean crossing.
+export const HELIOSPHERE = {
+  terminationShock: { name: 'Termination shock', crossings: [['Voyager 1', 2004, 94 * AU], ['Voyager 2', 2007, 84 * AU]] },
+  heliopause: { name: 'Heliopause', crossings: [['Voyager 1', 2012, 121.6 * AU], ['Voyager 2', 2018, 119 * AU]] },
+};
+
 // Star systems within about 16.7 light-years, transcribed from the
 // Wikipedia list of nearest stars (Gaia-era distances). Distance in
 // light-years; galactic l and b computed from the J2000 positions; types
@@ -605,7 +654,7 @@ export const VOIDS = [
 // Notes shown while the view radius is inside an otherwise empty stretch,
 // so the emptiness reads as real space rather than a rendering gap.
 export const SIGNPOSTS = [
-  { range: [220 * AU, 1000 * AU], text: 'Nothing out here but Sedna\u2019s orbit. The Kuiper belt ends near 50 AU; the Oort cloud, if it is there, begins around 2,000 AU.' },
+  { range: [800 * AU, 1500 * AU], text: 'Nothing out here but Sedna\u2019s orbit. The Voyagers, our farthest craft, are inside 200 AU; the Oort cloud, if real, begins near 2,000 AU.' },
   { range: [2 * LY, 3.6 * LY], text: 'The nearest star, Proxima Centauri, is 4.2 light-years away, just off the edge.' },
   { range: [4e6 * LY, 8e6 * LY], text: 'The Local Group is on its own out to about 10 million light-years, where the Maffei and M81 groups begin.' },
 ];
