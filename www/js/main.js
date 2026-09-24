@@ -1,7 +1,7 @@
 import { AU, LY, SCALE_UNITS, DAY_S, PLANETS, STARS, STAR_SYSTEMS, LOCAL_GROUP, LOCAL_GROUP_STOPS } from './data.js';
 import {
   daysSinceJ2000, lerp, lerpLog, easeInOut, layerAlpha, niceScaleBar,
-  levelFromHash, levelFromShortcut, hashForView, moonLevels, formatDate, shouldIgnoreGlobalKeys,
+  levelFromHash, levelFromShortcut, hashForView, planetLevels, formatDate, shouldIgnoreGlobalKeys,
   skyToPlane, orbitalPosition, placeLabel, pickLevel, systemLevels, galaxyLevels, TOUR, TOUR_HOLD_MS, tourLegMs,
 } from './util.js';
 import { LAYERS, GALACTIC_CENTER } from './scenes.js';
@@ -10,11 +10,11 @@ import { drawOverview } from './overview.js';
 const M31 = skyToPlane(121.2, 2.54e6 * LY);
 const VIRGO = skyToPlane(284, 54e6 * LY);
 
-// Moon systems: one level per body with moons, listed in the Moons menu and
+// Planets: one level per planet and dwarf planet, listed in the Planets menu and
 // reached by clicking the planet or by hash. Each has `follow`, so the camera
 // stays centered on the planet as it moves.
-export const MOON_LEVELS = moonLevels(PLANETS);
-for (const lv of MOON_LEVELS) lv.shortcut = { 'earth-moon': '1', jupiter: '2', saturn: '3' }[lv.id];
+export const PLANET_LEVELS = planetLevels(PLANETS);
+for (const lv of PLANET_LEVELS) lv.shortcut = { 'earth-moon': '1', jupiter: '2', saturn: '3' }[lv.id];
 
 const SYSTEM_LEVELS = systemLevels(STAR_SYSTEMS, STARS);
 const GALAXY_LEVELS = galaxyLevels(LOCAL_GROUP_STOPS, LOCAL_GROUP);
@@ -48,15 +48,15 @@ export const LEVELS = [
     caption: 'Looking outward means looking back in time. Schematic 2D comoving slice; the cosmic web is procedural, not a present-day map.' },
 ];
 
-const ALL_LEVELS = [...MOON_LEVELS, ...LEVELS];
+const ALL_LEVELS = [...PLANET_LEVELS, ...LEVELS];
 
 // The level bar: a plain level id, or a menu of levels in sections, listed
 // widest at the top so a menu reads like the sky above the bar.
 const byId = (id) => LEVELS.find((lv) => lv.id === id);
 const BAR = [
-  { label: 'Moons', sections: [
-    { title: 'Dwarf planets', levels: MOON_LEVELS.filter((lv) => lv.follow.dwarf).reverse() },
-    { title: 'Planets', levels: MOON_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
+  { label: 'Planets', sections: [
+    { title: 'Dwarf planets', levels: PLANET_LEVELS.filter((lv) => lv.follow.dwarf).reverse() },
+    { title: 'Planets', levels: PLANET_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() },
   ] },
   { label: 'Solar system', sections: [{ levels: ['trans-neptunian', 'outer', 'inner'].map(byId) }] },
   { label: 'Stellar neighborhood', sections: [
@@ -223,7 +223,7 @@ function zoomAt(sx, sy, factor) {
 // whichever wide level is closest in scale.
 function nearestLevel() {
   const body = anim ? anim.level.follow : cam.follow;
-  if (body) return MOON_LEVELS.find((lv) => lv.follow === body);
+  if (body) return PLANET_LEVELS.find((lv) => lv.follow === body);
   return pickLevel(LEVELS, cam.cx, cam.cy, cam.mpp * halfMin());
 }
 

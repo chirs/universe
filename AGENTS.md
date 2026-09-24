@@ -78,10 +78,12 @@ playbooks, which clone the repo and serve `www/` as the document root.
   loop, level stops, and input (buttons, wheel, keys, hash). A level with
   `follow` keeps the camera pinned to that planet as it moves; following
   drops automatically once the view is wider than a fraction of an AU.
-  Every body with moons gets a `MOON_LEVELS` entry (built by `moonLevels`
-  in `util.js`), listed in the Moons menu and reached by clicking the planet
-  or by `#uranus` and the like. The level bar is laid out by `BAR`: plain
-  levels and drop-up menus (Moons, Solar system, Milky Way), each menu
+  Every planet and dwarf planet gets a `PLANET_LEVELS` entry (built by
+  `planetLevels` in `util.js`), listed in the Planets menu and reached by
+  clicking the planet or by `#uranus` and the like; the stop is sized to
+  the moon system, or to a couple of dozen radii for a moonless body. The
+  level bar is laid out by `BAR`: plain
+  levels and drop-up menus (Planets, Solar system, Milky Way), each menu
   listing its stops widest first and showing the active stop's name. A level with `clickName` is reached by
   clicking that label (or any of `clickNames`), which is how the galactic
   center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the

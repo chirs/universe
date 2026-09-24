@@ -35,7 +35,7 @@ The dwarf-planet layer includes Ceres, Pluto, Haumea, Makemake, Eris, Sedna,
 and six large candidates: Orcus, Máni, Salacia, Quaoar, Varda, and Gonggong.
 
 Heliocentric positions come from JPL Horizons elements at J2000. Clicking any
-body with modeled moons zooms to its satellite system. For remote satellites
+planet zooms to it, with its satellite system where it has one. For remote satellites
 without a published J2000 phase, the displayed phase is illustrative while
 the modeled orbit size, period, and eccentricity remain measured values.
 

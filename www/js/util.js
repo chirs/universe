@@ -500,12 +500,13 @@ export function moonSystemRadius(body) {
   return 1.3 * Math.max(...body.moons.map((moon) => moon.a * (1 + (moon.e || 0))));
 }
 
-// One camera stop per body with modeled moons, in distance order.
-export function moonLevels(planets) {
-  return planets.filter((p) => p.moons).map((p) => ({
+// One camera stop per planet and dwarf planet, in distance order: wide
+// enough for its moons, or a couple of dozen radii around a moonless body.
+export function planetLevels(planets) {
+  return planets.map((p) => ({
     id: p.name === 'Earth' ? 'earth-moon' : p.name.toLowerCase(),
-    name: `${p.name} & ${p.moons.length === 1 ? p.moons[0].name : 'moons'}`,
-    radius: moonSystemRadius(p),
+    name: p.moons ? `${p.name} & ${p.moons.length === 1 ? p.moons[0].name : 'moons'}` : p.name,
+    radius: p.moons ? moonSystemRadius(p) : 25 * p.radius,
     follow: p,
   }));
 }

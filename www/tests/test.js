@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   meanLongitude, orbitalPosition, solveKepler, lerpLog, easeInOut, layerAlpha,
   niceScaleBar, mulberry32, skyToPlane, levelFromHash, daysSinceJ2000, placeLabel,
-  levelFromShortcut, hashForView, moonSystemRadius, moonLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
+  levelFromShortcut, hashForView, moonSystemRadius, planetLevels, shouldIgnoreGlobalKeys, TOUR, tourLegMs,
   formatDistance, formatPeriod, planetSummary, moonSummary, starSummary,
   galaxySummary, clusterSummary, superclusterSummary, voidSummary, landmarkSummary, observableUniverseSummary,
   makeZeldovichWeb, schwarzschildRadius, blackHoleSummary, sStarSummary, skyOrbitPosition, skyOrbitPath,
@@ -212,15 +212,17 @@ test('levelFromHash falls back to the first level', () => {
   assert.equal(levelFromHash(undefined, levels).id, 'inner');
 });
 
-test('moon levels cover every body with moons', () => {
-  const levels = moonLevels(PLANETS);
-  assert.equal(levels.length, PLANETS.filter((p) => p.moons).length);
+test('planet levels cover every planet, moons or not', () => {
+  const levels = planetLevels(PLANETS);
+  assert.equal(levels.length, PLANETS.length);
   assert.equal(new Set(levels.map((lv) => lv.id)).size, levels.length);
-  assert.equal(levels[0].id, 'earth-moon');
-  assert.equal(levels[0].name, 'Earth & Moon');
+  assert.equal(levels[0].id, 'mercury');
+  assert.equal(levels[0].name, 'Mercury');
+  assert.equal(levelFromHash('#venus', levels).radius, 25 * PLANETS[1].radius);
+  assert.equal(levelFromHash('#earth-moon', levels).name, 'Earth & Moon');
   assert.equal(levelFromHash('#uranus', levels).name, 'Uranus & moons');
   assert.equal(levelFromHash('#orcus', levels).name, 'Orcus & Vanth');
-  for (const lv of levels) assert.equal(lv.radius, moonSystemRadius(lv.follow));
+  for (const lv of levels) assert.equal(lv.radius, lv.follow.moons ? moonSystemRadius(lv.follow) : 25 * lv.follow.radius);
 });
 
 test('level shortcuts preserve digits and add named intermediate keys', () => {
