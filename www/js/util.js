@@ -331,6 +331,17 @@ export function lookbackSummary(years, dist) {
   return `Lookback ${years} billion years · light from ${formatDistance(dist)} away (comoving) left when the universe was ${(13.8 - years).toFixed(1)} billion years old`;
 }
 
+export function yearsAgo(years) {
+  if (years >= 1e9) return `${years / 1e9} billion years ago`;
+  if (years >= 1e6) return `${years / 1e6} million years ago`;
+  return `${years.toLocaleString('en-US')} years ago`;
+}
+
+export function lookbackPowerSummary(years, dist) {
+  const comoving = years >= 1e8 ? ' (comoving; space has stretched since)' : '';
+  return `Lookback ${yearsAgo(years)} · light from ${formatDistance(dist)} away${comoving} set out then`;
+}
+
 export function observableUniverseSummary(radius) {
   return `Observable horizon · radius ${formatDistance(radius)} (comoving) · universe age about 13.8 billion years`;
 }

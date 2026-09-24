@@ -808,6 +808,11 @@ test('the eras sit at their Planck-cosmology distances', () => {
   assert.ok(close(UNIVERSE.cmb.dist / LY / 1e6, cosmologyAt(UNIVERSE.cmb.z, 'z').distance));
   assert.ok(close(UNIVERSE.radius / LY / 1e6, HORIZON));
   for (const [years, r] of UNIVERSE.lookbackRings) assert.ok(close(r / LY / 1e6, cosmologyAt(years, 'lookback').distance), `${years}`);
+  // Beyond a million years the table is fine enough to check against.
+  for (const [years, r] of UNIVERSE.lookbackPowers.filter(([y]) => y >= 1e8)) {
+    assert.ok(close(r / LY / 1e6, cosmologyAt(years / 1e9, 'lookback').distance), `${years}`);
+  }
+  assert.deepEqual(UNIVERSE.lookbackPowers.map(([y]) => Math.log10(y)), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const far = Math.max(...DISTANT_OBJECTS.map((o) => o.dist * 1e6 * LY));
   assert.ok(far < UNIVERSE.firstGalaxies.dist && UNIVERSE.firstGalaxies.dist < UNIVERSE.cmb.dist && UNIVERSE.cmb.dist < UNIVERSE.radius);
 });

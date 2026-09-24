@@ -16,7 +16,7 @@ import {
   componentSummary, exoplanetSummary, habitableZone, diskToSky,
   sampledPosition, trackPath, spacecraftSummary, heliosphereSummary, rankineNose, rankineRadius, issSummary, cometSummary, asteroidSummary, trojanPoints, globularSummary,
   darkAgesSummary, cmbSummary, lookbackSummary, sunOrbitSummary,
-  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary, hiiSummary,
+  greatCircleToSky, quadraticThrough, slerpSky, wallSummary, distantSummary, herculesSummary, radioRadius, radioSummary, hiiSummary, yearsAgo, lookbackPowerSummary,
 } from './util.js';
 
 const TAU = Math.PI * 2;
@@ -240,7 +240,7 @@ const trojans = (() => {
           pts[2 * i] = rr * Math.cos(lon);
           pts[2 * i + 1] = rr * Math.sin(lon);
         }
-        drawPoints(ctx, view, pts.subarray(0, 2 * n), 0, 0, '#b8a888', 0.55 * alpha);
+        drawPoints(ctx, view, pts.subarray(0, 2 * n), 0, 0, '#b8a888', 0.25 * alpha);
         const c = offset > 0 ? centers.l4 : centers.l5;
         label(view, view.sx(c.x), view.sy(c.y), name, 0.8 * alpha, 0);
       }
@@ -1691,6 +1691,34 @@ const eras = {
   },
 };
 
+// A ring for every power of ten in years, from 10 years to a billion,
+// each shown while it is a sensible size on screen.
+const lookbackPowers = {
+  name: 'lookback powers',
+  range: [0, INF],
+  draw(ctx, view, alpha) {
+    const x = view.sx(0);
+    const y = view.sy(0);
+    const span = Math.hypot(view.w, view.h);
+    ctx.setLineDash([2, 6]);
+    ctx.lineWidth = 1;
+    for (const [years, dist] of UNIVERSE.lookbackPowers) {
+      const r = dist / view.mpp;
+      if (r < 20 || r > 4 * span) continue;
+      // Fade in from 20 px, out as the ring grows well past the screen.
+      const a = alpha * Math.min(1, (r - 20) / 30, (4 * span - r) / (2 * span));
+      ctx.strokeStyle = `rgba(200,210,240,${0.3 * a})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, TAU);
+      ctx.stroke();
+      const name = yearsAgo(years);
+      label(view, x + r * Math.cos(-Math.PI / 3), y - r * Math.sin(-Math.PI / 3), name, 0.6 * a, 0);
+      ringHit(view, x, y, r, name, a, lookbackPowerSummary(years, dist));
+    }
+    ctx.setLineDash([]);
+  },
+};
+
 const landmarks = {
   name: 'landmarks',
   range: [20e6 * LY, 12e9 * LY],
@@ -1770,7 +1798,7 @@ const signposts = SIGNPOSTS.map((sp) => ({
 }));
 
 export const LAYERS = [
-  cosmicWeb, eras, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
+  cosmicWeb, eras, lookbackPowers, landmarks, greatWalls, distantObjects, superclusterWalls, clusters, magellanicStream, localGroup, milkyWay, dust, hiiRegions, globularClusters, nuclearCluster,
   nucleus, fieldStars, localBubble, radioSphere, radcliffeWave, galacticObjects, oortCloud, brightStars, nearestStars, starSystems, heliosphere, kuiperBelt, asteroidBelt, trojans, solarSystem, smallBodies, spacecraft, moons, earthOrbiters, sunDot,
   youAreHere, horizon, ...signposts,
 ];

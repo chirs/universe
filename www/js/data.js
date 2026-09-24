@@ -828,6 +828,13 @@ export const UNIVERSE = {
   firstGalaxies: { dist: 35.701e9 * LY, z: 20, sinceBigBang: '180 million years' },
   cmb: { dist: 45.219e9 * LY, z: 1089, sinceBigBang: '380,000 years' },
   lookbackRings: [[4, 4.643e9 * LY], [8, 11.193e9 * LY], [12, 22.690e9 * LY], [13, 28.469e9 * LY]],
+  // Every power of ten in years, drawn at every scale. Up to a million
+  // years the comoving distance is the light-travel distance to well under
+  // a percent; the last two come from the same cosmology.
+  lookbackPowers: [
+    ...[1, 2, 3, 4, 5, 6, 7].map((k) => [10 ** k, 10 ** k * LY]),
+    [1e8, 100.382e6 * LY], [1e9, 1035.72e6 * LY],
+  ],
   webSeed: 5,
   // The top-level web: cells about as wide as real voids and supercluster
   // spacing, so at the universe scale it is a fine grain and resolves into
