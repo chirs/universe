@@ -9,7 +9,7 @@ import {
   pickLevel, armRadius, galactocentricToPlane, makeArm, starStyle, makeExpDisk, habitableZone, systemLevels,
   diskToSky, galaxyLevels, sampledPosition, trackPath, trojanPoints, greatCircleToSky, quadraticThrough,
   slerpSky, sunOrbitPeriodMyr, rankineNose, rankineRadius, radioRadius, horseshoe, coorbitalState,
-  hyperbolicPosition, binaryOffset,
+  hyperbolicPosition, hyperbolicAt, hyperbolicPath, binaryOffset,
 } from '../js/util.js';
 import {
   planetSummary, moonSummary, starSummary, galaxySummary, clusterSummary, superclusterSummary, voidSummary,
@@ -425,6 +425,16 @@ test('interstellar visitors pass perihelion at q and leave at their known speeds
     const out = (y) => { const q = hyperbolicPosition(b, b.tP + y * YEAR_D); return Math.hypot(q.x, q.y); };
     assert.ok(out(1) < out(2) && Math.abs(out(3) - out(-3)) < 1e-6 * out(3));
     assert.match(interstellarSummary(b, b.tP), new RegExp(`leaving at ${speeds[b.name]} km/s`));
+    // The anomaly form agrees with the time form, and the fixed path is
+    // dense around perihelion and reaches the asked radius.
+    const at = hyperbolicAt(b, 1.5);
+    const back = hyperbolicPosition(b, at.days);
+    assert.ok(Math.hypot(at.x - back.x, at.y - back.y) < 1e-6 * AU, b.name);
+    const path = hyperbolicPath(b, 100 * AU);
+    const rOf = (p) => Math.hypot(p.x, p.y);
+    assert.ok(Math.abs(rOf(path[0]) - 100 * AU) < 1e-6 * AU && Math.abs(rOf(path.at(-1)) - 100 * AU) < 1e-6 * AU);
+    const near = path.filter((p) => rOf(p) < 2 * b.q);
+    assert.ok(near.length > 40 && near.every((p, i) => i === 0 || p.days > near[i - 1].days), `${near.length}`);
   }
 });
 

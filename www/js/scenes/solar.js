@@ -5,7 +5,7 @@ import {
 import { TRACKS } from '../spacecraft.js';
 import {
   orbitalPosition, layerAlpha, formatDistance, sampledPosition, trackPath, rankineNose, rankineRadius,
-  trojanPoints, coorbitalState, hyperbolicPosition, binaryShares, binaryOffset,
+  trojanPoints, coorbitalState, hyperbolicPosition, hyperbolicPath, binaryShares, binaryOffset,
 } from '../util.js';
 import {
   planetSummary, moonSummary, ringSummary, starSummary, spacecraftSummary, heliosphereSummary, issSummary,
@@ -306,36 +306,36 @@ export const smallBodies = {
 };
 
 // The interstellar visitors on their open paths: behind them solid, ahead
-// dashed, both fading with distance from the present.
+// dashed, both fading with distance from the present. The vertices are
+// fixed; the clock only moves the split and the fade.
+const paths = new Map();
 export const interstellar = {
   name: 'interstellar',
   range: [0, 3000 * AU],
   draw(ctx, view, alpha, days) {
     ctx.lineWidth = 1;
     for (const b of INTERSTELLAR) {
-      for (const [from, to, dash] of [[-1, 0, []], [0, 1, [3, 5]]]) {
+      if (!paths.has(b)) paths.set(b, hyperbolicPath(b, 4000 * AU));
+      const path = paths.get(b);
+      const now = { ...hyperbolicPosition(b, days), days };
+      const split = path.findIndex((p) => p.days > days);
+      const behind = split < 0 ? [...path, now] : [...path.slice(0, split), now];
+      const ahead = split < 0 ? [] : [now, ...path.slice(split)];
+      for (const [pts, dash] of [[behind, []], [ahead, [3, 5]]]) {
         ctx.setLineDash(dash);
-        let last = null;
-        for (let i = 0; i <= 200; i++) {
-          // Denser near now: steps grow as the square of time from now.
-          const t = (from + (to - from) * i / 200);
-          const d = days + Math.sign(t) * t * t * 40 * YEAR_D;
-          const p = hyperbolicPosition(b, d);
-          const pt = [view.sx(p.x), view.sy(p.y)];
-          if (last) {
-            ctx.strokeStyle = `rgba(230,200,170,${0.35 * alpha * (1 - Math.abs(t))})`;
-            ctx.beginPath();
-            ctx.moveTo(...last);
-            ctx.lineTo(...pt);
-            ctx.stroke();
-          }
-          last = pt;
+        for (let i = 1; i < pts.length; i++) {
+          const fade = 1 - Math.abs(pts[i - 1].days - days) / (40 * YEAR_D);
+          if (fade <= 0) continue;
+          ctx.strokeStyle = `rgba(230,200,170,${0.35 * alpha * fade})`;
+          ctx.beginPath();
+          ctx.moveTo(view.sx(pts[i - 1].x), view.sy(pts[i - 1].y));
+          ctx.lineTo(view.sx(pts[i].x), view.sy(pts[i].y));
+          ctx.stroke();
         }
       }
       ctx.setLineDash([]);
-      const p = hyperbolicPosition(b, days);
-      const x = view.sx(p.x);
-      const y = view.sy(p.y);
+      const x = view.sx(now.x);
+      const y = view.sy(now.y);
       if (!onScreen(view, x, y)) continue;
       dot(ctx, x, y, 2, b.color, alpha);
       label(view, x, y, b.name, alpha, 0);

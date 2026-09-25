@@ -247,10 +247,28 @@ export function hyperbolicPosition(body, days) {
     H -= dH;
     if (Math.abs(dH) < 1e-12) break;
   }
+  return hyperbolicAt(body, H);
+}
+
+// The same orbit at hyperbolic anomaly H, with the time it is passed.
+export function hyperbolicAt(body, H) {
+  const a = body.q / (1 - body.e);
+  const n = Math.sqrt(G_SI * SOLAR_MASS / (-a) ** 3) * DAY_S;
   const r = a * (1 - body.e * Math.cosh(H));
   const nu = 2 * Math.atan(Math.sqrt((body.e + 1) / (body.e - 1)) * Math.tanh(H / 2));
   const lon = body.varpi * D2R + (body.retrograde ? -nu : nu);
-  return { x: r * Math.cos(lon), y: r * Math.sin(lon) };
+  return { x: r * Math.cos(lon), y: r * Math.sin(lon), days: body.tP + (body.e * Math.sinh(H) - H) / n };
+}
+
+// The path out to `radius` as fixed vertices, dense around perihelion where
+// the path bends and sparse on the straight legs, so the drawn route does
+// not depend on the clock.
+export function hyperbolicPath(body, radius, n = 300) {
+  const a = body.q / (1 - body.e);
+  const hMax = Math.acosh((1 + radius / -a) / body.e);
+  const out = [];
+  for (let k = -n; k <= n; k++) out.push(hyperbolicAt(body, Math.sign(k) * (k / n) ** 2 * hMax));
+  return out;
 }
 
 // A planet and its binary partner (Pluto and Charon) circle their
