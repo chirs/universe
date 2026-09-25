@@ -101,9 +101,13 @@ html, body {
 #help dd { margin: 0; color: #9ba1b1; white-space: nowrap; }
 
 #hover-info {
-  max-width: 360px;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 560px;
+  text-align: center;
   z-index: 1;
-  padding: 8px 12px;
+  padding: 8px 16px;
   background: rgba(12, 14, 22, 0.8);
   border: 1px solid var(--edge);
   border-radius: 8px;

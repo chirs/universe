@@ -357,13 +357,6 @@ function updateHud() {
   if (hover) {
     hoverNameEl.textContent = hover.name;
     hoverDetailsEl.textContent = hover.detail;
-    // Beside the marker, flipped to the other side near the right or bottom edge.
-    const x = hover.markerX ?? hover.x;
-    const y = hover.markerY ?? hover.y;
-    const pw = hoverInfoEl.offsetWidth;
-    const ph = hoverInfoEl.offsetHeight;
-    hoverInfoEl.style.left = `${x + 16 + pw > w - 8 ? x - 16 - pw : x + 16}px`;
-    hoverInfoEl.style.top = `${Math.max(8, y + 16 + ph > h - 8 ? y - 16 - ph : y + 16)}px`;
   }
 }
 
