@@ -102,18 +102,16 @@ html, body {
 
 #hover-info {
   top: 64px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 560px;
+  left: 0;
+  right: 0;
   text-align: center;
   z-index: 1;
-  padding: 8px 16px;
+  padding: 8px 20px;
   background: rgba(12, 14, 22, 0.8);
-  border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-top: 1px solid var(--edge);
+  border-bottom: 1px solid var(--edge);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 #hover-info[hidden] { display: none; }
 #hover-info .name { font: 17px/1.2 var(--serif); color: #fff; }
