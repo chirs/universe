@@ -353,7 +353,8 @@ function updateHud() {
   captionEl.textContent = moment ? `${moment.title}. ${moment.caption}` : near.caption || DEFAULT_CAPTION;
   momentsToggle.classList.toggle('active', !!moment);
   for (const b of momentsEl.querySelectorAll('button[data-t]')) b.classList.toggle('active', !!moment && b.dataset.t === String(moment.t));
-  hoverInfoEl.hidden = !hover;
+  // Quick to appear, slow to go; the last text stays while it fades.
+  hoverInfoEl.classList.toggle('shown', !!hover);
   if (hover) {
     hoverNameEl.textContent = hover.name;
     hoverDetailsEl.textContent = hover.detail;
