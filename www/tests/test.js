@@ -23,8 +23,9 @@ import {
   PLANETS, BELTS, STARS, BRIGHT_STARS, LOCAL_GROUP, CLUSTERS, SUPERCLUSTERS, VOIDS, SIGNPOSTS, SCALE_UNITS, AU, LY, J2000_MS,
   SGR_A_STAR, S_STARS, MILKY_WAY, YEAR_D, SOLAR_MASS, SPIRAL_ARMS, MILKY_WAY_OBJECTS, PC, LOCAL_BUBBLE, STAR_SYSTEMS, LOCAL_GROUP_STOPS,
   SPACECRAFT, COMETS, ASTEROIDS, RADCLIFFE_WAVE, MAGELLANIC_STREAM, DISTANT_OBJECTS, UNIVERSE, HELIOSPHERE, RADIO, SYSTEM_STARS, WR_140, DAY_S, INTERSTELLAR, S5_HVS1,
-  GALAXIES, ARECIBO_MESSAGE, NEAR_EARTH, EARTH_RINGS, KM,
+  GALAXIES, ARECIBO_MESSAGE, NEAR_EARTH, EARTH_RINGS, KM, ISS,
 } from '../js/data.js';
+import { CLOSE_UPS } from '../js/levels.js';
 import { SCO_CEN } from '../js/scocen.js';
 import { timeFromHash } from '../js/util.js';
 import { TRACKS } from '../js/spacecraft.js';
@@ -436,6 +437,13 @@ test('interstellar visitors pass perihelion at q and leave at their known speeds
     const near = path.filter((p) => rOf(p) < 2 * b.q);
     assert.ok(near.length > 40 && near.every((p, i) => i === 0 || p.days > near[i - 1].days), `${near.length}`);
   }
+});
+
+test('the Earth orbits stop frames the geostationary ring with the ISS inside', () => {
+  const stop = CLOSE_UPS.find((lv) => lv.id === 'earth-orbits');
+  const rings = EARTH_RINGS.map((r) => r.radius);
+  assert.ok(stop.radius > Math.max(...rings) && stop.radius < 2 * Math.max(...rings));
+  assert.ok(ISS.a < Math.min(...rings));
 });
 
 test('Pluto and Charon circle a barycenter outside Pluto; Earth\u2019s companions share its year', () => {

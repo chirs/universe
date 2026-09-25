@@ -15,13 +15,15 @@ import { createAmbient } from './audio.js';
 // Way menu turns that over: the galaxy itself sits next to the button, below
 // a rule, with the places inside it grouped above, narrowest first.
 const byId = (id) => LEVELS.find((lv) => lv.id === id);
+const closeUp = (id) => CLOSE_UPS.find((lv) => lv.id === id);
 const BAR = [
+  { label: 'Earth', sections: [
+    { title: 'Companions', levels: COMPANION_LEVELS },
+    { rule: true, levels: [closeUp('lagrange'), PLANET_LEVELS.find((lv) => lv.id === 'earth'), closeUp('earth-orbits'), closeUp('iss')] },
+  ] },
   { label: 'Planets', sections: [{ levels: PLANET_LEVELS.filter((lv) => !lv.follow.dwarf).reverse() }] },
   { label: 'Dwarf planets', sections: [{ levels: PLANET_LEVELS.filter((lv) => lv.follow.dwarf).reverse() }] },
-  { label: 'Solar system', sections: [
-    { levels: ['heliosphere', 'trans-neptunian', 'outer', 'inner'].map(byId) },
-    { title: 'Earth\u2019s companions', levels: COMPANION_LEVELS },
-  ] },
+  { label: 'Solar system', sections: [{ levels: ['heliosphere', 'trans-neptunian', 'outer', 'inner'].map(byId) }] },
   { label: 'Stellar neighborhood', sections: [
     { levels: [byId('stars')] },
     { title: 'Star systems, farthest first', levels: [...SYSTEM_LEVELS].reverse() },
@@ -332,12 +334,15 @@ function updateHud() {
   barLabel.textContent = bar.label;
   dateEl.textContent = formatDate(simMs);
   const near = nearestLevel();
-  // The close-ups are not in the bar; they light their planet's menu, which
-  // names the close-up.
-  const inBar = CLOSE_UPS.includes(near) ? PLANET_LEVELS.find((lv) => lv.follow === near.follow) : near;
+  // Earth's close-ups have their own menu; the others are not in the bar
+  // and light their planet's menu, which names the close-up. A stop in two
+  // menus (Earth) lights only the first.
+  const inBar = CLOSE_UPS.includes(near) && near.follow !== EARTH ? PLANET_LEVELS.find((lv) => lv.follow === near.follow) : near;
   for (const b of levelsEl.querySelectorAll('button[data-id]')) b.classList.toggle('active', !overview && b.dataset.id === inBar.id);
+  let lit = false;
   for (const m of menus) {
-    const open = !overview && m.levels.includes(inBar);
+    const open = !overview && !lit && m.levels.includes(inBar);
+    lit ||= open;
     m.toggle.textContent = `${open ? near.name : m.label} ▾`;
     m.toggle.classList.toggle('active', open);
   }

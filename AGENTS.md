@@ -87,8 +87,10 @@ playbooks, which clone the repo and serve `www/` as the document root.
   `center: 399` (JWST and Euclid at L2; SOHO, DSCOVR and IMAP at L1) is
   tracked relative to Earth and drawn in a frame turning with Earth, so
   its halo orbit stays on its side of Earth. Spektr-RG is not in Horizons,
-  so it is left out. The ISS and Lagrange-point stops (`CLOSE_UPS` in
-  main.js) follow Earth and are reached by clicking.
+  so it is left out. The ISS, Earth-orbits and Lagrange-point stops (`CLOSE_UPS` in
+  levels.js) follow Earth; the Earth menu lists them with the companions
+  and the Earth stop, and the ISS and Lagrange stops are also reached by
+  clicking.
   A close-up with `spin` is drawn in a frame turning about its planet: the
   Janus and Epimetheus stop turns with the pair, whose horseshoe between
   swaps is modeled by `coorbitalState` in util.js (Saturn's `coorbitals`),
@@ -190,8 +192,8 @@ playbooks, which clone the repo and serve `www/` as the document root.
   alone; the stop is sized to
   the moon system, or to a couple of dozen radii for a moonless body. The
   level bar is laid out by `BAR`: plain
-  levels and drop-up menus (Planets, Dwarf planets, Solar system, Milky
-  Way, Local Group, Superclusters, Universe), each menu listing its stops widest first (the Milky Way menu puts
+  levels and drop-up menus (Earth, Planets, Dwarf planets, Solar system,
+  Milky Way, Local Group, Superclusters, Universe), each menu listing its stops widest first (the Milky Way menu puts
   the galaxy last, next to the button) and showing the active stop's name. A level with `clickName` is reached by
   clicking that label (or any of `clickNames`), which is how the galactic
   center, Sgr A*, the star-system stops (built from `STAR_SYSTEMS`) and the

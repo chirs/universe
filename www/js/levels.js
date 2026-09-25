@@ -70,7 +70,9 @@ export const LEVELS = [
 export const SATURN = PLANETS.find((p) => p.name === 'Saturn');
 export const EARTH = PLANETS.find((p) => p.name === 'Earth');
 export const CLOSE_UPS = [
-  { id: 'iss', name: 'ISS', radius: 20000e3, follow: PLANETS.find((p) => p.name === 'Earth'), clickName: 'ISS' },
+  { id: 'iss', name: 'ISS', radius: 20000e3, follow: EARTH, clickName: 'ISS' },
+  { id: 'earth-orbits', name: 'Earth orbits', radius: 60000 * KM, follow: EARTH,
+    caption: 'The geostationary ring, 36,000 km up, where satellites hang over one spot; the GPS orbits inside it; and the ISS hugging the planet a few hundred km up.' },
   { id: 'lagrange', name: 'Sun\u2013Earth L1 and L2', radius: 2.2e9, follow: PLANETS.find((p) => p.name === 'Earth'),
     clickNames: ['JWST', 'Euclid', 'SOHO', 'DSCOVR', 'IMAP'],
     caption: 'Craft loop around the Sun\u2013Earth Lagrange points, 1.5 million km from Earth: JWST and Euclid beyond it at L2, with the Sun, Earth and Moon behind their shields; SOHO, DSCOVR and IMAP sunward at L1, watching the Sun and the solar wind.' },

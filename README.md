@@ -17,8 +17,9 @@ face-on at their measured periods, a rough habitable zone in green.
 Clicking Janus or Epimetheus at Saturn shows the two moons that share an
 orbit and swap places every four years, in a frame turning with them. In
 the Milky Way menu, WR 140 throws off a shell of dust at each close pass of
-its two stars. The Solar system menu has Earth's companions, Cruithne and
-the quasi-moon Kamoʻoalewa, seen turning with Earth; the interstellar
+its two stars. The Earth menu runs from the companions Cruithne and the
+quasi-moon Kamoʻoalewa, seen turning with Earth, in through the Lagrange
+points and the Moon to the geostationary and GPS rings and the ISS; the interstellar
 visitors ʻOumuamua and Borisov cross the planets on open paths; Pluto and
 Charon circle a point between them. HR 8799's four photographed planets
 open like the other systems; around the galaxy wrap the Sagittarius
