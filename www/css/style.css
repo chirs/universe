@@ -62,11 +62,19 @@ html, body {
 #volume[hidden] { display: none; }
 
 #top {
-  top: 16px;
-  left: 20px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  box-sizing: border-box;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   gap: 18px;
+  background: rgba(12, 14, 22, 0.8);
+  border-bottom: 1px solid var(--edge);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 #title {
@@ -101,21 +109,23 @@ html, body {
 #help dd { margin: 0; color: #9ba1b1; white-space: nowrap; }
 
 #hover-info {
-  top: 64px;
+  top: 52px;
   left: 0;
   right: 0;
-  text-align: center;
   z-index: 1;
-  padding: 8px 20px;
-  background: rgba(12, 14, 22, 0.8);
-  border-top: 1px solid var(--edge);
-  border-bottom: 1px solid var(--edge);
+  padding: 7px 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: rgba(14, 24, 26, 0.85);
+  border-bottom: 1px solid rgba(127, 224, 192, 0.35);
+  box-shadow: inset 0 3px 0 rgba(127, 224, 192, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 #hover-info[hidden] { display: none; }
-#hover-info .name { font: 17px/1.2 var(--serif); color: #fff; }
-#hover-info .details { margin-top: 3px; color: #9ba1b1; font-size: 12px; }
+#hover-info .name { font: 18px/1.2 var(--serif); color: #fff; white-space: nowrap; }
+#hover-info .details { color: #c2c8d4; font-size: 13px; }
 
 #bottom {
   left: 20px;
@@ -199,8 +209,7 @@ html, body {
 #moments button:disabled:hover { background: none; }
 
 #time {
-  top: 16px;
-  right: 20px;
+  margin-left: auto;
   display: flex;
   gap: 6px;
   align-items: center;
